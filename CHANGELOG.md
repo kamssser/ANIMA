@@ -6,6 +6,12 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.5.1 - 2026-11-03
+
+**Perbaikan**
+- Generate style 2D sekarang langsung memberi tahu kalau belum ada **karakter utama yang tersimpan**, tidak lagi menunggu lama lalu gagal tanpa mengisi hook, script, dan shot.
+- Di Pengaturan > Karakter muncul tanda **"Belum disimpan"** setelah gambar jadi, dan menutup editor meminta konfirmasi kalau karakter belum disimpan.
+
 ## 0.5.0 - 2026-11-03
 
 **Baru**

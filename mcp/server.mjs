@@ -91,7 +91,7 @@ const BG_RULES = [
   'Perspektif dan kedalaman: lapisan jauh-tengah-dekat. Ukuran usahakan di bawah 60 KB (pakai pola/pengulangan, bukan ribuan titik).',
 ];
 
-const server = new McpServer({ name: 'anima', version: '0.5.0' });
+const server = new McpServer({ name: 'anima', version: '0.5.1' });
 
 server.tool('anima_list_projects', 'Daftar project ANIMA (id, judul, status). Maks 20 terbaru.', {}, async () => {
   try {
@@ -127,7 +127,13 @@ server.tool(
         onScreenText: 'Teks narasi WAJIB tampil di layar (subtitle otomatis per kata), jadi setiap shot yang berbicara harus punya narration.',
       };
       if (st.kind === '2d') {
-        const { data: chars } = await db.from('characters').select('key,name,nickname,is_main,personality').order('is_main', { ascending: false });
+        const { data: chars, error: ce } = await db.from('characters').select('key,name,nickname,is_main,personality,svg').order('is_main', { ascending: false });
+        if (ce) return fail(`Gagal membaca karakter: ${ce.message}`);
+        // Berhenti di awal (sebelum menggambar latar) kalau belum ada karakter tersimpan.
+        if (!chars?.some((c) => c.is_main && c.svg)) {
+          return fail('BERHENTI: akun ini belum punya karakter utama yang tersimpan. Jangan menulis atau menggambar apa pun. Beri tahu pengguna: buka Pengaturan > Karakter, generate karakter utama, lalu klik "Simpan karakter", kemudian Generate lagi.');
+        }
+        for (const c of chars) delete c.svg;
         Object.assign(guide, {
           style: { id: st.id, label: st.label, kind: '2d', draw: st.draw },
           format: p.format || '9:16',

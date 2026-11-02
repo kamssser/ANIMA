@@ -23,7 +23,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/misc';
-import { deleteProject, getProject, listJobs, listShots, updateProject } from '@/lib/api';
+import { deleteProject, getProject, listCharacters, listJobs, listShots, updateProject } from '@/lib/api';
 import { onRender, queueRender } from '@/lib/render';
 import { sb } from '@/lib/supabase';
 import type { Project, ProjectStatus, RenderJob, Shot } from '@/lib/types';
@@ -124,6 +124,17 @@ function GeneratePanel({ project, onDone, beforeRun }: { project: Project; onDon
   );
 
   async function run() {
+    if (is2D(project.visual_style)) {
+      // Style 2D wajib punya karakter utama tersimpan; cek dulu supaya Claude tidak bekerja sia-sia.
+      const chars = await listCharacters().catch(() => []);
+      if (!chars.some((c) => c.is_main && c.svg)) {
+        toast.error('Belum ada karakter utama yang tersimpan', {
+          description: 'Buka Pengaturan > Karakter, generate karakter utama, lalu klik "Simpan karakter". Setelah itu Generate lagi.',
+          duration: 10000,
+        });
+        return;
+      }
+    }
     if (project.script.trim() && !window.confirm('Script dan shot yang sekarang akan diganti hasil baru dari Claude. Lanjutkan?')) return;
     setRunning(true);
     setLog([]);

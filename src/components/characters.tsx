@@ -44,6 +44,11 @@ function Editor({ initial, others, onClose, onSaved }: { initial: Draft; others:
   const [problems, setProblems] = useState<string[]>([]);
   const [talking, setTalking] = useState(false);
   const eventId = initial.id ?? 'baru';
+  const unsaved = Boolean(d.svg) && JSON.stringify(d) !== JSON.stringify(initial);
+  const close = () => {
+    if (unsaved && !window.confirm('Karakter belum disimpan. Tutup dan buang perubahan?')) return;
+    onClose();
+  };
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }));
 
   useEffect(() => window.anima.onCharacterEvent((e) => e.id === eventId && setStep(e.line)), [eventId]);
@@ -67,6 +72,7 @@ function Editor({ initial, others, onClose, onSaved }: { initial: Draft; others:
       setProblems(r.problems ?? []);
       if (withFeedback) setFeedback('');
       if (r.problems?.length) toast.warning('Gambar jadi, tapi ada bagian animasi yang kurang', { description: r.problems.join(' ') });
+      else toast.success('Gambar jadi', { description: 'Kalau sudah cocok, klik "Simpan karakter". Kalau belum, tulis revisi.' });
     } catch (e) {
       toast.error('Gagal menggambar', { description: cleanErr(e) });
     } finally {
@@ -171,9 +177,10 @@ function Editor({ initial, others, onClose, onSaved }: { initial: Draft; others:
             <Button onClick={save} disabled={busy || !d.svg}>
               Simpan karakter
             </Button>
-            <Button variant="ghost" onClick={onClose} disabled={busy}>
+            <Button variant="ghost" onClick={close} disabled={busy}>
               Tutup
             </Button>
+            {unsaved && !busy && <Badge variant="warning" className="self-center">Belum disimpan, klik Simpan karakter</Badge>}
           </div>
         </div>
 
