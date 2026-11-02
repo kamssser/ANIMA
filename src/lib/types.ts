@@ -77,6 +77,8 @@ export interface UpdateState {
   message?: string;
   checkedAt?: string;
   current?: string;
+  /** Catatan update (dari CHANGELOG.md lewat GitHub Releases). */
+  notes?: string;
 }
 
 export interface BenchResult {

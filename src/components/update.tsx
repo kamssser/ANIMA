@@ -95,6 +95,13 @@ export function UpdateDialog() {
           </DialogDescription>
         </DialogHeader>
 
+        {u.notes && (
+          <div className="grid gap-1.5">
+            <div className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Yang baru</div>
+            <div className="max-h-48 overflow-y-auto rounded-lg border bg-muted/40 p-3 text-sm leading-relaxed whitespace-pre-line">{u.notes}</div>
+          </div>
+        )}
+
         {u.state === 'downloading' && (
           <div className="grid gap-2">
             <Progress value={u.percent ?? 0} />

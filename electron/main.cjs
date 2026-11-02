@@ -896,10 +896,30 @@ function setupAutoUpdate() {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.on('checking-for-update', () => sendUpdate({ state: 'checking', error: null }));
-  autoUpdater.on('update-available', (i) => sendUpdate({ state: 'downloading', version: i.version, percent: 0 }));
+  // Catatan rilis dari GitHub (bisa HTML atau daftar per versi) -> teks biasa untuk dialog "Yang baru".
+  const plainNotes = (n) => {
+    const raw = Array.isArray(n) ? n.map((x) => x.note || '').join('\n') : String(n || '');
+    return raw
+      .replace(/<\/(li|p|h\d)>|<br\s*\/?>/gi, '\n')
+      .replace(/<li>/gi, '- ')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\*\*/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  };
+  autoUpdater.on('update-available', (i) =>
+    sendUpdate({ state: 'downloading', version: i.version, percent: 0, notes: plainNotes(i.releaseNotes) }),
+  );
   autoUpdater.on('update-not-available', () => sendUpdate({ state: 'latest', checkedAt: new Date().toISOString() }));
   autoUpdater.on('download-progress', (p) => sendUpdate({ state: 'downloading', percent: Math.round(p.percent) }));
-  autoUpdater.on('update-downloaded', (i) => sendUpdate({ state: 'ready', version: i.version, percent: 100 }));
+  autoUpdater.on('update-downloaded', (i) =>
+    sendUpdate({ state: 'ready', version: i.version, percent: 100, notes: plainNotes(i.releaseNotes) || updateState.notes }),
+  );
   autoUpdater.on('error', (err) => {
     const msg = String(err?.message || err);
     // Belum ada release di GitHub = belum ada update, bukan error yang perlu ditampilkan.

@@ -148,11 +148,52 @@ setx GH_TOKEN "github_pat_..."   # token fine-grained: repo ANIMA, Contents = Re
 
 Setiap kali mau merilis:
 
-1. Naikkan `version` di `package.json` (mis. `0.3.0` -> `0.3.1`). Versi harus lebih tinggi dari yang terpasang.
-2. Buka terminal baru (supaya `GH_TOKEN` terbaca), lalu jalankan `npm run release`.
-3. Installer + `latest.yml` terunggah ke Releases; aplikasi teman menerima notifikasi saat dibuka berikutnya.
+1. Naikkan `version` di `package.json` (mis. `0.3.1` -> `0.3.2`). Versi harus lebih tinggi dari yang terpasang.
+2. Tulis catatan update di `CHANGELOG.md` (`## 0.3.2 - YYYY-MM-DD`). Wajib: tanpa ini `npm run release` menolak jalan.
+   Catatan ini muncul di halaman Releases GitHub dan di dialog update aplikasi teman ("Yang baru").
+3. Commit + push, buka terminal baru (supaya `GH_TOKEN` terbaca), lalu jalankan `npm run release`.
+4. Installer + `latest.yml` terunggah ke Releases; aplikasi teman menerima notifikasi saat dibuka berikutnya.
+
+Memperbaiki catatan rilis yang sudah terbit: edit `CHANGELOG.md`, lalu `node scripts/release.mjs --notes-only`.
 
 `npm run dist` membuat installer lokal saja tanpa mengunggah.
+
+## 8. Pindah ke laptop lain (untuk mengembangkan & merilis update)
+
+Semua kode ada di GitHub, jadi folder ini **tidak perlu di-zip**. Di laptop baru:
+
+1. Install **Git**, **Node.js LTS**, **Python 3** (untuk SFX), dan **Claude Code**.
+2. Ambil kode dan pasang paketnya:
+
+   ```powershell
+   cd $HOME\Documents
+   git clone https://github.com/kamssser/ANIMA.git
+   cd ANIMA
+   npm install
+   ```
+
+3. Simpan token GitHub (buat token baru di GitHub; boleh satu token per laptop):
+
+   ```powershell
+   setx GH_TOKEN "github_pat_..."
+   ```
+
+4. Buka Claude Code di folder `ANIMA`. Claude otomatis membaca `CLAUDE.md` (aturan rilis, catatan update, dll).
+5. Coba jalankan: `npm run build` lalu `npm start`, login dengan akun yang sama.
+6. Di aplikasi: **Pengaturan > Proyek Remotion > Siapkan otomatis**, isi lagi API key vibi.pro, lalu
+   **Sambungkan** Claude.
+
+| Ada di GitHub (ikut `git clone`) | Tidak ikut (dibuat ulang di laptop baru) |
+| --- | --- |
+| Kode aplikasi, `CLAUDE.md`, `CHANGELOG.md`, template Remotion, skrip rilis | `node_modules` (`npm install`) |
+| Logo, ikon, banner | `GH_TOKEN` (`setx`) |
+| Skema Supabase | Pengaturan aplikasi + API key vibi.pro (diisi di aplikasi) |
+| | Proyek Remotion `anima-remotion` (tombol **Siapkan otomatis**) |
+
+**Data project, shot, dan riwayat render tidak hilang**: semuanya di Supabase (cloud), jadi tinggal login.
+File MP4 hasil render ada di laptop lama (`Videos\ANIMA`); pindahkan manual kalau masih dibutuhkan.
+
+Selalu `git pull` sebelum mulai bekerja dan `git push` setelah selesai, terutama kalau memakai lebih dari satu laptop.
 
 ## Struktur folder
 
