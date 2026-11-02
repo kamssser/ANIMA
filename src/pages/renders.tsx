@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { PageHeader } from '@/components/layout';
+import { PageBody, PageHeader } from '@/components/layout';
 import { JobTable } from '@/components/job-table';
 import { Card, CardContent, Skeleton } from '@/components/ui/misc';
 import { listJobs } from '@/lib/api';
@@ -24,11 +24,11 @@ export default function RendersPage() {
   return (
     <>
       <PageHeader title="Antrean Render" description="Render berjalan satu per satu di laptop ini. Aplikasi boleh diperkecil, tapi jangan ditutup." />
-      <div className="p-6">
+      <PageBody>
         <Card>
           <CardContent className="p-0">{jobs ? <JobTable jobs={jobs} showProject onChanged={load} /> : <Skeleton className="m-5 h-24" />}</CardContent>
         </Card>
-      </div>
+      </PageBody>
     </>
   );
 }

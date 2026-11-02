@@ -18,7 +18,14 @@ export async function getProject(id: string) {
 }
 
 export async function createProject(input: Pick<Project, 'title' | 'topic' | 'target_seconds'>) {
-  return check<Project>(await sb().from('projects').insert(input).select().single());
+  const { defaultComposition } = await window.anima.getSettings();
+  return check<Project>(
+    await sb()
+      .from('projects')
+      .insert({ ...input, composition: defaultComposition || 'Main' })
+      .select()
+      .single(),
+  );
 }
 
 export async function updateProject(id: string, patch: Partial<Project>) {

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { sb } from '@/lib/supabase';
+import { BrandScreen } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Label } from '@/components/ui/misc';
@@ -34,11 +35,11 @@ export function LoginPage({ onResetConfig }: { onResetConfig: () => void }) {
   }
 
   return (
-    <div className="grid min-h-full place-items-center p-6">
-      <Card className="w-full max-w-sm">
+    <BrandScreen>
+      <Card className="brand-glow w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-lg">{mode === 'login' ? 'Masuk' : 'Buat akun'}</CardTitle>
-          <CardDescription>Akun Supabase project kamu sendiri.</CardDescription>
+          <CardDescription>{mode === 'login' ? 'Lanjutkan produksi video kamu.' : 'Sekali daftar, langsung bisa dipakai.'}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className="flex flex-col gap-4">
@@ -50,7 +51,7 @@ export function LoginPage({ onResetConfig }: { onResetConfig: () => void }) {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" size="lg" disabled={busy}>
               {busy ? 'Memproses...' : mode === 'login' ? 'Masuk' : 'Daftar'}
             </Button>
             <button
@@ -66,6 +67,6 @@ export function LoginPage({ onResetConfig }: { onResetConfig: () => void }) {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </BrandScreen>
   );
 }

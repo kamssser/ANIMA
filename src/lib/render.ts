@@ -35,7 +35,9 @@ export function wireRenderEvents() {
         case 'done':
           await updateJob(e.jobId, { status: 'done', progress: 100, output_path: e.outFile, finished_at: new Date().toISOString() });
           await setProjectStatusFromJob(e.jobId, 'done');
-          toast.success('Render selesai', {
+          (e.warning ? toast.warning : toast.success)(e.warning ? 'Video selesai, audio belum lengkap' : 'Render selesai', {
+            description: e.warning || undefined,
+            duration: e.warning ? 15000 : 4000,
             action: { label: 'Buka folder', onClick: () => window.anima.showItem(e.outFile) },
           });
           break;

@@ -77,7 +77,7 @@ export function ClaudeIntegration() {
           <div>
             <CardTitle>Integrasi Claude</CardTitle>
             <CardDescription className="mt-1.5">
-              Claude bisa membaca brief dan menyimpan script + shot langsung ke ANIMA lewat MCP, tanpa copy-paste panjang.
+              Claude bisa membaca brief dan menyimpan script + shot langsung ke HyperForge lewat MCP, tanpa copy-paste panjang.
             </CardDescription>
           </div>
           <Button variant="ghost" size="icon" title="Deteksi ulang" onClick={detect}>
@@ -103,7 +103,7 @@ export function ClaudeIntegration() {
             ) : (
               <form onSubmit={connect} className="flex flex-wrap items-end gap-2">
                 <div className="grid flex-1 gap-2">
-                  <Label htmlFor="mcp-pw">Password akun ANIMA (sekali saja, tidak disimpan)</Label>
+                  <Label htmlFor="mcp-pw">Password akun HyperForge (sekali saja, tidak disimpan)</Label>
                   <Input id="mcp-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
                 <Button type="submit" disabled={busy || !d.node}>

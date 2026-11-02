@@ -78,7 +78,25 @@ Template skill aslinya membaca cerita dari `story.ts`. Ubah bagian itu supaya me
 **Catatan laptop ini:** sisakan minimal 5 GB kosong di drive folder sementara, karena Remotion menyalin
 `public/` (sekitar 1,3 GB) setiap kali render. Mulailah dengan resolusi **540x960 (uji cepat)**.
 
-## 4. Menyambungkan Claude (otomatis)
+## 4. Suara (vibi.pro) dan SFX + musik (Python)
+
+Alurnya mengikuti skill cartoon-3d-short:
+
+1. **Suara:** tab **Render > Buat suara**. Script dikirim ke vibi.pro (`POST /v1/text-to-speech/{voice_id}`),
+   hasil MP3 dikonversi ke `<proyek Remotion>/voice/voice.wav` (48 kHz, sesuai syarat `mix.py`).
+2. **Timing kata (opsional):** speech-to-text vibi.pro menghasilkan `voice/words.json` (`[{ "s", "e", "text" }]`),
+   yang dipakai `mix.py` untuk menurunkan musik saat narasi berbicara.
+3. **SFX + musik:** setelah video dirender, ANIMA menjalankan `python mix.py` di folder `audio/`
+   (butuh numpy + scipy; tombol pasangnya ada di Pengaturan).
+4. **Gabung:** `audio/mix.wav` digabung ke MP4 dengan ffmpeg bawaan Remotion.
+
+Atur API key, pilihan suara, provider (ElevenLabs / MiniMax / CapCut), bahasa, dan kecepatan di
+**Pengaturan > Suara narasi**. Setiap pembuatan suara memakai kredit vibi.pro.
+
+Catatan: waktu SFX di template skill ditulis manual di `timeline.py` dan `sfx.py` untuk cerita contoh
+(67,5 detik). Untuk cerita baru, Claude (lewat skill) perlu menyesuaikan file itu sebelum render.
+
+## 5. Menyambungkan Claude (otomatis)
 
 Buka **Pengaturan > Integrasi Claude**. ANIMA mendeteksi sendiri **Claude Code** dan **Claude Desktop**
 yang terpasang. Ketik password akun ANIMA sekali, lalu klik **Sambungkan**.
@@ -99,6 +117,43 @@ Setelah itu, di halaman project ANIMA klik **Salin prompt**, lalu tempel ke Clau
 | `anima_patch_shot` | Revisi satu shot saja (hemat token) |
 | `anima_job_status` | Status render terakhir |
 
+## 6. Membagikan ke teman (tinggal install)
+
+Buat installer dengan `npm run dist`, lalu kirim file `release/ANIMA Studio Setup x.y.z.exe`.
+
+Yang dilakukan teman:
+
+1. Install **Node.js LTS** dari nodejs.org (sekali saja, dibutuhkan untuk render dan MCP).
+2. Jalankan installer ANIMA Studio, lalu klik **Daftar** dengan email sendiri. Supabase sudah terisi dari
+   `app-defaults.json`; data tiap akun terpisah berkat RLS.
+3. **Pengaturan > Proyek Remotion > Siapkan otomatis** (sekitar 600 MB, 3-10 menit).
+4. **Pengaturan > Uji render > Uji otomatis & pilih paralel**, lalu klik **Terapkan saran ini**.
+   ANIMA membandingkan 1 proses vs beberapa proses paralel di perangkat itu dan memilih yang tercepat.
+5. Opsional: isi API key vibi.pro sendiri (suara), klik **Pasang numpy & scipy** (SFX), lalu **Sambungkan** Claude.
+
+`app-defaults.json` hanya boleh berisi URL dan **publishable** key Supabase. Jangan pernah menaruh secret key
+atau API key vibi.pro di sana, karena file itu ikut ke installer.
+
+## 7. Mengirim update ke teman (otomatis lewat aplikasi)
+
+Update disimpan di **GitHub Releases** repo `kamssser/ANIMA` (publik). Teman tidak perlu membuka GitHub:
+aplikasi mengecek update setiap dibuka dan setiap 4 jam, mengunduhnya di latar belakang, lalu menampilkan
+tombol **Restart & update** di bagian atas.
+
+Persiapan sekali saja (di laptop pembuat):
+
+```powershell
+setx GH_TOKEN "github_pat_..."   # token fine-grained: repo ANIMA, Contents = Read and write
+```
+
+Setiap kali mau merilis:
+
+1. Naikkan `version` di `package.json` (mis. `0.3.0` -> `0.3.1`). Versi harus lebih tinggi dari yang terpasang.
+2. Buka terminal baru (supaya `GH_TOKEN` terbaca), lalu jalankan `npm run release`.
+3. Installer + `latest.yml` terunggah ke Releases; aplikasi teman menerima notifikasi saat dibuka berikutnya.
+
+`npm run dist` membuat installer lokal saja tanpa mengunggah.
+
 ## Struktur folder
 
 ```
@@ -107,5 +162,7 @@ src/            tampilan React + shadcn/ui
   pages/        Overview, Project, Detail project, Antrean Render, Pengaturan
   lib/          Supabase, API, penghubung render
 supabase/       schema.sql untuk dijalankan di Supabase
-mcp/            server MCP untuk Claude Desktop
+mcp/            server MCP untuk Claude Code / Claude Desktop
+remotion-template/  proyek Remotion skill (versi paket dikunci), disalin oleh "Siapkan otomatis"
+server/         skrip uji kecepatan render untuk server Linux
 ```

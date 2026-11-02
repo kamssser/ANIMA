@@ -1,37 +1,53 @@
 {
   "name": "anima-studio",
-  "productName": "ANIMA Studio",
-  "version": "0.1.0",
+  "productName": "HyperForge",
+  "version": "0.3.0",
   "private": true,
-  "description": "ANIMA Studio - aplikasi Windows untuk mengelola produksi video pendek 3D (Claude + Remotion)",
+  "description": "HyperForge - aplikasi Windows untuk mengelola produksi video pendek 3D (Claude + Remotion)",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n vite,app -c blue,green \"vite\" \"wait-on tcp:5173 && electron . --dev\"",
     "build": "tsc --noEmit && vite build",
     "start": "electron .",
-    "dist": "npm run build && electron-builder --win nsis",
+    "dist": "npm run build && electron-builder --win nsis --publish never",
+    "release": "npm run build && electron-builder --win nsis --publish always",
     "mcp": "node mcp/server.mjs"
   },
   "build": {
-    "appId": "com.anima.studio",
-    "productName": "ANIMA Studio",
+    "appId": "com.hyperforge.studio",
+    "productName": "HyperForge",
     "asar": false,
     "files": [
       "dist/**",
       "electron/**",
+      "build/icon.ico",
       "mcp/**",
+      "remotion-template/**",
+      "app-defaults.json",
       "package.json"
     ],
     "directories": {
       "output": "release"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "kamssser",
+        "repo": "ANIMA",
+        "releaseType": "release"
+      }
+    ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "shortcutName": "HyperForge"
     }
   },
   "dependencies": {
@@ -39,6 +55,7 @@
     "@supabase/supabase-js": "^2.118.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-updater": "^6.8.11",
     "lucide-react": "^1.66.0",
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",

@@ -2,10 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Clapperboard, Copy, FileText, Film, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/layout';
+import { PageBody, PageHeader } from '@/components/layout';
 import { ProjectBadge } from '@/components/status';
 import { ShotEditor } from '@/components/shot-editor';
 import { JobTable } from '@/components/job-table';
+import { VoicePanel } from '@/components/voice-panel';
 import { Button } from '@/components/ui/button';
 import { Input, NativeSelect, Textarea } from '@/components/ui/input';
 import {
@@ -70,7 +71,8 @@ export default function ProjectDetailPage() {
           </>
         }
       />
-      <Tabs defaultValue="brief" className="p-6">
+      <PageBody>
+      <Tabs defaultValue="brief">
         <TabsList>
           <TabsTrigger value="brief">
             <FileText /> Brief & Script
@@ -92,6 +94,7 @@ export default function ProjectDetailPage() {
           <RenderTab project={project} shots={shots} onProject={setProject} />
         </TabsContent>
       </Tabs>
+      </PageBody>
     </>
   );
 }
@@ -245,6 +248,7 @@ function RenderTab({ project, shots, onProject }: { project: Project; shots: Sho
 
   return (
     <div className="flex flex-col gap-4">
+      <VoicePanel project={project} shots={shots} />
       <Card>
         <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div className="text-sm">

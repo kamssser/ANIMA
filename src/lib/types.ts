@@ -51,7 +51,68 @@ export interface Settings {
   scale: number;
   concurrency: number;
   crf: number;
+  vibiApiKey: string;
+  vibiProvider: 'elevenlabs' | 'minimax' | 'capcut';
+  vibiModel: string;
+  vibiVoiceId: string;
+  vibiVoiceName: string;
+  vibiLanguage: string;
+  vibiSpeed: number;
+  wordTimestamps: boolean;
+  voiceDir: string;
+  audioDir: string;
+  pythonPath: string;
+  runMix: boolean;
+  muxAudio: boolean;
+  frameTimeoutMs: number;
+  renderQuality: 'full' | 'draft';
+  benchFrame: number;
 }
+
+export interface UpdateState {
+  state: 'idle' | 'dev' | 'checking' | 'latest' | 'downloading' | 'ready' | 'error';
+  version?: string;
+  percent?: number;
+  error?: string | null;
+  message?: string;
+  checkedAt?: string;
+  current?: string;
+}
+
+export interface BenchResult {
+  id: string;
+  kind: 'still' | 'speed';
+  date: string;
+  composition: string;
+  frame: number;
+  frames: number;
+  width: number;
+  height: number;
+  quality: 'full' | 'draft';
+  concurrency: number;
+  seconds: number;
+  secPerFrame: number;
+  estVideoHours: number | null;
+  file: string;
+  preview?: string | null;
+}
+
+export interface VibiVoice {
+  id: string;
+  name: string;
+  description?: string;
+  gender?: string;
+  accent?: string;
+  preview?: string;
+}
+
+export interface VoiceStatus {
+  mp3: string | null;
+  words: number | null;
+  updatedAt: string | null;
+}
+
+export type PythonCheck = { ok: boolean; python: string | null; numpy?: string; scipy?: string; error?: string };
 
 export interface SystemInfo {
   cpu: string;
@@ -75,7 +136,7 @@ export type RenderEvent =
   | { jobId: string; type: 'queued'; position: number }
   | { jobId: string; type: 'started'; outFile: string }
   | { jobId: string; type: 'progress'; progress: number; stage: string }
-  | { jobId: string; type: 'done'; outFile: string }
+  | { jobId: string; type: 'done'; outFile: string; warning?: string }
   | { jobId: string; type: 'failed'; error: string }
   | { jobId: string; type: 'cancelled' };
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { ExternalLink } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { BrandScreen } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Label } from '@/components/ui/misc';
@@ -29,7 +30,7 @@ export function SetupPage({ onSaved }: { onSaved: (s: Settings) => void }) {
         return;
       }
       if (error && /Invalid API key|JWT/i.test(error.message)) {
-        toast.error('Anon key salah.');
+        toast.error('Key salah. Pakai publishable key, bukan secret key.');
         return;
       }
       onSaved(await window.anima.saveSettings({ supabaseUrl: cleanUrl, supabaseAnonKey: key.trim() }));
@@ -42,17 +43,17 @@ export function SetupPage({ onSaved }: { onSaved: (s: Settings) => void }) {
   }
 
   return (
-    <div className="grid min-h-full place-items-center p-6">
-      <Card className="w-full max-w-lg">
+    <BrandScreen>
+      <Card className="brand-glow w-full max-w-lg">
         <CardHeader>
-          <CardTitle className="text-lg">Selamat datang di ANIMA Studio</CardTitle>
+          <CardTitle className="text-lg">Selamat datang di HyperForge</CardTitle>
           <CardDescription>Sambungkan ke Supabase sekali saja. Datanya tersimpan di laptop ini.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
             <li>Buat project gratis di supabase.com.</li>
             <li>Buka SQL Editor, tempel isi file supabase/schema.sql, klik Run.</li>
-            <li>Buka Project Settings, lalu API. Salin Project URL dan anon public key ke bawah.</li>
+            <li>Buka Project Settings, lalu API Keys. Salin Project URL dan publishable key ke bawah.</li>
           </ol>
           <Button variant="outline" size="sm" className="w-fit" onClick={() => window.anima.openExternal('https://supabase.com/dashboard')}>
             Buka Supabase <ExternalLink />
@@ -62,14 +63,14 @@ export function SetupPage({ onSaved }: { onSaved: (s: Settings) => void }) {
             <Input id="url" placeholder="https://abcdefgh.supabase.co" value={url} onChange={(e) => setUrl(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="key">Anon public key</Label>
-            <Input id="key" placeholder="eyJhbGciOi..." value={key} onChange={(e) => setKey(e.target.value)} />
+            <Label htmlFor="key">Publishable key (atau anon public key)</Label>
+            <Input id="key" placeholder="sb_publishable_... atau eyJhbGciOi..." value={key} onChange={(e) => setKey(e.target.value)} />
           </div>
           <Button onClick={save} disabled={busy || !url || !key}>
             {busy ? 'Mengecek...' : 'Simpan dan lanjut'}
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </BrandScreen>
   );
 }

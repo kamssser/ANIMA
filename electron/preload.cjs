@@ -14,6 +14,39 @@ contextBridge.exposeInMainWorld('anima', {
     ipcRenderer.on('render:event', listener);
     return () => ipcRenderer.removeListener('render:event', listener);
   },
+  vibiVoices: (search) => ipcRenderer.invoke('vibi:voices', search),
+  voiceStatus: (slug) => ipcRenderer.invoke('voice:status', slug),
+  generateVoice: (payload) => ipcRenderer.invoke('voice:generate', payload),
+  onVoiceEvent: (cb) => {
+    const listener = (_e, event) => cb(event);
+    ipcRenderer.on('voice:event', listener);
+    return () => ipcRenderer.removeListener('voice:event', listener);
+  },
+  updateState: () => ipcRenderer.invoke('update:state'),
+  checkUpdate: () => ipcRenderer.invoke('update:check'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
+  onUpdateEvent: (cb) => {
+    const listener = (_e, event) => cb(event);
+    ipcRenderer.on('update:event', listener);
+    return () => ipcRenderer.removeListener('update:event', listener);
+  },
+  setupRemotion: () => ipcRenderer.invoke('remotion:setup'),
+  onSetupEvent: (cb) => {
+    const listener = (_e, event) => cb(event);
+    ipcRenderer.on('setup:event', listener);
+    return () => ipcRenderer.removeListener('setup:event', listener);
+  },
+  benchAuto: () => ipcRenderer.invoke('bench:auto'),
+  benchList: () => ipcRenderer.invoke('bench:list'),
+  benchRun: (kind) => ipcRenderer.invoke('bench:run', kind),
+  benchCancel: () => ipcRenderer.invoke('bench:cancel'),
+  onBenchEvent: (cb) => {
+    const listener = (_e, event) => cb(event);
+    ipcRenderer.on('bench:event', listener);
+    return () => ipcRenderer.removeListener('bench:event', listener);
+  },
+  pythonCheck: () => ipcRenderer.invoke('python:check'),
+  pythonInstall: () => ipcRenderer.invoke('python:install'),
   detectClaude: () => ipcRenderer.invoke('claude:detect'),
   installClaude: (payload) => ipcRenderer.invoke('claude:install', payload),
   removeClaude: () => ipcRenderer.invoke('claude:remove'),

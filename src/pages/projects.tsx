@@ -1,13 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Clock, Film, FolderKanban, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/layout';
+import { PageBody, PageHeader } from '@/components/layout';
 import { ProjectBadge } from '@/components/status';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input, Textarea } from '@/components/ui/input';
-import { Card, CardContent, Label, Skeleton, TBody, TD, TH, THead, TR, Table } from '@/components/ui/misc';
+import { Label, Skeleton } from '@/components/ui/misc';
 import { createProject, listProjects } from '@/lib/api';
 import type { Project } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
@@ -30,47 +30,52 @@ export default function ProjectsPage() {
   return (
     <>
       <PageHeader title="Project" description="Satu project = satu video pendek." actions={<NewProjectDialog />} />
-      <div className="flex flex-col gap-4 p-6">
-        <Input placeholder="Cari judul atau topik..." value={filter} onChange={(e) => setFilter(e.target.value)} className="max-w-xs" />
-        <Card>
-          <CardContent className="p-0">
-            {!shown ? (
-              <Skeleton className="m-5 h-24" />
-            ) : shown.length === 0 ? (
-              <p className="p-6 text-sm text-muted-foreground">Belum ada project. Klik "Project baru" untuk mulai.</p>
-            ) : (
-              <Table>
-                <THead>
-                  <TR>
-                    <TH>Judul</TH>
-                    <TH>Topik</TH>
-                    <TH>Durasi target</TH>
-                    <TH>Status</TH>
-                    <TH>Diubah</TH>
-                  </TR>
-                </THead>
-                <TBody>
-                  {shown.map((p) => (
-                    <TR key={p.id}>
-                      <TD className="font-medium">
-                        <Link to={`/projects/${p.id}`} className="hover:underline">
-                          {p.title}
-                        </Link>
-                      </TD>
-                      <TD className="max-w-xs truncate text-muted-foreground">{p.topic || '-'}</TD>
-                      <TD className="tabular-nums">{p.target_seconds} dtk</TD>
-                      <TD>
-                        <ProjectBadge status={p.status} />
-                      </TD>
-                      <TD className="text-muted-foreground">{formatDate(p.updated_at)}</TD>
-                    </TR>
-                  ))}
-                </TBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <PageBody>
+        <div className="relative max-w-sm">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Cari judul atau topik..." value={filter} onChange={(e) => setFilter(e.target.value)} className="pl-9" />
+        </div>
+        {!shown ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-40 rounded-xl" />
+            ))}
+          </div>
+        ) : shown.length === 0 ? (
+          <div className="grid place-items-center gap-3 rounded-xl border border-dashed py-16 text-center">
+            <FolderKanban className="size-10 text-muted-foreground/50" />
+            <div>
+              <div className="font-medium">{filter ? 'Tidak ada yang cocok' : 'Belum ada project'}</div>
+              <div className="text-sm text-muted-foreground">{filter ? 'Coba kata kunci lain.' : 'Klik "Project baru" untuk mulai video pertamamu.'}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {shown.map((p) => (
+              <Link
+                key={p.id}
+                to={`/projects/${p.id}`}
+                className="group flex flex-col rounded-xl border bg-card p-5 transition-colors hover:border-primary/60 hover:bg-accent/30"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+                    <Film className="size-5" />
+                  </div>
+                  <ProjectBadge status={p.status} />
+                </div>
+                <div className="mt-4 line-clamp-1 font-semibold group-hover:text-primary">{p.title}</div>
+                <div className="mt-1 line-clamp-2 min-h-10 text-sm text-muted-foreground">{p.topic || 'Tanpa topik'}</div>
+                <div className="mt-4 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="size-3.5" /> {p.target_seconds} detik
+                  </span>
+                  <span>{formatDate(p.updated_at)}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </PageBody>
     </>
   );
 }
