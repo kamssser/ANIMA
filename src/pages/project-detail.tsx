@@ -150,6 +150,7 @@ function GeneratePanel({ project, onDone, beforeRun }: { project: Project; onDon
       await window.anima.generateWithClaude({
         projectId: fresh.id,
         prompt: buildPrompt(fresh),
+        style: is2D(fresh.visual_style) ? visualStyle(fresh.visual_style).id : undefined,
         session: { access_token: data.session.access_token, expires_at: data.session.expires_at ?? 0 },
       });
       await onDone();

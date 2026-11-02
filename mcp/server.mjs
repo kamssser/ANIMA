@@ -7,6 +7,7 @@
 // ANIMA_SESSION_FILE: file berisi URL Supabase + token sesi khusus MCP (bukan password).
 
 import fs from 'node:fs';
+import path from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createClient } from '@supabase/supabase-js';
@@ -74,7 +75,7 @@ const shotSchema = z.object({
 const CONTENT = JSON.parse(fs.readFileSync(new URL('../shared/content-types.json', import.meta.url), 'utf8'));
 const typeOf = (id) => CONTENT.types.find((t) => t.id === id) ?? CONTENT.types.find((t) => t.id === 'karangan');
 const VISUAL = JSON.parse(fs.readFileSync(new URL('../shared/visual-styles.json', import.meta.url), 'utf8'));
-const styleOf = (id) => VISUAL.styles.find((x) => x.id === id) ?? VISUAL.styles[0];
+const styleOf = (id) => VISUAL.styles.find((x) => x.id === (VISUAL.aliases?.[id] ?? id)) ?? VISUAL.styles[0];
 
 // Aturan menata video 2D (latar SVG + pemeran per shot). Dikirim di guide untuk project ber-style 2D.
 const STAGE_RULES = [
@@ -91,7 +92,7 @@ const BG_RULES = [
   'Perspektif dan kedalaman: lapisan jauh-tengah-dekat. Ukuran usahakan di bawah 60 KB (pakai pola/pengulangan, bukan ribuan titik).',
 ];
 
-const server = new McpServer({ name: 'anima', version: '0.5.1' });
+const server = new McpServer({ name: 'anima', version: '0.6.0' });
 
 server.tool('anima_list_projects', 'Daftar project ANIMA (id, judul, status). Maks 20 terbaru.', {}, async () => {
   try {
@@ -139,7 +140,7 @@ server.tool(
           format: p.format || '9:16',
           characters: chars || [],
           stage: STAGE_RULES,
-          background: BG_RULES,
+          background: [...BG_RULES, 'Panggil anima_style_references dulu dan tiru gaya potongan referensinya (~90%) saat menggambar latar.'],
           referencePhotos: t.needsSources
             ? 'Untuk tempat/bangunan/benda nyata: cari foto dengan anima_find_photos, lihat dengan anima_view_photo, lalu gambar latar yang bentuk dan posisinya MIRIP foto itu. Simpan foto yang dipakai lewat field reference di anima_save_background.'
             : undefined,
@@ -243,6 +244,31 @@ server.tool(
       if (error) return fail(error.message);
       if (!data?.length) return fail(`shot ${idx} tidak ada`);
       return ok(`shot ${idx} diperbarui`);
+    } catch (e) {
+      return fail(e.message);
+    }
+  },
+);
+
+server.tool(
+  'anima_style_references',
+  'Style 2D: lihat potongan frame referensi gaya (lembar storyboard dari video referensi style ini). Panggil SEBELUM menggambar latar, lalu tiru gayanya ~90% tanpa menyalin tokoh/adegan.',
+  { style: z.string().describe('id style project (guide.style.id)') },
+  async ({ style }) => {
+    try {
+      const base = process.env.ANIMA_REF_DIR;
+      const st = styleOf(style);
+      const dir = base ? path.join(base, st.id) : null;
+      const files = dir && fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.jpg')).sort() : [];
+      if (!files.length) return ok('Belum ada potongan referensi (offline). Gambar mengikuti guide.style.draw saja.');
+      // ambil merata maks 4 lembar supaya hemat token
+      const pick = files.filter((_f, i) => i % Math.ceil(files.length / 4) === 0).slice(0, 4);
+      return {
+        content: [
+          { type: 'text', text: `${pick.length} lembar referensi gaya ${st.label}. ${(VISUAL.referenceRules || []).join(' ')}` },
+          ...pick.map((f) => ({ type: 'image', data: fs.readFileSync(path.join(dir, f)).toString('base64'), mimeType: 'image/jpeg' })),
+        ],
+      };
     } catch (e) {
       return fail(e.message);
     }

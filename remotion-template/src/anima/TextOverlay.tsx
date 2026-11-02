@@ -3,8 +3,8 @@
 import React from 'react';
 import { AbsoluteFill, OffthreadVideo, staticFile } from 'remotion';
 import { Subtitles } from './Subtitles';
-import { STYLES } from './styles';
-import type { StyleId, Word } from './types';
+import { styleLook } from './styles';
+import type { Word } from './types';
 
 export type TextOverlayProps = {
   /** path relatif terhadap public/, mis. "anima-tmp/video.mp4" */
@@ -14,7 +14,7 @@ export type TextOverlayProps = {
   height: number;
   words?: Word[];
   shots: { durationInFrames: number; text: string }[];
-  look?: StyleId;
+  look?: string;
 };
 
 export const TextOverlay: React.FC<TextOverlayProps> = ({ video, words, shots, look }) => {
@@ -27,7 +27,7 @@ export const TextOverlay: React.FC<TextOverlayProps> = ({ video, words, shots, l
   return (
     <AbsoluteFill style={{ background: '#000' }}>
       {video && <OffthreadVideo src={staticFile(video)} muted />}
-      <Subtitles words={words} shots={shots} starts={starts} look={STYLES[look ?? 'manhwa'].subtitle} />
+      <Subtitles words={words} shots={shots} starts={starts} look={styleLook(look ?? 'manhwa').subtitle} />
     </AbsoluteFill>
   );
 };

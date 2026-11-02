@@ -46,6 +46,8 @@ declare global {
       generateWithClaude(payload: {
         projectId: string;
         prompt: string;
+        /** style 2D: aplikasi menyiapkan potongan referensi gaya dulu */
+        style?: string;
         session: { access_token: string; expires_at: number };
       }): Promise<{ ok: boolean; summary: string }>;
       cancelGenerate(): Promise<boolean>;

@@ -80,7 +80,7 @@ ${shelves(0)}${shelves(1)}
 </svg>`;
 
 export const DEMO: Comic2DProps = {
-  style: 'komedi',
+  style: 'sinema',
   format: '9:16',
   characters: { budi: { name: 'Budi', svg: DEMO_BUDI }, sari: { name: 'Sari', svg: DEMO_SARI } },
   backgrounds: { toko: { svg: DEMO_SHOP } },

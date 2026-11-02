@@ -1030,7 +1030,7 @@ ipcMain.handle('claude:install', async (_e, { session, targets }) => {
 /** @type {import('node:child_process').ChildProcess | null} */
 let genChild = null;
 
-ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session }) => {
+ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session, style }) => {
   if (genChild) throw new Error('Claude sedang menulis project lain. Tunggu selesai dulu.');
   const claude = await claudeCodePath();
   if (!claude) throw new Error('Claude Code tidak ditemukan. Install Claude Code lalu login, atau pakai tombol Salin prompt.');
@@ -1048,8 +1048,16 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session }) => 
   );
   const cleanup = () => fs.rm(genSession, { force: true }, () => {});
 
+  // Style 2D: siapkan potongan referensi gaya supaya Claude bisa melihatnya saat menggambar latar.
+  if (style) {
+    try {
+      await require('./references.cjs').ensureStyleReferences(refDir(), style, (l) => win && !win.isDestroyed() && win.webContents.send('claude:event', { projectId, line: l }));
+    } catch {
+      /* offline: tetap jalan tanpa referensi */
+    }
+  }
   const mcpConfig = JSON.stringify({
-    mcpServers: { anima: { type: 'stdio', command: node, args: [mcpServerPath()], env: { ANIMA_SESSION_FILE: genSession } } },
+    mcpServers: { anima: { type: 'stdio', command: node, args: [mcpServerPath()], env: { ANIMA_SESSION_FILE: genSession, ANIMA_REF_DIR: refDir() } } },
   });
   const tools = [
     'mcp__anima__anima_get_project',
@@ -1059,6 +1067,7 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session }) => 
     'mcp__anima__anima_save_background',
     'mcp__anima__anima_find_photos',
     'mcp__anima__anima_view_photo',
+    'mcp__anima__anima_style_references',
     'WebSearch',
     'WebFetch',
   ];
@@ -1099,6 +1108,7 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session }) => 
             else if (n.endsWith('find_photos')) say(`Mencari foto referensi: ${c.input?.query ?? ''}`);
             else if (n.endsWith('view_photo')) say('Melihat foto referensi...');
             else if (n.endsWith('save_background')) say(`Menggambar latar: ${c.input?.bgId ?? ''}`);
+            else if (n.endsWith('style_references')) say('Melihat potongan referensi gaya...');
             else if (n.endsWith('save_story')) {
               say('Menyimpan hook, script, dan shot...');
               saved = true;
@@ -1238,8 +1248,27 @@ function setupAutoUpdate() {
 
 // Versi dari package.json (app.getVersion() bisa berisi versi Electron kalau dijalankan lewat skrip lain).
 const APP_VERSION = require('../package.json').version;
+// Potongan referensi gaya (storyboard video referensi) disimpan di sini, tidak ikut installer.
+const refDir = () => path.join(app.getPath('userData'), 'references');
+
+/** Render SVG ke PNG lewat jendela tersembunyi (untuk diperiksa Claude terhadap referensi). */
+async function renderSvgPng(svg, width, height, outFile) {
+  fs.mkdirSync(path.dirname(outFile), { recursive: true });
+  const w = new BrowserWindow({ show: false, width, height, useContentSize: true, webPreferences: { offscreen: true, javascript: false } });
+  try {
+    const body = svg.replace(/<svg([^>]*)>/, (_m, a) => `<svg${a.replace(/\s(width|height|preserveAspectRatio)="[^"]*"/g, '')} width="${width}" height="${height}" preserveAspectRatio="xMidYMax meet">`);
+    await w.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`<html><body style="margin:0;background:#eef1f4;overflow:hidden">${body}</body></html>`)}`);
+    await new Promise((r) => setTimeout(r, 300));
+    const img = await w.webContents.capturePage();
+    fs.writeFileSync(outFile, img.toPNG());
+    return outFile;
+  } finally {
+    w.destroy();
+  }
+}
+
 // Karakter 2D: digambar Claude sebagai SVG ber-rig (electron/characters.cjs).
-require('./characters.cjs').register({ ipcMain, getWin: () => win, claudeCodePath, cwd: app.getPath('userData') });
+require('./characters.cjs').register({ ipcMain, getWin: () => win, claudeCodePath, cwd: app.getPath('userData'), refDir: refDir(), renderSvgPng });
 
 ipcMain.handle('update:state', () => ({ ...updateState, current: APP_VERSION }));
 if (!app.isPackaged) {

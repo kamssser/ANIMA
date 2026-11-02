@@ -6,6 +6,19 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.6.0 - 2026-11-03
+
+**Baru**
+- **3 style baru** menggantikan Drama Indonesia, Komedi, dan Indie animasi:
+  - **Indie sinematik**: garis tipis rapi, warna hangat, cahaya dramatis seperti film pendek animasi.
+  - **Sketsa muram**: garis sketsa yang sedikit bergetar, warna kusam kehijauan dengan satu aksen merah.
+  - **Pastel lembut**: hampir tanpa garis, warna pastel seperti cat air, suasana tenang dan imut.
+- Setiap style 2D sekarang memakai **potongan frame dari video referensi**. Claude melihat potongan itu sebelum menggambar karakter dan latar. Setelah gambar karakter jadi, Claude **memeriksa hasilnya terhadap referensi** dan memperbaikinya sendiri. Potongan referensi diunduh ke laptop saat pertama dipakai.
+
+**Perubahan**
+- Project dan karakter yang memakai style lama otomatis pindah ke style pengganti: Drama dan Indie menjadi Indie sinematik, Komedi menjadi Pastel lembut.
+- Membuat karakter sekarang sedikit lebih lama (sekitar 2 sampai 3 menit) karena ada pemeriksaan terhadap referensi.
+
 ## 0.5.1 - 2026-11-03
 
 **Perbaikan**

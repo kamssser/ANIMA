@@ -31,7 +31,7 @@ const emptyDraft = (isMain: boolean): Draft => ({
   is_main: isMain,
   personality: '',
   appearance: '',
-  visual_style: 'komedi',
+  visual_style: 'sinema',
   svg: '',
 });
 
@@ -127,7 +127,7 @@ function Editor({ initial, others, onClose, onSaved }: { initial: Draft; others:
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="cs">Gaya gambar</Label>
-              <NativeSelect id="cs" value={d.visual_style} onChange={(e) => set({ visual_style: e.target.value })}>
+              <NativeSelect id="cs" value={visualStyle(d.visual_style).id} onChange={(e) => set({ visual_style: e.target.value })}>
                 {STYLES_2D.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.label}

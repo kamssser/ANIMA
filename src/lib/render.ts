@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
 import { buildRenderProps, createJob, listCharacters, listShots, updateJob, updateProject } from './api';
-import { is2D } from './styles';
+import { is2D, styleId } from './styles';
 import { sb } from './supabase';
 import type { Character, Comic2DRequest, Project, ProjectStatus, RenderEvent, Shot, Stage2D } from './types';
 import { slugify } from './utils';
@@ -91,7 +91,7 @@ export function buildComic2D(project: Project, shots: Shot[], characters: Charac
   for (const c of characters) if (used.has(c.key) && c.svg) chars[c.key] = { name: c.nickname || c.name, svg: c.svg };
   const bgs: Comic2DRequest['backgrounds'] = {};
   for (const [k, b] of Object.entries(project.assets?.backgrounds ?? {})) bgs[k] = { svg: b.svg };
-  return { style: project.visual_style || 'komedi', format: project.format === '16:9' ? '16:9' : '9:16', characters: chars, backgrounds: bgs, shots: out };
+  return { style: styleId(project.visual_style), format: project.format === '16:9' ? '16:9' : '9:16', characters: chars, backgrounds: bgs, shots: out };
 }
 
 export async function queueRender(project: Project) {

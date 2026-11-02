@@ -3,7 +3,7 @@ import React from 'react';
 import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig } from 'remotion';
 import { fitSvg, RigSvg } from './rig';
 import { Subtitles } from './Subtitles';
-import { STYLES } from './styles';
+import { styleLook } from './styles';
 import type { CastMember, Comic2DProps, Framing, Shot2D } from './types';
 import { FPS } from './types';
 
@@ -61,7 +61,7 @@ const Character: React.FC<{ m: CastMember; svg: string; talking: boolean; frame:
 const ShotView: React.FC<{ p: Comic2DProps; shot: Shot2D; startSec: number }> = ({ p, shot, startSec }) => {
   const raw = useCurrentFrame();
   const { width: W, height: H } = useVideoConfig();
-  const st = STYLES[p.style] ?? STYLES.manhwa;
+  const st = styleLook(p.style);
   const f = st.onTwos ? Math.floor(raw / 2) * 2 : raw;
   const t = startSec + raw / FPS;
   const u = Math.min(1, raw / Math.max(1, shot.durationInFrames - 1));
@@ -125,7 +125,7 @@ export const Comic2D: React.FC<Comic2DProps> = (p) => {
           <ShotView p={p} shot={s} startSec={starts[i] / FPS} />
         </Sequence>
       ))}
-      <Subtitles words={p.words} shots={p.shots} starts={starts} look={(STYLES[p.style] ?? STYLES.manhwa).subtitle} />
+      <Subtitles words={p.words} shots={p.shots} starts={starts} look={styleLook(p.style).subtitle} />
       {p.watermark && (
         <div style={{ position: 'absolute', top: 36, right: 40, font: '700 30px Arial, sans-serif', color: 'rgba(255,255,255,0.85)', textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}>{p.watermark}</div>
       )}

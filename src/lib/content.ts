@@ -40,7 +40,7 @@ export function buildPrompt(project: Project) {
   if (two) {
     steps.push(`Style 2D "${st.label}", format ${project.format || '9:16'}: pakai karakter dari guide.characters (karakter utama wajib tampil). Isi world tiap shot: bg, camera, framing, cast, speaker.`);
     if (t.needsSources) steps.push('Untuk tempat/bangunan nyata: anima_find_photos lalu anima_view_photo, dan gambar latar yang bentuk + posisinya mirip foto (isi reference).');
-    steps.push('Gambar setiap latar sebagai SVG dengan anima_save_background (sesuai gaya di guide.style.draw dan aturan guide.background) SEBELUM menyimpan story.');
+    steps.push('Lihat potongan referensi gaya dengan anima_style_references, lalu gambar setiap latar sebagai SVG dengan anima_save_background (tiru gaya referensi ~90%, ikuti guide.style.draw dan guide.background) SEBELUM menyimpan story.');
   }
   steps.push(`Simpan dengan anima_save_story (hook, script, ${t.needsSources ? 'sources, ' : ''}shots). Kalau ditolak, perbaiki sesuai pesannya lalu simpan ulang.`);
   const head = two

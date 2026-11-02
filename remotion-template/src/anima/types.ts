@@ -1,7 +1,7 @@
 // Format data video 2D HyperForge. Dikirim aplikasi sebagai inputProps (file --props), tanpa kode per video.
 // Folder src/anima/ dikelola aplikasi: disalin ulang setiap render, jangan diedit manual.
 
-export type StyleId = 'manhwa' | 'drama' | 'komedi' | 'indie';
+export type StyleId = 'manhwa' | 'sinema' | 'sketsa' | 'pastel';
 export type Format = '9:16' | '16:9';
 export type Framing = 'wide' | 'medium' | 'close';
 export type Camera = 'static' | 'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right' | 'shake' | 'push-speaker';
@@ -50,7 +50,8 @@ export interface Word {
 }
 
 export type Comic2DProps = {
-  style: StyleId;
+  /** StyleId, atau id lama 0.5.0 (drama/komedi/indie) yang dipetakan styleLook */
+  style: string;
   format: Format;
   characters: Record<string, CharacterAsset>;
   backgrounds: Record<string, BackgroundAsset>;

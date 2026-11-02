@@ -18,44 +18,60 @@
         "Shading lembut: 1 lapis bayangan semi transparan (opacity 0.15-0.25) di bawah dagu, leher, lipatan baju; blush tipis di pipi.",
         "Warna natural sedikit pastel, pakaian kasual Indonesia modern (kaos, kemeja, jaket, hijab bila sesuai).",
         "Latar: pemandangan atau ruangan dengan gradasi langit/cahaya hangat, banyak lapisan (jauh-tengah-dekat), detail sederhana tapi kaya warna; akan diblur di video."
+      ],
+      "references": [
+        "57_R5B3S7RU",
+        "IOqV0FH-zjo",
+        "RYzLyUBf8tw"
       ]
     },
     {
-      "id": "drama",
-      "label": "Drama Indonesia",
+      "id": "sinema",
+      "label": "Indie sinematik",
       "kind": "2d",
-      "description": "Kartun drama keluarga/UMKM semi-realistis, latar Indonesia yang detail (warung, dapur, gang), figuran siluet abu-abu.",
+      "description": "Animasi indie gaya film pendek: garis tipis rapi, warna cel hangat, cahaya dramatis (api, bulan, senja), karakter ekspresif.",
+      "references": [
+        "nCKwUB8EVbc",
+        "oOVcz73Daws"
+      ],
       "draw": [
-        "Semi-realistis: proporsi dewasa normal, wajah dengan tulang pipi, alis tebal, mata dengan iris berwarna dan highlight, garis kerut halus untuk orang tua.",
-        "Garis sedang (stroke 4-5) warna gelap hangat #2a1e1a, shading 2 tingkat (bayangan + highlight kecil) pada kulit, rambut, dan lipatan baju.",
-        "Pakaian khas Indonesia sehari-hari: daster, kemeja batik, celemek, hijab, kaos oblong, sandal; motif sederhana boleh.",
-        "Latar: tempat khas Indonesia (warung, dapur, gang, pasar, ruang tamu) dengan banyak benda (rak, toples, poster, kipas angin), perspektif satu titik, warna hangat.",
-        "Figuran di latar boleh berupa siluet abu-abu polos tanpa detail wajah."
+        "Karakter bergaya kartun indie: kepala sedikit besar, rambut bervolume dengan bentuk tegas (kuncir, poni, ikal), alis tebal ekspresif, mata sedang dengan pupil gelap, boleh kacamata bulat; pakaian kasual berlapis (jaket, hoodie, sepatu bot).",
+        "Garis tipis rapi (stroke 3-4) warna gelap hangat #2a1f24 di semua tepi, ujung garis bulat.",
+        "Warna cel: tiap bagian 1 warna dasar + 1 bayangan datar (path terpisah, lebih gelap dan sedikit keunguan) di sisi jauh dari cahaya; palet hangat jenuh: merah bata, oranye, kuning keemasan, toska, hijau zaitun, krem.",
+        "Pipi dan hidung diberi rona merah muda tipis; kulit beragam (sawo matang, kuning langsat).",
+        "Latar: ruangan atau kota dengan garis tipis yang sama, bayangan datar besar, satu sumber cahaya dramatis (jendela senja, lampu, api, bulan) dengan gradasi lembut; langit malam biru tua atau senja oranye-ungu."
       ]
     },
     {
-      "id": "komedi",
-      "label": "Komedi garis tebal",
+      "id": "sketsa",
+      "label": "Sketsa muram",
       "kind": "2d",
-      "description": "Kartun komedi lucu: garis tebal, warna datar cerah, hidung besar, ekspresi berlebihan. Paling cepat dibuat.",
+      "description": "Animasi indie bernuansa muram dan aneh: garis sketsa tipis yang tidak rata, warna kusam kehijauan dengan satu aksen merah.",
+      "references": [
+        "uLyOEWFMfB0"
+      ],
       "draw": [
-        "Kepala besar (sekitar 1/3 tinggi badan), hidung besar dan menonjol, mata bulat putih dengan pupil kecil, badan sederhana, tangan bulat sederhana.",
-        "Garis tebal (stroke 8-10) warna #1b1720, sambungan dan ujung garis bulat (round).",
-        "Warna datar tanpa gradasi, cerah dan kontras (ungu, kuning, toska, oranye), tanpa shading atau paling banyak 1 bayangan datar.",
-        "Ekspresi dibuat berlebihan: mata melotot, alis tinggi, mulut lebar saat bicara.",
-        "Latar: bentuk sederhana dengan garis tebal yang sama, warna datar terang, langit polos, benda besar dan sedikit."
+        "Karakter kurus dan agak aneh: wajah pucat abu kehijauan, mata berupa bentuk hitam kosong atau garis sipit, mulut kecil datar, topi atau rambut yang menutupi dahi; tangan kadang memakai sarung tangan merah.",
+        "Garis sketsa tipis (stroke 2-3) warna #1c1c1c, sengaja sedikit tidak rata: pakai path dengan beberapa titik kontrol bergelombang kecil, boleh ada garis ganda di beberapa tepi.",
+        "Warna datar tanpa gradasi, palet kusam terbatas: hijau sage pucat, abu kehijauan, krem kusam, coklat tua; SATU warna aksen merah tua (#b3261e) untuk benda penting (topi, sarung tangan, noda).",
+        "Hampir tanpa bayangan; tekstur boleh berupa beberapa goresan tipis atau bintik di permukaan.",
+        "Latar: interior sempit sederhana (dapur, toko, lorong) dengan perspektif datar, dinding polos kusam, lantai dengan goresan; sedikit benda, suasana sepi dan janggal."
       ]
     },
     {
-      "id": "indie",
-      "label": "Indie animasi",
+      "id": "pastel",
+      "label": "Pastel lembut",
       "kind": "2d",
-      "description": "Gaya film pendek animasi indie: garis tangan, warna cel kalem, ekspresif. Garis sedikit bergetar seperti digambar tangan.",
+      "description": "Animasi 2D lembut bergaya cat air: hampir tanpa garis, warna pastel (mint, sage, pasir, kuning), suasana tenang dan imut.",
+      "references": [
+        "EEa-bJorKZE"
+      ],
       "draw": [
-        "Karakter ekspresif dan agak bergaya (kepala sedikit besar, alis tebal, rambut berbentuk tegas, kulit dengan rona), pose santai.",
-        "Garis tangan sedang (stroke 4-6) warna #222630, ketebalan tidak harus rata.",
-        "Warna cel: 1 warna dasar + 1 warna bayangan datar yang lebih gelap dan sedikit kebiruan; palet kalem (biru abu, merah bata, hijau zaitun, krem).",
-        "Latar: ruangan atau kota dengan garis tipis, warna kalem kebiruan, pencahayaan dramatis (satu sumber cahaya), detail benda sehari-hari."
+        "Karakter imut dan bulat: kepala besar bulat, mata kecil gelap atau melengkung saat senyum, pipi merah muda, rambut hitam sederhana (kuncir dua, poni), pakaian polos warna cerah seperti jas hujan kuning.",
+        "Hampir TANPA garis luar: bentuk dibuat dari isian warna saja; detail kecil (mata, mulut, lipatan) memakai garis tipis (stroke 2) warna gelap lembut, bukan hitam pekat.",
+        "Palet pastel: mint #bfe3cf, sage #8fb9a0, hijau laut #3f6f5c, pasir #d9b99b, krem #f3ead8, kuning #f6d64a, langit #cfe9e4; bayangan = versi sedikit lebih gelap dari warna dasar dengan opacity 0.35.",
+        "Tekstur lembut seperti cat air: beberapa bentuk transparan (opacity 0.15-0.3) bertumpuk, tanpa tepi tajam.",
+        "Latar: pemandangan luas dan tenang (laut, langit dengan awan bulat, gurun retak, tebing, hujan tipis), horizon rendah, banyak ruang kosong."
       ]
     }
   ],
@@ -67,5 +83,14 @@
     "Opsional ekspresi: di dalam head, grup alis/mata khusus dengan data-expr=\"normal\" | \"senang\" | \"sedih\" | \"marah\" | \"kaget\". Kalau dipakai, WAJIB ada data-expr=\"normal\".",
     "id (gradient, clipPath) boleh dipakai; aplikasi memberi awalan unik otomatis.",
     "Ukuran file usahakan di bawah 25 KB: pakai path, jangan ribuan titik."
+  ],
+  "aliases": {
+    "drama": "sinema",
+    "komedi": "pastel",
+    "indie": "sinema"
+  },
+  "referenceRules": [
+    "Lihat dulu potongan frame referensi (file gambar yang diberikan) dan tiru GAYA-nya sekitar 90%: ketebalan garis, palet warna, cara memberi bayangan, proporsi, dan suasana cahaya.",
+    "JANGAN menyalin tokoh, wajah, pakaian khas, logo, teks, atau adegan dari referensi. Karakter dan tempat harus orisinal."
   ]
 }
