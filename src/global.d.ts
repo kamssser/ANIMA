@@ -24,7 +24,11 @@ declare global {
       onRenderEvent(cb: (e: RenderEvent) => void): () => void;
       vibiVoices(search?: string): Promise<VibiVoice[]>;
       voiceStatus(slug: string): Promise<VoiceStatus>;
-      generateVoice(payload: { slug: string; text: string }): Promise<{ mp3: string; words: number | null; credits: number | null; notes: string[] }>;
+      generateVoice(payload: {
+        slug: string;
+        text: string;
+        lines?: { speaker: string; text: string }[];
+      }): Promise<{ mp3: string; words: number | null; credits: number | null; notes: string[] }>;
       onVoiceEvent(cb: (e: { slug: string; step: string; progress: number }) => void): () => void;
       updateState(): Promise<UpdateState>;
       checkUpdate(): Promise<UpdateState>;
@@ -39,6 +43,13 @@ declare global {
       onBenchEvent(cb: (e: { step: string; progress: number }) => void): () => void;
       pythonCheck(): Promise<PythonCheck>;
       pythonInstall(): Promise<{ ok: boolean; log: string }>;
+      generateWithClaude(payload: {
+        projectId: string;
+        prompt: string;
+        session: { access_token: string; expires_at: number };
+      }): Promise<{ ok: boolean; summary: string }>;
+      cancelGenerate(): Promise<boolean>;
+      onClaudeEvent(cb: (e: { projectId: string; line: string }) => void): () => void;
       detectClaude(): Promise<ClaudeDetect>;
       installClaude(payload: {
         session: { access_token: string; refresh_token: string; expires_at: number };

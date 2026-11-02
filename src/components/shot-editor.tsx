@@ -10,7 +10,7 @@ import { FPS, cn, formatSeconds, framesToSeconds } from '@/lib/utils';
 
 const CAMERA_PRESETS = ['wide establishing', 'medium', 'close-up', 'over-the-shoulder', 'dolly in', 'dolly out', 'pan left', 'pan right', 'crane up', 'orbit'];
 
-export function ShotEditor({ projectId, shots, onChange }: { projectId: string; shots: Shot[]; onChange: () => void }) {
+export function ShotEditor({ projectId, shots, onChange, twoVoices = false }: { projectId: string; shots: Shot[]; onChange: () => void; twoVoices?: boolean }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = shots.find((s) => s.id === selectedId) ?? shots[0] ?? null;
   const total = framesToSeconds(shots.reduce((n, s) => n + s.duration_frames, 0));
@@ -59,6 +59,16 @@ export function ShotEditor({ projectId, shots, onChange }: { projectId: string; 
               onClick={() => setSelectedId(s.id)}
             >
               <span className="w-6 text-xs text-muted-foreground tabular-nums">{s.idx}</span>
+              {twoVoices && (
+                <span
+                  className={cn(
+                    'grid size-5 shrink-0 place-items-center rounded text-[10px] font-bold',
+                    s.speaker === 'B' ? 'bg-cyan/20 text-cyan' : s.speaker === 'A' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground',
+                  )}
+                >
+                  {s.speaker || '?'}
+                </span>
+              )}
               <span className="flex-1 truncate">{s.camera || s.narration_text || 'Shot kosong'}</span>
               <span className="text-xs text-muted-foreground tabular-nums">{framesToSeconds(s.duration_frames).toFixed(1)}d</span>
               <div className="hidden gap-0.5 group-hover:flex">
@@ -74,7 +84,7 @@ export function ShotEditor({ projectId, shots, onChange }: { projectId: string; 
         </CardContent>
       </Card>
       {selected ? (
-        <ShotForm key={selected.id} shot={selected} onChange={onChange} />
+        <ShotForm key={selected.id} shot={selected} onChange={onChange} twoVoices={twoVoices} />
       ) : (
         <Card>
           <CardContent className="p-6 text-sm text-muted-foreground">Pilih atau tambah shot.</CardContent>
@@ -84,8 +94,9 @@ export function ShotEditor({ projectId, shots, onChange }: { projectId: string; 
   );
 }
 
-function ShotForm({ shot, onChange }: { shot: Shot; onChange: () => void }) {
+function ShotForm({ shot, onChange, twoVoices }: { shot: Shot; onChange: () => void; twoVoices: boolean }) {
   const [seconds, setSeconds] = useState(framesToSeconds(shot.duration_frames));
+  const [speaker, setSpeaker] = useState(shot.speaker ?? '');
   const [camera, setCamera] = useState(shot.camera);
   const [characters, setCharacters] = useState(shot.characters.join(', '));
   const [narration, setNarration] = useState(shot.narration_text);
@@ -116,6 +127,7 @@ function ShotForm({ shot, onChange }: { shot: Shot; onChange: () => void }) {
         narration_text: narration,
         world: JSON.parse(world || '{}'),
         notes,
+        ...(twoVoices ? { speaker } : {}),
       });
       toast.success(`Shot ${shot.idx} tersimpan`);
       onChange();
@@ -160,8 +172,23 @@ function ShotForm({ shot, onChange }: { shot: Shot; onChange: () => void }) {
           <Label htmlFor="chars">Karakter (pisahkan dengan koma)</Label>
           <Input id="chars" value={characters} onChange={(e) => setCharacters(e.target.value)} placeholder="Bridge, Busker" />
         </div>
+        {twoVoices && (
+          <div className="grid gap-2">
+            <Label>Pembicara</Label>
+            <div className="flex gap-2">
+              {[
+                { v: 'A', label: 'A (suara A)' },
+                { v: 'B', label: 'B (suara B)' },
+              ].map((o) => (
+                <Button key={o.v} type="button" size="sm" variant={speaker === o.v ? 'default' : 'outline'} onClick={() => setSpeaker(o.v)}>
+                  {o.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="grid gap-2">
-          <Label htmlFor="nar">Narasi</Label>
+          <Label htmlFor="nar">{twoVoices ? 'Kalimat yang diucapkan' : 'Narasi'}</Label>
           <Textarea id="nar" value={narration} onChange={(e) => setNarration(e.target.value)} />
         </div>
         <div className="grid gap-2">

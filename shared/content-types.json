@@ -1,0 +1,101 @@
+{
+  "hookRules": [
+    "Detik 0-3 WAJIB hook: pertanyaan mengejutkan, fakta tak terduga, konflik, atau gambaran hasil akhir. Jangan buka dengan salam, perkenalan, atau 'di video ini'.",
+    "Buka satu rasa penasaran (open loop) di awal dan baru jawab di akhir video, supaya penonton bertahan sampai habis.",
+    "Setiap 5-8 detik harus ada beat baru: kejutan kecil, pergantian kamera, atau informasi baru. Tidak ada bagian datar.",
+    "Kalimat pendek dan lisan (maksimal 12 kata), mudah diucapkan narator.",
+    "Akhiri dengan payoff yang memuaskan (jawaban/twist/hasil), boleh ditutup ajakan singkat 1 kalimat.",
+    "Tulis isi hook (kalimat pembuka) juga di field 'hook' saat menyimpan."
+  ],
+  "types": [
+    {
+      "id": "sejarah",
+      "label": "Sejarah",
+      "description": "Peristiwa nyata dari masa lalu, akurat dan bersumber.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dulu dengan pencarian web dan baca minimal 2 sumber kredibel (ensiklopedia, museum, jurnal, media besar) sebelum menulis.",
+        "Tahun, nama tokoh, tempat, dan angka harus sesuai sumber. Kalau sumber berbeda pendapat, sebut 'menurut ...' atau pilih yang paling kuat.",
+        "Jangan mengarang dialog tokoh sejarah seolah kutipan asli.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
+    },
+    {
+      "id": "fakta",
+      "label": "Fakta",
+      "description": "Fakta sains, alam, atau dunia yang mengejutkan, wajib bersumber.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dengan pencarian web dan verifikasi setiap angka/klaim dari minimal 2 sumber kredibel.",
+        "Hindari mitos populer; kalau membahas mitos, jelaskan bahwa itu mitos.",
+        "Gunakan perbandingan yang mudah dibayangkan untuk angka besar.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
+    },
+    {
+      "id": "dongeng",
+      "label": "Dongeng",
+      "description": "Cerita fiktif bergaya dongeng dengan pesan moral.",
+      "needsSources": false,
+      "twoVoices": false,
+      "rules": [
+        "Cerita fiktif dengan tokoh jelas, dunia ajaib atau kehidupan sehari-hari yang hangat.",
+        "Struktur: masalah -> usaha -> kegagalan kecil -> solusi -> pesan moral singkat di akhir.",
+        "Aman untuk semua umur."
+      ]
+    },
+    {
+      "id": "karangan",
+      "label": "Cerita karangan",
+      "description": "Cerita orisinal bebas: lucu, misteri, atau mengharukan.",
+      "needsSources": false,
+      "twoVoices": false,
+      "rules": [
+        "Cerita orisinal, jangan meniru cerita atau karakter yang sudah ada.",
+        "Wajib ada konflik dan twist atau payoff di akhir yang menjawab hook.",
+        "Tokoh utama punya keinginan yang jelas sejak awal."
+      ]
+    },
+    {
+      "id": "tutorial",
+      "label": "Tutorial",
+      "description": "Langkah demi langkah cara melakukan sesuatu.",
+      "needsSources": false,
+      "twoVoices": false,
+      "rules": [
+        "Hook menunjukkan hasil akhir atau masalah yang diselesaikan ('Dalam 60 detik kamu bisa ...').",
+        "Langkah bernomor, satu langkah per shot, urut dan bisa dipraktikkan.",
+        "Sebut kesalahan umum atau tips singkat di tengah supaya tetap menarik.",
+        "Akhiri dengan hasil jadi dan rangkuman 1 kalimat."
+      ]
+    },
+    {
+      "id": "dialog",
+      "label": "Dialog",
+      "description": "Percakapan dua tokoh, dua suara berbeda.",
+      "needsSources": false,
+      "twoVoices": true,
+      "rules": [
+        "Percakapan antara 2 tokoh: pembicara A dan pembicara B, dengan karakter dan gaya bicara yang berbeda jelas.",
+        "Setiap shot = satu giliran bicara; isi field 'speaker' dengan 'A' atau 'B' dan 'narration' dengan kalimatnya saja (tanpa nama tokoh).",
+        "Saling bersahutan cepat, ada ketegangan atau humor, dan punchline di akhir.",
+        "Sebut nama dan sifat tokoh A dan B di script bagian atas."
+      ]
+    },
+    {
+      "id": "film",
+      "label": "Film",
+      "description": "Gaya sinematik seperti trailer atau film pendek, dua suara.",
+      "needsSources": false,
+      "twoVoices": true,
+      "rules": [
+        "Gaya sinematik: narator (pembicara A) dan karakter utama (pembicara B) bergantian.",
+        "Isi field 'speaker' setiap shot dengan 'A' (narator) atau 'B' (karakter).",
+        "Gunakan kamera yang dramatis (dolly, crane, close-up) dan bangun ketegangan menuju klimaks.",
+        "Akhiri dengan klimaks atau cliffhanger yang menjawab hook."
+      ]
+    }
+  ]
+}

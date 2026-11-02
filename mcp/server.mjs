@@ -28,6 +28,8 @@ let db;
 async function auth() {
   let s = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf8'));
   if (!s.expires_at || s.expires_at * 1000 < Date.now() + 60_000) {
+    // Sesi pinjaman dari tombol Generate di aplikasi tidak punya refresh token.
+    if (!s.refresh_token) throw new Error('Sesi generate sudah habis. Ulangi Generate dari aplikasi HyperForge.');
     const c = createClient(s.url, s.anonKey, { auth: noAuth });
     const { data, error } = await c.auth.refreshSession({ refresh_token: s.refresh_token });
     if (error || !data.session) {
@@ -57,9 +59,14 @@ const shotSchema = z.object({
   characters: z.array(z.string()).default([]),
   narration: z.string().default('').describe('Kalimat narasi pada shot ini'),
   world: z.record(z.string(), z.unknown()).default({}).describe('Setting/props/cahaya dalam bentuk objek bebas'),
+  speaker: z.enum(['A', 'B', '']).default('').describe("Untuk jenis dialog/film: 'A' atau 'B' (siapa yang bicara di shot ini)"),
 });
 
-const server = new McpServer({ name: 'anima', version: '0.1.0' });
+// Aturan per jenis konten (sama dengan yang dipakai aplikasi).
+const CONTENT = JSON.parse(fs.readFileSync(new URL('../shared/content-types.json', import.meta.url), 'utf8'));
+const typeOf = (id) => CONTENT.types.find((t) => t.id === id) ?? CONTENT.types.find((t) => t.id === 'karangan');
+
+const server = new McpServer({ name: 'anima', version: '0.4.0' });
 
 server.tool('anima_list_projects', 'Daftar project ANIMA (id, judul, status). Maks 20 terbaru.', {}, async () => {
   try {
@@ -74,16 +81,25 @@ server.tool('anima_list_projects', 'Daftar project ANIMA (id, judul, status). Ma
 
 server.tool(
   'anima_get_project',
-  'Ambil brief satu project. includeShots=true untuk ikut shot list (lebih banyak token).',
+  'Ambil brief satu project beserta ATURAN WAJIB jenis kontennya (guide). Baca guide sebelum menulis. includeShots=true untuk ikut shot list.',
   { id: z.string().uuid(), includeShots: z.boolean().default(false) },
   async ({ id, includeShots }) => {
     try {
       await auth();
-      const { data: p, error } = await db.from('projects').select('id,title,topic,target_seconds,script,status').eq('id', id).single();
+      const { data: p, error } = await db.from('projects').select('id,title,topic,target_seconds,script,status,content_type,hook').eq('id', id).single();
       if (error) return fail(error.message);
-      if (!includeShots) return ok(p);
-      const { data: shots } = await db.from('shots').select('idx,duration_frames,camera,characters,narration_text,world').eq('project_id', id).order('idx');
-      return ok({ ...p, shots });
+      const t = typeOf(p.content_type);
+      const guide = {
+        type: t.label,
+        hook: CONTENT.hookRules,
+        rules: t.rules,
+        sourcesRequired: t.needsSources,
+        twoSpeakers: t.twoVoices,
+        targetWords: Math.round(p.target_seconds * 3.7),
+      };
+      if (!includeShots) return ok({ ...p, guide });
+      const { data: shots } = await db.from('shots').select('idx,duration_frames,camera,characters,narration_text,world,speaker').eq('project_id', id).order('idx');
+      return ok({ ...p, guide, shots });
     } catch (e) {
       return fail(e.message);
     }
@@ -92,12 +108,32 @@ server.tool(
 
 server.tool(
   'anima_save_story',
-  'Simpan script + SELURUH shot list sebuah project (shot lama diganti). Balasan hanya jumlah shot.',
-  { id: z.string().uuid(), script: z.string(), shots: z.array(shotSchema).min(1).max(60) },
-  async ({ id, script, shots }) => {
+  'Simpan hook + script + SELURUH shot list sebuah project (shot lama diganti). Untuk sejarah/fakta wajib isi sources; untuk dialog/film wajib isi speaker A/B tiap shot.',
+  {
+    id: z.string().uuid(),
+    hook: z.string().min(1).describe('Kalimat hook 0-3 detik pertama'),
+    script: z.string(),
+    sources: z
+      .array(z.object({ title: z.string(), url: z.string() }))
+      .default([])
+      .describe('Sumber yang dibaca (wajib untuk sejarah & fakta)'),
+    shots: z.array(shotSchema).min(1).max(60),
+  },
+  async ({ id, hook, script, sources, shots }) => {
     try {
       await auth();
-      const up = await db.from('projects').update({ script, status: 'ready' }).eq('id', id);
+      const { data: p, error: pe } = await db.from('projects').select('content_type').eq('id', id).single();
+      if (pe) return fail(pe.message);
+      const t = typeOf(p.content_type);
+      if (t.needsSources && sources.filter((s) => /^https?:\/\//.test(s.url)).length < 2) {
+        return fail(`Jenis "${t.label}" wajib minimal 2 sumber (judul + URL) yang benar-benar dibaca. Riset dulu lalu simpan ulang.`);
+      }
+      if (t.twoVoices) {
+        const bad = shots.findIndex((s) => s.speaker !== 'A' && s.speaker !== 'B');
+        if (bad >= 0) return fail(`Jenis "${t.label}" wajib isi speaker 'A' atau 'B' di setiap shot (shot ${bad + 1} kosong).`);
+        if (!shots.some((s) => s.speaker === 'B')) return fail(`Jenis "${t.label}" butuh dua pembicara: belum ada shot dengan speaker 'B'.`);
+      }
+      const up = await db.from('projects').update({ script, hook, sources, status: 'ready' }).eq('id', id);
       if (up.error) return fail(up.error.message);
       const del = await db.from('shots').delete().eq('project_id', id);
       if (del.error) return fail(del.error.message);
@@ -109,6 +145,7 @@ server.tool(
         characters: s.characters,
         narration_text: s.narration,
         world: s.world,
+        speaker: s.speaker,
       }));
       const ins = await db.from('shots').insert(rows);
       if (ins.error) return fail(ins.error.message);
@@ -137,6 +174,7 @@ server.tool(
       if (patch.characters !== undefined) row.characters = patch.characters;
       if (patch.narration !== undefined) row.narration_text = patch.narration;
       if (patch.world !== undefined) row.world = patch.world;
+      if (patch.speaker !== undefined) row.speaker = patch.speaker;
       const { data, error } = await db.from('shots').update(row).eq('project_id', id).eq('idx', idx).select('idx');
       if (error) return fail(error.message);
       if (!data?.length) return fail(`shot ${idx} tidak ada`);

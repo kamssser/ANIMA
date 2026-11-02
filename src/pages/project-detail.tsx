@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Clapperboard, Copy, FileText, Film, Trash2 } from 'lucide-react';
+import { BookOpen, Clapperboard, Copy, FileText, Film, Loader2, Sparkles, Trash2, X, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageBody, PageHeader } from '@/components/layout';
 import { ProjectBadge } from '@/components/status';
@@ -10,6 +10,7 @@ import { VoicePanel } from '@/components/voice-panel';
 import { Button } from '@/components/ui/button';
 import { Input, NativeSelect, Textarea } from '@/components/ui/input';
 import {
+  Badge,
   Card,
   CardContent,
   CardDescription,
@@ -24,8 +25,10 @@ import {
 } from '@/components/ui/misc';
 import { deleteProject, getProject, listJobs, listShots, updateProject } from '@/lib/api';
 import { onRender, queueRender } from '@/lib/render';
+import { sb } from '@/lib/supabase';
 import type { Project, ProjectStatus, RenderJob, Shot } from '@/lib/types';
-import { WORDS_PER_SECOND, countWords, formatSeconds, framesToSeconds } from '@/lib/utils';
+import { WORDS_PER_SECOND, cn, countWords, formatSeconds, framesToSeconds } from '@/lib/utils';
+import { CONTENT_TYPES, buildPrompt, contentType } from '@/lib/content';
 
 export default function ProjectDetailPage() {
   const { id = '' } = useParams();
@@ -51,7 +54,7 @@ export default function ProjectDetailPage() {
     <>
       <PageHeader
         title={project.title}
-        description={project.topic || 'Tanpa topik'}
+        description={`${contentType(project.content_type).label} · ${project.topic || 'Tanpa topik'}`}
         actions={
           <>
             <ProjectBadge status={project.status} />
@@ -85,10 +88,17 @@ export default function ProjectDetailPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="brief">
-          <BriefTab project={project} onSaved={setProject} />
+          <BriefTab
+            project={project}
+            onSaved={setProject}
+            onGenerated={async () => {
+              setProject(await getProject(project.id));
+              await reloadShots();
+            }}
+          />
         </TabsContent>
         <TabsContent value="shots">
-          <ShotEditor projectId={project.id} shots={shots} onChange={reloadShots} />
+          <ShotEditor projectId={project.id} shots={shots} onChange={reloadShots} twoVoices={contentType(project.content_type).twoVoices} />
         </TabsContent>
         <TabsContent value="render">
           <RenderTab project={project} shots={shots} onProject={setProject} />
@@ -99,7 +109,99 @@ export default function ProjectDetailPage() {
   );
 }
 
-function BriefTab({ project, onSaved }: { project: Project; onSaved: (p: Project) => void }) {
+function GeneratePanel({ project, onDone, beforeRun }: { project: Project; onDone: () => Promise<void>; beforeRun: () => Promise<Project> }) {
+  const [running, setRunning] = useState(false);
+  const [log, setLog] = useState<string[]>([]);
+  const t = contentType(project.content_type);
+
+  useEffect(
+    () =>
+      window.anima.onClaudeEvent((e) => {
+        if (e.projectId === project.id) setLog((l) => [...l.slice(-5), e.line]);
+      }),
+    [project.id],
+  );
+
+  async function run() {
+    if (project.script.trim() && !window.confirm('Script dan shot yang sekarang akan diganti hasil baru dari Claude. Lanjutkan?')) return;
+    setRunning(true);
+    setLog([]);
+    try {
+      // Simpan perubahan brief dulu (jenis konten, topik, durasi) supaya Claude membaca versi terbaru.
+      const fresh = await beforeRun();
+      // Pinjamkan sesi login aplikasi ke Claude; perpanjang dulu kalau sisa umurnya < 30 menit.
+      let { data } = await sb().auth.getSession();
+      if (!data.session || (data.session.expires_at ?? 0) * 1000 < Date.now() + 30 * 60 * 1000) {
+        data = (await sb().auth.refreshSession()).data;
+      }
+      if (!data.session) throw new Error('Sesi login habis. Keluar lalu masuk lagi.');
+      await window.anima.generateWithClaude({
+        projectId: fresh.id,
+        prompt: buildPrompt(fresh),
+        session: { access_token: data.session.access_token, expires_at: data.session.expires_at ?? 0 },
+      });
+      await onDone();
+      toast.success('Claude selesai menulis', { description: 'Hook, script, dan shot sudah tersimpan.' });
+    } catch (e) {
+      toast.error('Generate gagal', { description: (e as Error).message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') });
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  const prompt = buildPrompt(project);
+
+  return (
+    <Card className="border-primary/40">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Sparkles className="size-4 text-primary" /> Generate dengan Claude
+        </CardTitle>
+        <CardDescription>
+          Claude menulis hook, script, dan shot sesuai jenis <b>{t.label}</b>
+          {t.needsSources ? ', setelah riset sumber di web' : ''}
+          {t.twoVoices ? ', dengan dua pembicara (A & B)' : ''}. Memakai langganan Claude kamu, tanpa API key.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <Button onClick={run} disabled={running}>
+          {running ? <Loader2 className="animate-spin" /> : <Sparkles />} {running ? 'Claude sedang menulis...' : 'Generate hook + script + shot'}
+        </Button>
+        {running && (
+          <>
+            <div className="grid gap-1 rounded-md bg-muted p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
+              {(log.length ? log : ['Menyiapkan...']).map((l, i) => (
+                <div key={i} className={cn('truncate', i === log.length - 1 && 'text-foreground')}>
+                  {l}
+                </div>
+              ))}
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => window.anima.cancelGenerate()}>
+              <X /> Batalkan
+            </Button>
+          </>
+        )}
+        <details className="text-xs text-muted-foreground">
+          <summary className="cursor-pointer select-none">Pakai Claude Desktop / manual (salin prompt)</summary>
+          <p className="mt-2 rounded-md bg-muted p-3 font-mono leading-relaxed whitespace-pre-line">{prompt}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => {
+              navigator.clipboard.writeText(prompt);
+              toast.success('Prompt disalin');
+            }}
+          >
+            <Copy /> Salin prompt
+          </Button>
+        </details>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved: (p: Project) => void; onGenerated: () => Promise<void> }) {
   const [draft, setDraft] = useState(project);
   const [busy, setBusy] = useState(false);
   useEffect(() => setDraft(project), [project]);
@@ -107,20 +209,27 @@ function BriefTab({ project, onSaved }: { project: Project; onSaved: (p: Project
   const words = countWords(draft.script);
   const estSeconds = words / WORDS_PER_SECOND;
   const dirty = JSON.stringify(draft) !== JSON.stringify(project);
+  const t = contentType(draft.content_type);
+
+  async function persist() {
+    const saved = await updateProject(project.id, {
+      title: draft.title,
+      topic: draft.topic,
+      target_seconds: draft.target_seconds,
+      composition: draft.composition,
+      script: draft.script,
+      status: draft.status,
+      content_type: draft.content_type || 'karangan',
+      hook: draft.hook ?? '',
+    });
+    onSaved(saved);
+    return saved;
+  }
 
   async function save() {
     setBusy(true);
     try {
-      onSaved(
-        await updateProject(project.id, {
-          title: draft.title,
-          topic: draft.topic,
-          target_seconds: draft.target_seconds,
-          composition: draft.composition,
-          script: draft.script,
-          status: draft.status,
-        }),
-      );
+      await persist();
       toast.success('Tersimpan');
     } catch (e) {
       toast.error((e as Error).message);
@@ -129,22 +238,43 @@ function BriefTab({ project, onSaved }: { project: Project; onSaved: (p: Project
     }
   }
 
-  // Prompt pendek: Claude cukup diberi ID project, detailnya diambil sendiri lewat MCP (hemat token).
-  const prompt = `Pakai skill cartoon-3d-short. Ambil brief dengan tool anima_get_project id "${project.id}", tulis script ${project.target_seconds} detik (~${Math.round(
-    project.target_seconds * WORDS_PER_SECOND,
-  )} kata) dan shot list, lalu simpan dengan anima_save_story. Balas cukup "selesai" + jumlah shot.`;
-
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+    <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
       <Card>
         <CardContent className="flex flex-col gap-4 p-5">
-          <div className="grid gap-2">
-            <Label htmlFor="t">Judul</Label>
-            <Input id="t" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+          <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
+            <div className="grid gap-2">
+              <Label htmlFor="t">Judul</Label>
+              <Input id="t" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="ct">Jenis konten</Label>
+              <NativeSelect id="ct" value={t.id} onChange={(e) => setDraft({ ...draft, content_type: e.target.value })}>
+                {CONTENT_TYPES.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                    {c.needsSources ? ' (wajib sumber)' : ''}
+                    {c.twoVoices ? ' (2 suara)' : ''}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="topic">Topik / ide cerita</Label>
             <Textarea id="topic" value={draft.topic} onChange={(e) => setDraft({ ...draft, topic: e.target.value })} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="hook" className="flex items-center gap-2">
+              <Zap className="size-4 text-primary" /> Hook (0-3 detik pertama)
+            </Label>
+            <Textarea
+              id="hook"
+              className="min-h-14"
+              placeholder="Diisi otomatis oleh Claude: kalimat pembuka yang membuat penonton bertahan sampai habis."
+              value={draft.hook ?? ''}
+              onChange={(e) => setDraft({ ...draft, hook: e.target.value })}
+            />
           </div>
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
@@ -155,6 +285,30 @@ function BriefTab({ project, onSaved }: { project: Project; onSaved: (p: Project
             </div>
             <Textarea id="script" className="min-h-64 font-mono text-[13px]" value={draft.script} onChange={(e) => setDraft({ ...draft, script: e.target.value })} />
           </div>
+          {(t.needsSources || (project.sources?.length ?? 0) > 0) && (
+            <div className="grid gap-2">
+              <Label className="flex items-center gap-2">
+                <BookOpen className="size-4 text-primary" /> Sumber
+                {t.needsSources && <Badge variant="warning">Wajib untuk {t.label}</Badge>}
+              </Label>
+              {project.sources?.length ? (
+                <ul className="grid gap-1 rounded-md border p-3 text-sm">
+                  {project.sources.map((src, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-muted-foreground">{i + 1}.</span>
+                      <button className="truncate text-left text-primary hover:underline" title={src.url} onClick={() => window.anima.openExternal(src.url)}>
+                        {src.title || src.url}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+                  Belum ada sumber. Claude wajib riset dan mengisi minimal 2 sumber saat generate.
+                </p>
+              )}
+            </div>
+          )}
           <div className="flex justify-end">
             <Button onClick={save} disabled={busy || !dirty}>
               {busy ? 'Menyimpan...' : 'Simpan'}
@@ -164,6 +318,7 @@ function BriefTab({ project, onSaved }: { project: Project; onSaved: (p: Project
       </Card>
 
       <div className="flex flex-col gap-4">
+        <GeneratePanel project={draft} onDone={onGenerated} beforeRun={persist} />
         <Card>
           <CardContent className="flex flex-col gap-4 p-5">
             <div className="grid gap-2">
@@ -183,27 +338,6 @@ function BriefTab({ project, onSaved }: { project: Project; onSaved: (p: Project
                 <option value="done">Selesai</option>
               </NativeSelect>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Prompt untuk Claude</CardTitle>
-            <CardDescription>
-              Tempel di Claude Code atau Claude Desktop yang sudah tersambung (Pengaturan &gt; Integrasi Claude). Pendek supaya hemat token.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <p className="rounded-md bg-muted p-3 font-mono text-xs leading-relaxed">{prompt}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(prompt);
-                toast.success('Prompt disalin');
-              }}
-            >
-              <Copy /> Salin prompt
-            </Button>
           </CardContent>
         </Card>
       </div>

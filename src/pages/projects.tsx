@@ -7,7 +7,9 @@ import { ProjectBadge } from '@/components/status';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input, Textarea } from '@/components/ui/input';
-import { Label, Skeleton } from '@/components/ui/misc';
+import { Badge, Label, Skeleton } from '@/components/ui/misc';
+import { CONTENT_TYPES, contentType, type ContentTypeId } from '@/lib/content';
+import { cn } from '@/lib/utils';
 import { createProject, listProjects } from '@/lib/api';
 import type { Project } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
@@ -63,7 +65,8 @@ export default function ProjectsPage() {
                   </div>
                   <ProjectBadge status={p.status} />
                 </div>
-                <div className="mt-4 line-clamp-1 font-semibold group-hover:text-primary">{p.title}</div>
+                <div className="mt-4 text-[11px] font-semibold tracking-wider text-primary uppercase">{contentType(p.content_type).label}</div>
+                <div className="mt-1 line-clamp-1 font-semibold group-hover:text-primary">{p.title}</div>
                 <div className="mt-1 line-clamp-2 min-h-10 text-sm text-muted-foreground">{p.topic || 'Tanpa topik'}</div>
                 <div className="mt-4 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
@@ -86,13 +89,14 @@ function NewProjectDialog() {
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState('');
   const [seconds, setSeconds] = useState(60);
+  const [kind, setKind] = useState<ContentTypeId>('karangan');
   const [busy, setBusy] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      const p = await createProject({ title: title.trim(), topic: topic.trim(), target_seconds: seconds });
+      const p = await createProject({ title: title.trim(), topic: topic.trim(), target_seconds: seconds, content_type: kind });
       setOpen(false);
       navigate(`/projects/${p.id}`);
     } catch (err) {
@@ -109,12 +113,36 @@ function NewProjectDialog() {
           <Plus /> Project baru
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <form onSubmit={submit} className="flex flex-col gap-4">
           <DialogHeader>
             <DialogTitle>Project baru</DialogTitle>
-            <DialogDescription>Isi brief singkat. Script dan shot bisa dibuat Claude atau diketik manual.</DialogDescription>
+            <DialogDescription>Pilih jenis konten dan isi ide singkat. Hook, script, dan shot nanti dibuat Claude.</DialogDescription>
           </DialogHeader>
+          <div className="grid gap-2">
+            <Label>Jenis konten</Label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {CONTENT_TYPES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setKind(t.id)}
+                  className={cn(
+                    'flex flex-col gap-1 rounded-lg border p-3 text-left transition-colors hover:border-primary/60',
+                    kind === t.id && 'border-primary bg-primary/10 ring-1 ring-primary/40',
+                  )}
+                >
+                  <span className="text-sm font-medium">{t.label}</span>
+                  <span className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">{t.description}</span>
+                  <span className="mt-auto flex flex-wrap gap-1 pt-1">
+                    {t.needsSources && <Badge variant="warning">Wajib sumber</Badge>}
+                    {t.twoVoices && <Badge variant="secondary">2 suara</Badge>}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground">Semua jenis otomatis dibuatkan hook di 3 detik pertama supaya penonton bertahan sampai habis.</span>
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="title">Judul</Label>
             <Input id="title" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="The Bridge That Fell for a Song" />

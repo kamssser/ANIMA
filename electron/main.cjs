@@ -58,6 +58,13 @@ const defaultSettings = () => ({
   vibiVoiceName: '',
   vibiLanguage: 'id',
   vibiSpeed: 1,
+  // Suara B untuk dialog/film: default MiniMax supaya modelnya beda dari suara A (ElevenLabs).
+  vibi2Provider: 'minimax',
+  vibi2Model: 'speech-2.8-turbo',
+  vibi2VoiceId: '',
+  vibi2VoiceName: '',
+  vibi2Language: 'Indonesian',
+  vibi2Speed: 1,
   wordTimestamps: true,
   // Pipeline audio skill: <proyek Remotion>/voice (input) dan /audio (mix.py).
   voiceDir: 'voice',
@@ -577,51 +584,99 @@ ipcMain.handle('voice:status', (_e, slug) => {
   };
 });
 
-ipcMain.handle('voice:generate', async (_e, { slug, text }) => {
-  const s = readSettings();
-  const say = (step, progress) => win && !win.isDestroyed() && win.webContents.send('voice:event', { slug, step, progress });
-  if (!s.vibiVoiceId) throw new Error('Pilih suara dulu di Pengaturan > Suara.');
-  if (!text.trim()) throw new Error('Script masih kosong.');
-
-  const dir = voiceOutDir(s, slug);
-  fs.mkdirSync(dir, { recursive: true });
-
-  // 1. Text to speech.
-  say('Mengirim script ke vibi.pro', 0);
-  const isEleven = s.vibiProvider === 'elevenlabs';
-  const task = await vibi(s, `/v1/text-to-speech/${encodeURIComponent(s.vibiVoiceId)}`, {
+/** Satu kali TTS vibi.pro dengan konfigurasi suara tertentu; hasilnya ditulis ke file mp3. */
+async function vibiTts(s, voice, text, outFile, onProgress) {
+  const isEleven = voice.provider === 'elevenlabs';
+  const task = await vibi(s, `/v1/text-to-speech/${encodeURIComponent(voice.voiceId)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       text,
-      provider: s.vibiProvider,
-      ...(s.vibiProvider !== 'capcut' && s.vibiModel ? { model_id: s.vibiModel } : {}),
-      language_code: s.vibiLanguage,
+      provider: voice.provider,
+      ...(voice.provider !== 'capcut' && voice.model ? { model_id: voice.model } : {}),
+      language_code: voice.language,
       voice_settings: isEleven
-        ? { stability: 0.5, similarity_boost: 0.75, speed: Number(s.vibiSpeed) || 1 }
-        : { speed: Number(s.vibiSpeed) || 1, pitch: 0 },
+        ? { stability: 0.5, similarity_boost: 0.75, speed: Number(voice.speed) || 1 }
+        : { speed: Number(voice.speed) || 1, pitch: 0 },
     }),
   });
-  const done = await vibiPoll(s, `/v1/history/${task.id}`, (p) => say('Membuat suara', p));
+  const done = await vibiPoll(s, `/v1/history/${task.id}`, onProgress);
   const audioUrl = done.result?.audio_url;
   if (!audioUrl) throw new Error('vibi.pro tidak mengembalikan audio_url.');
+  const res = await fetch(audioUrl, audioUrl.startsWith(VIBI) ? { headers: { 'xi-api-key': s.vibiApiKey } } : {});
+  if (!res.ok) throw new Error(`Gagal mengunduh audio (${res.status})`);
+  fs.writeFileSync(outFile, Buffer.from(await res.arrayBuffer()));
+  return done.credits_deducted ?? 0;
+}
 
-  say('Mengunduh audio', 100);
+const voiceA = (s) => ({ provider: s.vibiProvider, model: s.vibiModel, voiceId: s.vibiVoiceId, language: s.vibiLanguage, speed: s.vibiSpeed });
+const voiceB = (s) => ({ provider: s.vibi2Provider, model: s.vibi2Model, voiceId: s.vibi2VoiceId, language: s.vibi2Language, speed: s.vibi2Speed });
+
+/**
+ * payload.text  : satu narator (suara A).
+ * payload.lines : dialog/film [{ speaker: 'A'|'B', text }] -> tiap giliran pakai suara A atau B
+ *                 (boleh beda provider/model), digabung dengan jeda 0,3 detik.
+ */
+ipcMain.handle('voice:generate', async (_e, { slug, text, lines }) => {
+  const s = readSettings();
+  const say = (step, progress) => win && !win.isDestroyed() && win.webContents.send('voice:event', { slug, step, progress });
+  if (!s.vibiVoiceId) throw new Error('Pilih suara A dulu di Pengaturan > Suara & audio.');
+  const dialog = Array.isArray(lines) && lines.some((l) => l.speaker === 'B');
+  if (dialog && !s.vibi2VoiceId) throw new Error('Jenis ini memakai 2 suara. Pilih suara B dulu di Pengaturan > Suara & audio.');
+  if (!dialog && !String(text || '').trim()) throw new Error('Script masih kosong.');
+
+  const dir = voiceOutDir(s, slug);
+  fs.mkdirSync(dir, { recursive: true });
   const mp3 = path.join(dir, 'voice.mp3');
-  const audioRes = await fetch(audioUrl, audioUrl.startsWith(VIBI) ? { headers: { 'xi-api-key': s.vibiApiKey } } : {});
-  if (!audioRes.ok) throw new Error(`Gagal mengunduh audio (${audioRes.status})`);
-  fs.writeFileSync(mp3, Buffer.from(await audioRes.arrayBuffer()));
-
-  // 2. Konversi ke voice.wav 48 kHz (format yang diminta mix.py skill).
   const notes = [];
-  if (s.remotionProjectPath && fs.existsSync(s.remotionProjectPath)) {
-    say('Konversi ke WAV 48 kHz', 100);
-    const vdir = path.join(s.remotionProjectPath, s.voiceDir);
-    fs.mkdirSync(vdir, { recursive: true });
-    const r = await ffmpeg(s, ['-y', '-i', mp3, '-ar', '48000', '-ac', '1', '-c:a', 'pcm_s24le', path.join(vdir, 'voice.wav')]);
-    if (!r.ok) notes.push(`Konversi WAV gagal: ${r.log.split('\n').slice(-2).join(' ')}`);
+  let credits = 0;
+  const hasRemotion = s.remotionProjectPath && fs.existsSync(s.remotionProjectPath);
+  const vdir = hasRemotion ? path.join(s.remotionProjectPath, s.voiceDir) : null;
+  if (vdir) fs.mkdirSync(vdir, { recursive: true });
+
+  if (!dialog) {
+    // 1. Satu narator: TTS sekali, lalu konversi ke voice.wav 48 kHz (format yang diminta mix.py skill).
+    say('Membuat suara', 0);
+    credits += await vibiTts(s, voiceA(s), text, mp3, (p) => say('Membuat suara', p));
+    if (vdir) {
+      say('Konversi ke WAV 48 kHz', 100);
+      const r = await ffmpeg(s, ['-y', '-i', mp3, '-ar', '48000', '-ac', '1', '-c:a', 'pcm_s24le', path.join(vdir, 'voice.wav')]);
+      if (!r.ok) notes.push(`Konversi WAV gagal: ${r.log.split('\n').slice(-2).join(' ')}`);
+    } else {
+      notes.push('Folder Remotion belum diatur, voice.wav belum dibuat.');
+    }
   } else {
-    notes.push('Folder Remotion belum diatur, voice.wav belum dibuat.');
+    // 1. Dialog/film: TTS per giliran dengan suara A/B, samakan format, gabung dengan jeda.
+    const parts = path.join(dir, 'parts');
+    fs.rmSync(parts, { recursive: true, force: true });
+    fs.mkdirSync(parts, { recursive: true });
+    const turns = lines.filter((l) => String(l.text || '').trim());
+    const list = [];
+    const gap = path.join(parts, 'gap.wav');
+    const g = await ffmpeg(s, ['-y', '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=mono', '-t', '0.3', '-c:a', 'pcm_s24le', gap]);
+    if (!g.ok) throw new Error(`ffmpeg tidak bisa dipakai: ${g.log.split('\n').slice(-2).join(' ')}`);
+    for (let i = 0; i < turns.length; i++) {
+      const t = turns[i];
+      const who = t.speaker === 'B' ? 'B' : 'A';
+      const label = `Suara ${who}: giliran ${i + 1}/${turns.length}`;
+      say(label, Math.round((i / turns.length) * 100));
+      const partMp3 = path.join(parts, `${String(i).padStart(3, '0')}-${who}.mp3`);
+      credits += await vibiTts(s, who === 'B' ? voiceB(s) : voiceA(s), t.text, partMp3, () => {});
+      const partWav = partMp3.replace(/\.mp3$/, '.wav');
+      const r = await ffmpeg(s, ['-y', '-i', partMp3, '-ar', '48000', '-ac', '1', '-c:a', 'pcm_s24le', partWav]);
+      if (!r.ok) throw new Error(`Konversi giliran ${i + 1} gagal: ${r.log.split('\n').slice(-2).join(' ')}`);
+      if (list.length) list.push(gap);
+      list.push(partWav);
+    }
+    say('Menggabungkan dua suara', 100);
+    const listFile = path.join(parts, 'list.txt');
+    fs.writeFileSync(listFile, list.map((f) => `file '${f.replace(/\\/g, '/').replace(/'/g, "'\\''")}'`).join('\n'));
+    const fullWav = path.join(dir, 'voice.wav');
+    const c = await ffmpeg(s, ['-y', '-f', 'concat', '-safe', '0', '-i', listFile, '-c:a', 'pcm_s24le', fullWav]);
+    if (!c.ok) throw new Error(`Gagal menggabungkan suara: ${c.log.split('\n').slice(-2).join(' ')}`);
+    await ffmpeg(s, ['-y', '-i', fullWav, '-c:a', 'libmp3lame', '-b:a', '160k', mp3]);
+    if (vdir) fs.copyFileSync(fullWav, path.join(vdir, 'voice.wav'));
+    else notes.push('Folder Remotion belum diatur, voice.wav belum disalin.');
   }
 
   // 3. Timing per kata lewat speech-to-text, disimpan sebagai words.json [{s, e, text}].
@@ -648,7 +703,7 @@ ipcMain.handle('voice:generate', async (_e, { slug, text }) => {
   }
 
   say('Selesai', 100);
-  return { mp3, words: wordCount, credits: done.credits_deducted ?? null, notes };
+  return { mp3, words: wordCount, credits, notes };
 });
 
 // ---------- Python (numpy + scipy untuk SFX & musik skill) ----------
@@ -852,6 +907,112 @@ ipcMain.handle('claude:install', async (_e, { session, targets }) => {
   }
 
   return { ok: results.every((r) => !/gagal|tidak/.test(r)), message: results.join('\n') };
+});
+
+// ---------- Generate brief/script/shot langsung dari aplikasi (Claude Code headless) ----------
+// Memakai login Claude Code pengguna (langganan Pro/Max), tanpa API key. Claude memanggil tool MCP ANIMA
+// untuk membaca aturan jenis konten lalu menyimpan hook + script + shot; WebSearch/WebFetch untuk riset sumber.
+
+/** @type {import('node:child_process').ChildProcess | null} */
+let genChild = null;
+
+ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session }) => {
+  if (genChild) throw new Error('Claude sedang menulis project lain. Tunggu selesai dulu.');
+  const claude = await claudeCodePath();
+  if (!claude) throw new Error('Claude Code tidak ditemukan. Install Claude Code lalu login, atau pakai tombol Salin prompt.');
+  const node = await which('node');
+  if (!node) throw new Error('Node.js tidak ditemukan.');
+  if (!session?.access_token) throw new Error('Sesi login tidak ditemukan. Keluar lalu masuk lagi.');
+
+  // Sesi pinjaman dari login aplikasi, khusus untuk generate ini: hanya access token (tanpa refresh token,
+  // jadi tidak bentrok dengan sesi aplikasi) dan dihapus setelah selesai. Tidak butuh "Sambungkan".
+  const s0 = readSettings();
+  const genSession = path.join(app.getPath('userData'), 'mcp-session-gen.json');
+  fs.writeFileSync(
+    genSession,
+    JSON.stringify({ url: s0.supabaseUrl, anonKey: s0.supabaseAnonKey, access_token: session.access_token, expires_at: session.expires_at, refresh_token: null }),
+  );
+  const cleanup = () => fs.rm(genSession, { force: true }, () => {});
+
+  const mcpConfig = JSON.stringify({
+    mcpServers: { anima: { type: 'stdio', command: node, args: [mcpServerPath()], env: { ANIMA_SESSION_FILE: genSession } } },
+  });
+  const tools = ['mcp__anima__anima_get_project', 'mcp__anima__anima_save_story', 'mcp__anima__anima_patch_shot', 'WebSearch', 'WebFetch'];
+  const args = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--mcp-config', mcpConfig, '--allowedTools', ...tools];
+  const say = (line) => win && !win.isDestroyed() && win.webContents.send('claude:event', { projectId, line });
+  say('Menyiapkan Claude...');
+
+  return await new Promise((resolve, reject) => {
+    const child = spawn(claude, args, { cwd: app.getPath('userData'), windowsHide: true, env: { ...process.env } });
+    genChild = child;
+    let buf = '';
+    let result = null;
+    let saved = false;
+    const errTail = [];
+    const timer = setTimeout(() => child.kill(), 20 * 60 * 1000);
+
+    child.stdout.on('data', (b) => {
+      buf += b.toString();
+      let nl;
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line) continue;
+        let ev;
+        try {
+          ev = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        if (ev.type === 'assistant') {
+          for (const c of ev.message?.content || []) {
+            if (c.type !== 'tool_use') continue;
+            const n = String(c.name);
+            if (n.endsWith('get_project')) say('Membaca brief & aturan jenis konten...');
+            else if (n === 'WebSearch') say(`Mencari sumber: ${c.input?.query ?? ''}`);
+            else if (n === 'WebFetch') say(`Membaca sumber: ${c.input?.url ?? ''}`);
+            else if (n.endsWith('save_story')) {
+              say('Menyimpan hook, script, dan shot...');
+              saved = true;
+            }
+          }
+        } else if (ev.type === 'result') {
+          result = ev;
+        }
+      }
+    });
+    child.stderr.on('data', (b) => {
+      errTail.push(b.toString().trim());
+      if (errTail.length > 10) errTail.shift();
+    });
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      genChild = null;
+      cleanup();
+      reject(err);
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      genChild = null;
+      cleanup();
+      if (result && !result.is_error && saved) {
+        say('Selesai');
+        resolve({ ok: true, summary: String(result.result || '').slice(0, 400) });
+      } else if (result && !result.is_error) {
+        reject(new Error(`Claude selesai tapi tidak menyimpan story. Jawaban Claude: ${String(result.result || '').slice(0, 300)}`));
+      } else {
+        const msg = result?.result || errTail.join('\n') || `Claude Code keluar dengan kode ${code}`;
+        reject(new Error(/login|auth|credential/i.test(msg) ? 'Claude Code belum login. Buka terminal, jalankan "claude", lalu login.' : String(msg).slice(0, 400)));
+      }
+    });
+  });
+});
+
+ipcMain.handle('claude:cancel', () => {
+  if (!genChild) return false;
+  if (process.platform === 'win32') execFile('taskkill', ['/pid', String(genChild.pid), '/T', '/F'], () => {});
+  else genChild.kill();
+  return true;
 });
 
 ipcMain.handle('claude:remove', async () => {

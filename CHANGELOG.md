@@ -6,6 +6,23 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.4.0 - 2026-11-02
+
+**Baru**
+- Tombol **Generate dengan Claude** langsung di aplikasi: Claude menulis hook, script, dan shot sendiri (memakai langganan Claude kamu, tanpa API key).
+- **7 jenis konten**: Sejarah, Fakta, Dongeng, Cerita karangan, Tutorial, Dialog, dan Film.
+- Sejarah & Fakta **wajib riset dan mencantumkan minimal 2 sumber**; daftar sumber tampil di project.
+- Semua jenis konten otomatis dibuatkan **hook di 3 detik pertama** dan alur yang membuat penonton bertahan sampai habis.
+- Dialog & Film memakai **2 suara dengan model berbeda** (Suara A dan Suara B); tiap shot punya pembicara A/B.
+- Pengaturan suara sekarang punya slot Suara A dan Suara B.
+
+**Perbaikan**
+- Tombol **Keluar** tidak lagi memutus sambungan Claude.
+- Generate dari aplikasi tidak perlu "Sambungkan Claude" lebih dulu; cukup login dan punya Claude Code.
+
+**Perubahan**
+- Pemilik Supabase perlu menjalankan pembaruan database sekali (`supabase/migrations/002_content_types.sql`).
+
 ## 0.3.1 - 2026-11-02
 
 **Baru**

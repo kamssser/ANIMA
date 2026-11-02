@@ -3,7 +3,13 @@ import type { JobStatus, Project, RenderJob, RenderProps, Shot } from './types';
 import { FPS } from './utils';
 
 function check<T>(res: { data: T | null; error: { message: string } | null }): T {
-  if (res.error) throw new Error(res.error.message);
+  if (res.error) {
+    // Kolom 0.4 (jenis konten, hook, sumber, pembicara) belum ada: migrasi 002 belum dijalankan.
+    if (/content_type|hook|sources|speaker/.test(res.error.message) && /column|schema cache/i.test(res.error.message)) {
+      throw new Error('Database belum diperbarui. Pemilik Supabase perlu menjalankan supabase/migrations/002_content_types.sql di SQL Editor.');
+    }
+    throw new Error(res.error.message);
+  }
   return res.data as T;
 }
 
@@ -17,7 +23,7 @@ export async function getProject(id: string) {
   return check<Project>(await sb().from('projects').select('*').eq('id', id).single());
 }
 
-export async function createProject(input: Pick<Project, 'title' | 'topic' | 'target_seconds'>) {
+export async function createProject(input: Pick<Project, 'title' | 'topic' | 'target_seconds' | 'content_type'>) {
   const { defaultComposition } = await window.anima.getSettings();
   return check<Project>(
     await sb()
@@ -129,6 +135,7 @@ export function buildRenderProps(project: Project, shots: Shot[]): RenderProps {
       characters: s.characters,
       world: s.world,
       narration: s.narration_text,
+      speaker: s.speaker ?? '',
     })),
   };
 }

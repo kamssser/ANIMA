@@ -82,3 +82,10 @@ create policy "own shots" on public.shots
 drop policy if exists "own render jobs" on public.render_jobs;
 create policy "own render jobs" on public.render_jobs
   for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- 0.4: jenis konten, hook, sumber, pembicara (sama dengan migrations/002_content_types.sql).
+alter table public.projects add column if not exists content_type text not null default 'karangan';
+alter table public.projects add column if not exists hook text not null default '';
+alter table public.projects add column if not exists sources jsonb not null default '[]'::jsonb;
+alter table public.shots add column if not exists speaker text not null default '';
+notify pgrst, 'reload schema';

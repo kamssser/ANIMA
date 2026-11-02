@@ -12,6 +12,10 @@ export interface Project {
   status: ProjectStatus;
   created_at: string;
   updated_at: string;
+  /** Jenis konten (shared/content-types.json). Kosong di database lama sebelum migrasi 002. */
+  content_type?: string;
+  hook?: string;
+  sources?: { title: string; url: string }[];
 }
 
 export interface Shot {
@@ -24,6 +28,8 @@ export interface Shot {
   world: Record<string, unknown>;
   narration_text: string;
   notes: string;
+  /** 'A' | 'B' untuk dialog/film; '' untuk satu narator. */
+  speaker?: string;
 }
 
 export interface RenderJob {
@@ -58,6 +64,13 @@ export interface Settings {
   vibiVoiceName: string;
   vibiLanguage: string;
   vibiSpeed: number;
+  /** Suara B (pembicara kedua untuk dialog/film), sengaja bisa beda provider/model dari suara A. */
+  vibi2Provider: 'elevenlabs' | 'minimax' | 'capcut';
+  vibi2Model: string;
+  vibi2VoiceId: string;
+  vibi2VoiceName: string;
+  vibi2Language: string;
+  vibi2Speed: number;
   wordTimestamps: boolean;
   voiceDir: string;
   audioDir: string;
@@ -163,5 +176,7 @@ export interface RenderProps {
     characters: string[];
     world: Record<string, unknown>;
     narration: string;
+    /** 'A' | 'B' untuk dialog/film, '' untuk satu narator. */
+    speaker: string;
   }[];
 }

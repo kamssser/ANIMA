@@ -47,6 +47,13 @@ contextBridge.exposeInMainWorld('anima', {
   },
   pythonCheck: () => ipcRenderer.invoke('python:check'),
   pythonInstall: () => ipcRenderer.invoke('python:install'),
+  generateWithClaude: (payload) => ipcRenderer.invoke('claude:generate', payload),
+  cancelGenerate: () => ipcRenderer.invoke('claude:cancel'),
+  onClaudeEvent: (cb) => {
+    const listener = (_e, event) => cb(event);
+    ipcRenderer.on('claude:event', listener);
+    return () => ipcRenderer.removeListener('claude:event', listener);
+  },
   detectClaude: () => ipcRenderer.invoke('claude:detect'),
   installClaude: (payload) => ipcRenderer.invoke('claude:install', payload),
   removeClaude: () => ipcRenderer.invoke('claude:remove'),

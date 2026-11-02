@@ -79,7 +79,7 @@ export function Layout({ email, children }: { email: string; children: ReactNode
             <div className="truncate text-xs font-medium text-foreground" title={email}>
               {email}
             </div>
-            <button className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground" onClick={() => sb().auth.signOut()}>
+            <button className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground" onClick={() => sb().auth.signOut({ scope: 'local' })}>
               <LogOut className="size-3" /> Keluar
             </button>
           </div>
