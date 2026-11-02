@@ -690,7 +690,7 @@ ipcMain.handle('system:info', async () => {
     tempFreeGb: await freeGb(s.tempDir),
     outputFreeGb: await freeGb(s.outputDir),
     remotionFound: s.remotionProjectPath ? Boolean(remotionBin(s.remotionProjectPath)) : false,
-    version: app.getVersion(),
+    version: require('../package.json').version,
   };
 });
 
@@ -927,7 +927,9 @@ function setupAutoUpdate() {
   });
 }
 
-ipcMain.handle('update:state', () => ({ ...updateState, version: updateState.version, current: app.getVersion() }));
+// Versi dari package.json (app.getVersion() bisa berisi versi Electron kalau dijalankan lewat skrip lain).
+const APP_VERSION = require('../package.json').version;
+ipcMain.handle('update:state', () => ({ ...updateState, current: APP_VERSION }));
 if (!app.isPackaged) {
   ipcMain.handle('update:check', () => updateState);
   ipcMain.handle('update:install', () => {});

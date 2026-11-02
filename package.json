@@ -1,7 +1,7 @@
 {
   "name": "anima-studio",
   "productName": "HyperForge",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "HyperForge - aplikasi Windows untuk mengelola produksi video pendek 3D (Claude + Remotion)",
   "main": "electron/main.cjs",
@@ -11,7 +11,7 @@
     "build": "tsc --noEmit && vite build",
     "start": "electron .",
     "dist": "npm run build && electron-builder --win nsis --publish never",
-    "release": "npm run build && electron-builder --win nsis --publish always",
+    "release": "npm run build && electron-builder --win nsis --publish never && node scripts/release.mjs",
     "mcp": "node mcp/server.mjs"
   },
   "build": {

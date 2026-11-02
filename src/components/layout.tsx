@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Clapperboard, FolderKanban, LayoutDashboard, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import logo from '@/assets/logo.png';
-import { UpdateBanner } from '@/components/update';
+import { SidebarUpdate, UpdateBanner, UpdateDialog } from '@/components/update';
 import { sb } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
@@ -70,7 +70,8 @@ export function Layout({ email, children }: { email: string; children: ReactNode
           ))}
         </nav>
 
-        <div className="m-3 flex items-center gap-3 rounded-xl border border-sidebar-border bg-card/60 p-3">
+        <SidebarUpdate />
+        <div className="mx-3 mb-3 flex items-center gap-3 rounded-xl border border-sidebar-border bg-card/60 p-3">
           <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground uppercase">
             {email.slice(0, 1) || '?'}
           </div>
@@ -88,6 +89,7 @@ export function Layout({ email, children }: { email: string; children: ReactNode
         <UpdateBanner />
         <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </main>
+      <UpdateDialog />
     </div>
   );
 }
