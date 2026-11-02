@@ -22,7 +22,7 @@ declare global {
       cancelRender(jobId: string): Promise<boolean>;
       activeRenders(): Promise<{ current: string | null; queued: string[] }>;
       onRenderEvent(cb: (e: RenderEvent) => void): () => void;
-      vibiVoices(search?: string): Promise<VibiVoice[]>;
+      vibiVoices(opts: { provider: 'elevenlabs' | 'minimax' | 'capcut'; search?: string; indo?: boolean }): Promise<VibiVoice[]>;
       voiceStatus(slug: string): Promise<VoiceStatus>;
       generateVoice(payload: {
         slug: string;
@@ -50,6 +50,14 @@ declare global {
       }): Promise<{ ok: boolean; summary: string }>;
       cancelGenerate(): Promise<boolean>;
       onClaudeEvent(cb: (e: { projectId: string; line: string }) => void): () => void;
+      generateCharacter(payload: {
+        id: string;
+        character: { name: string; nickname: string; is_main: boolean; personality: string; appearance: string; visual_style: string };
+        feedback?: string;
+        sessionId?: string;
+      }): Promise<{ svg: string; sessionId?: string; problems?: string[] }>;
+      cancelCharacter(): Promise<boolean>;
+      onCharacterEvent(cb: (e: { id: string; line: string }) => void): () => void;
       detectClaude(): Promise<ClaudeDetect>;
       installClaude(payload: {
         session: { access_token: string; refresh_token: string; expires_at: number };

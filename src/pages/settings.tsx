@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Bot, Clapperboard, FolderOpen, Mic, Palette, Save, Wrench } from 'lucide-react';
+import { Bot, Clapperboard, FolderOpen, Mic, Palette, Save, Users, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageBody, PageHeader } from '@/components/layout';
 import { ClaudeIntegration } from '@/components/claude-integration';
+import { CharacterSettings } from '@/components/characters';
 import { AudioMixSettings, VoiceSettings } from '@/components/audio-settings';
 import { RenderTest } from '@/components/render-test';
 import { RemotionSetup } from '@/components/remotion-setup';
@@ -40,6 +41,7 @@ function FolderField({ id, label, value, onChange, hint }: { id: string; label: 
 const SECTIONS = [
   { id: 'claude', label: 'Claude & akun', icon: Bot, hint: 'MCP untuk Claude Code / Desktop' },
   { id: 'remotion', label: 'Proyek Remotion', icon: Wrench, hint: 'Template skill & folder' },
+  { id: 'characters', label: 'Karakter', icon: Users, hint: 'Tokoh video 2D (maks 10)' },
   { id: 'audio', label: 'Suara & audio', icon: Mic, hint: 'vibi.pro, SFX, musik' },
   { id: 'render', label: 'Render', icon: Clapperboard, hint: 'Kualitas, paralel, uji' },
   { id: 'look', label: 'Tampilan & update', icon: Palette, hint: 'Tema, mode hemat, versi' },
@@ -161,6 +163,8 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
             </>
           )}
 
+          {section === 'characters' && <CharacterSettings />}
+
           {section === 'audio' && (
             <>
               <VoiceSettings s={s} setS={setS} />
@@ -174,8 +178,8 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
                 <CardHeader>
                   <CardTitle>Kualitas render</CardTitle>
                   <CardDescription>
-                    Belum yakin? Pakai "Uji otomatis & pilih paralel" di bawah, lalu klik Terapkan. Hasil uji di laptop i7-4710MQ: efek lengkap 540x960
-                    sekitar 28 detik/frame, draft sekitar 15 detik/frame.
+                    Belum yakin? Pakai "Uji otomatis & pilih paralel" di bawah, lalu klik Terapkan. Hasil uji di laptop i7-6820HQ (efek lengkap 540x960):
+                    GPU sekitar 1,6 detik/frame, CPU sekitar 11 detik/frame. Gambar hasil GPU dan CPU sama.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -205,6 +209,13 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
                         </option>
                       ))}
                       {![1, 2, 3, 4, 6, 8, 10, 12, 16].includes(s.concurrency) && <option value={s.concurrency}>Paralel {s.concurrency} proses</option>}
+                    </NativeSelect>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="gl">Kartu grafis</Label>
+                    <NativeSelect id="gl" value={s.gl} onChange={(e) => setS({ ...s, gl: e.target.value as Settings['gl'] })}>
+                      <option value="angle">GPU (disarankan, jauh lebih cepat)</option>
+                      <option value="swiftshader">CPU (cadangan kalau GPU error)</option>
                     </NativeSelect>
                   </div>
                   <div className="grid gap-2">

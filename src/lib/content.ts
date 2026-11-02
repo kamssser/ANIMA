@@ -1,5 +1,6 @@
 import data from '../../shared/content-types.json';
 import type { Project } from './types';
+import { is2D, visualStyle } from './styles';
 import { WORDS_PER_SECOND } from './utils';
 
 export type ContentTypeId = 'sejarah' | 'fakta' | 'dongeng' | 'karangan' | 'tutorial' | 'dialog' | 'film';
@@ -26,16 +27,24 @@ export const contentType = (id: string | null | undefined): ContentType =>
 export function buildPrompt(project: Project) {
   const t = contentType(project.content_type);
   const words = Math.round(project.target_seconds * WORDS_PER_SECOND);
-  const lines = [
-    `Pakai skill cartoon-3d-short. Kerjakan project HyperForge id "${project.id}" (jenis: ${t.label}).`,
-    '1. Panggil anima_get_project dengan id itu dan IKUTI semua aturan di field guide (hook + rules).',
+  const two = is2D(project.visual_style);
+  const st = visualStyle(project.visual_style);
+  const steps: string[] = [
+    `Panggil anima_get_project dengan id itu dan IKUTI semua aturan di field guide (hook + rules${two ? ' + style + stage + background' : ''}).`,
     t.needsSources
-      ? '2. WAJIB riset dulu dengan WebSearch lalu baca minimal 2 sumber kredibel dengan WebFetch sebelum menulis. Jangan mengarang fakta.'
-      : '2. Kembangkan ide dari topik project menjadi cerita yang kuat.',
-    `3. Tulis hook (0-3 detik), script narasi ~${words} kata untuk ${project.target_seconds} detik, dan shot list (5-6 detik per shot).`,
-    t.twoVoices ? "4. Dua pembicara: isi speaker 'A' atau 'B' di SETIAP shot; narration hanya kalimat yang diucapkan." : '',
-    `${t.twoVoices ? 5 : 4}. Simpan dengan anima_save_story (hook, script, ${t.needsSources ? 'sources, ' : ''}shots).`,
-    'Bahasa Indonesia. Balas singkat saja: "selesai" + jumlah shot.',
+      ? 'WAJIB riset dulu dengan WebSearch lalu baca minimal 2 sumber kredibel dengan WebFetch sebelum menulis. Jangan mengarang fakta.'
+      : 'Kembangkan ide dari topik project menjadi cerita yang kuat.',
+    `Tulis hook (0-3 detik), script narasi ~${words} kata untuk ${project.target_seconds} detik, dan shot list (${two ? '3-6' : '5-6'} detik per shot). Narasi tampil sebagai teks di layar.`,
   ];
-  return lines.filter(Boolean).join('\n');
+  if (t.twoVoices) steps.push("Dua pembicara: isi speaker 'A' atau 'B' di SETIAP shot; narration hanya kalimat yang diucapkan.");
+  if (two) {
+    steps.push(`Style 2D "${st.label}", format ${project.format || '9:16'}: pakai karakter dari guide.characters (karakter utama wajib tampil). Isi world tiap shot: bg, camera, framing, cast, speaker.`);
+    if (t.needsSources) steps.push('Untuk tempat/bangunan nyata: anima_find_photos lalu anima_view_photo, dan gambar latar yang bentuk + posisinya mirip foto (isi reference).');
+    steps.push('Gambar setiap latar sebagai SVG dengan anima_save_background (sesuai gaya di guide.style.draw dan aturan guide.background) SEBELUM menyimpan story.');
+  }
+  steps.push(`Simpan dengan anima_save_story (hook, script, ${t.needsSources ? 'sources, ' : ''}shots). Kalau ditolak, perbaiki sesuai pesannya lalu simpan ulang.`);
+  const head = two
+    ? `Kerjakan project HyperForge id "${project.id}" (jenis: ${t.label}, style: ${st.label}).`
+    : `Pakai skill cartoon-3d-short. Kerjakan project HyperForge id "${project.id}" (jenis: ${t.label}).`;
+  return [head, ...steps.map((x, i) => `${i + 1}. ${x}`), 'Bahasa Indonesia. Balas singkat saja: "selesai" + jumlah shot.'].join('\n');
 }

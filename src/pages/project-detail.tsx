@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { BookOpen, Clapperboard, Copy, FileText, Film, Loader2, Sparkles, Trash2, X, Zap } from 'lucide-react';
+import { BookOpen, Clapperboard, Copy, FileText, Film, Image, Loader2, Sparkles, Trash2, X, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageBody, PageHeader } from '@/components/layout';
 import { ProjectBadge } from '@/components/status';
@@ -29,6 +29,7 @@ import { sb } from '@/lib/supabase';
 import type { Project, ProjectStatus, RenderJob, Shot } from '@/lib/types';
 import { WORDS_PER_SECOND, cn, countWords, formatSeconds, framesToSeconds } from '@/lib/utils';
 import { CONTENT_TYPES, buildPrompt, contentType } from '@/lib/content';
+import { VISUAL_STYLES, is2D, visualStyle } from '@/lib/styles';
 
 export default function ProjectDetailPage() {
   const { id = '' } = useParams();
@@ -54,7 +55,7 @@ export default function ProjectDetailPage() {
     <>
       <PageHeader
         title={project.title}
-        description={`${contentType(project.content_type).label} · ${project.topic || 'Tanpa topik'}`}
+        description={`${contentType(project.content_type).label} · ${visualStyle(project.visual_style).label}${is2D(project.visual_style) ? ` ${project.format || '9:16'}` : ''} · ${project.topic || 'Tanpa topik'}`}
         actions={
           <>
             <ProjectBadge status={project.status} />
@@ -221,6 +222,8 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
       status: draft.status,
       content_type: draft.content_type || 'karangan',
       hook: draft.hook ?? '',
+      // Kolom style/format ada setelah migrasi 003 (project lama tanpa kolom ini tidak mengirimnya).
+      ...(project.visual_style !== undefined || draft.visual_style ? { visual_style: draft.visual_style || 'kartun-3d', format: draft.format || '9:16' } : {}),
     });
     onSaved(saved);
     return saved;
@@ -322,13 +325,36 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
         <Card>
           <CardContent className="flex flex-col gap-4 p-5">
             <div className="grid gap-2">
+              <Label htmlFor="vs">Style video</Label>
+              <NativeSelect id="vs" value={visualStyle(draft.visual_style).id} onChange={(e) => setDraft({ ...draft, visual_style: e.target.value })}>
+                {VISUAL_STYLES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.label}
+                    {v.kind === '3d' ? ' (render lama)' : ''}
+                  </option>
+                ))}
+              </NativeSelect>
+              <span className="text-xs text-muted-foreground">{visualStyle(draft.visual_style).description}</span>
+            </div>
+            {is2D(draft.visual_style) && (
+              <div className="grid gap-2">
+                <Label htmlFor="fmt">Format</Label>
+                <NativeSelect id="fmt" value={draft.format || '9:16'} onChange={(e) => setDraft({ ...draft, format: e.target.value as '9:16' | '16:9' })}>
+                  <option value="9:16">Tegak 9:16 (Shorts/TikTok/Reels)</option>
+                  <option value="16:9">Landscape 16:9 (YouTube)</option>
+                </NativeSelect>
+              </div>
+            )}
+            <div className="grid gap-2">
               <Label htmlFor="sec">Durasi target (detik)</Label>
               <Input id="sec" type="number" min={15} max={180} value={draft.target_seconds} onChange={(e) => setDraft({ ...draft, target_seconds: Number(e.target.value) })} />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="comp">Nama komposisi Remotion</Label>
-              <Input id="comp" value={draft.composition} onChange={(e) => setDraft({ ...draft, composition: e.target.value })} />
-            </div>
+            {!is2D(draft.visual_style) && (
+              <div className="grid gap-2">
+                <Label htmlFor="comp">Nama komposisi Remotion</Label>
+                <Input id="comp" value={draft.composition} onChange={(e) => setDraft({ ...draft, composition: e.target.value })} />
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="st">Status</Label>
               <NativeSelect id="st" value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as ProjectStatus })}>
@@ -340,8 +366,54 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
             </div>
           </CardContent>
         </Card>
+        {is2D(project.visual_style) && <AssetsCard project={project} />}
       </div>
     </div>
+  );
+}
+
+/** Style 2D: latar yang digambar Claude + foto referensi yang dipakai (sejarah/fakta). */
+function AssetsCard({ project }: { project: Project }) {
+  const bgs = Object.entries(project.assets?.backgrounds ?? {});
+  const refs = project.assets?.references ?? [];
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3 p-5">
+        <Label className="flex items-center gap-2">
+          <Image className="size-4 text-primary" /> Latar ({bgs.length})
+        </Label>
+        {bgs.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Belum ada latar. Latar digambar Claude saat Generate.</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {bgs.map(([k, b]) => (
+              <div key={k} title={b.description} className="grid gap-1">
+                <div
+                  className={cn('overflow-hidden rounded-md border bg-muted [&>svg]:size-full', project.format === '16:9' ? 'aspect-video' : 'aspect-[9/16]')}
+                  dangerouslySetInnerHTML={{ __html: b.svg.replace(/<svg/, '<svg preserveAspectRatio="xMidYMid slice"') }}
+                />
+                <span className="truncate text-[11px] text-muted-foreground">{k}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {refs.length > 0 && (
+          <>
+            <Label className="mt-2">Foto referensi</Label>
+            <ul className="grid gap-1 text-xs">
+              {refs.map((r, i) => (
+                <li key={i}>
+                  <button className="truncate text-left text-primary hover:underline" title={r.url} onClick={() => window.anima.openExternal(r.url)}>
+                    {r.title}
+                  </button>
+                  {r.license && <span className="text-muted-foreground"> · {r.license}</span>}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

@@ -200,7 +200,9 @@ export function RenderTest({ s, setS, beforeRun }: { s: Settings; setS: (s: Sett
                   <TD className="tabular-nums">
                     {r.width}x{r.height}
                   </TD>
-                  <TD>{r.quality === 'draft' ? 'Draft' : 'Lengkap'}</TD>
+                  <TD>
+                    {r.quality === 'draft' ? 'Draft' : 'Lengkap'}, {r.gl === 'angle' ? 'GPU' : 'CPU'}
+                  </TD>
                   <TD className="text-right tabular-nums">{Math.round(r.seconds)} dtk</TD>
                   <TD className="text-right tabular-nums">{r.secPerFrame.toFixed(1)}</TD>
                   <TD className="text-right tabular-nums">{r.estVideoHours != null ? hours(r.estVideoHours) : '-'}</TD>

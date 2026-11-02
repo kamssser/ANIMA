@@ -49,6 +49,9 @@ const defaultSettings = () => ({
   frameTimeoutMs: 300000,
   // 'draft' mematikan efek berat skill (ink, lens blur, bloom): ~2x lebih cepat di laptop i7-4710MQ.
   renderQuality: 'full',
+  // 'angle' = WebGL di kartu grafis (Direct3D). Tanpa flag, Chrome render memakai SwiftShader (CPU) yang jauh lebih lambat.
+  // 'swiftshader' = cadangan kalau GPU/driver bermasalah.
+  gl: 'angle',
   benchFrame: 400,
   // Suara narasi lewat vibi.pro (https://vibi.pro/docs).
   vibiApiKey: '',
@@ -159,6 +162,7 @@ const quote = (s) => `"${String(s).replace(/"/g, '\\"')}"`;
 // Saklar efek template bridge (getInputProps().post). Grade tetap nyala supaya warna mirip hasil akhir.
 const DRAFT_POST = { ink: false, lens: false, pre: false, bloom: false, grade: true, grain: false };
 const withQuality = (s, props) => (s.renderQuality === 'draft' ? { ...props, post: DRAFT_POST } : props);
+const glArg = (s) => `--gl=${s.gl === 'swiftshader' ? 'swiftshader' : 'angle'}`;
 
 function remotionBin(projectPath) {
   const bin = path.join(projectPath, 'node_modules', '.bin', process.platform === 'win32' ? 'remotion.cmd' : 'remotion');
@@ -175,103 +179,171 @@ async function freeGb(dir) {
   }
 }
 
+const anima2d = require('./comic2d.cjs');
+
+/**
+ * Satu proses Remotion CLI. Progress "Rendered/Encoded x/y" dipetakan ke rentang [from, to] persen.
+ * Hasil: { code, tail }.
+ */
+function remotionRun(s, job, bin, args, from, to) {
+  return new Promise((resolve) => {
+    // .cmd di Windows wajib lewat shell.
+    const child = spawn(quote(bin), args, {
+      cwd: s.remotionProjectPath,
+      shell: true,
+      windowsHide: true,
+      // Bundle Remotion (salinan public/) ditulis ke TEMP dan tidak pernah dihapus (SKILL.md "Disk"),
+      // jadi arahkan TEMP/TMP ke folder sementara ANIMA yang bisa dibersihkan.
+      env: { ...process.env, REMOTION_TMP: s.tempDir, TEMP: s.tempDir, TMP: s.tempDir, FORCE_COLOR: '0' },
+    });
+    if (current) current.child = child;
+    const tail = [];
+    let lastPct = -1;
+    const onData = (buf) => {
+      for (const line of buf.toString().split(/\r?\n|\r/)) {
+        const t = line.trim();
+        if (!t) continue;
+        tail.push(t);
+        if (tail.length > 30) tail.shift();
+        // Remotion mencetak "Rendered 120/2010" dan "Encoded 120/2010". Render frame = 90% rentang, encode = 10%.
+        const m = t.match(/(Rendered|Encoded|Stitched)[^\d]*(\d+)\s*\/\s*(\d+)/i);
+        if (m) {
+          const stage = m[1].toLowerCase();
+          const ratio = Number(m[2]) / Math.max(1, Number(m[3]));
+          const span = to - from;
+          const pct = Math.floor(from + (stage === 'rendered' ? ratio * span * 0.9 : span * 0.9 + ratio * span * 0.1));
+          if (pct !== lastPct) {
+            lastPct = pct;
+            emit({ jobId: job.jobId, type: 'progress', progress: pct, stage });
+          }
+        }
+      }
+    };
+    child.stdout.on('data', onData);
+    child.stderr.on('data', onData);
+    child.on('error', (e) => resolve({ code: -1, tail: [...tail, e.message] }));
+    child.on('close', (code) => resolve({ code, tail }));
+  });
+}
+
+const commonArgs = (s) => [
+  `--concurrency=${Number(s.concurrency) || 1}`,
+  '--codec=h264',
+  `--crf=${Number(s.crf) || 18}`,
+  glArg(s),
+  // Scene three.js + post-processing bisa > 30 detik per frame di GPU lama (default Remotion 30 dtk).
+  `--timeout=${Number(s.frameTimeoutMs) || 300000}`,
+];
+
+/**
+ * job.kind:
+ *  - '3d' (bawaan): komposisi buatan pengguna (job.composition) + lapisan teks wajib (job.overlay), lalu mix audio skill.
+ *  - '2d': mesin AnimaComic2D (job.comic, tanpa kode per video), lalu gabung suara narasi/dialog.
+ */
 async function runNext() {
   if (current || queue.length === 0) return;
   const job = queue.shift();
   const s = readSettings();
+  current = { jobId: job.jobId, child: null, cancelled: false };
+  const cleanups = [];
 
-  const fail = (error) => {
-    emit({ jobId: job.jobId, type: 'failed', error });
+  const finish = (event) => {
+    for (const c of cleanups) {
+      try {
+        c();
+      } catch {
+        /* sudah terhapus */
+      }
+    }
+    cleanBundles(s.tempDir);
+    const cancelled = current && current.cancelled;
     current = null;
+    emit(cancelled || !event ? { jobId: job.jobId, type: 'cancelled' } : event);
     runNext();
   };
+  const failWith = (error) => finish({ jobId: job.jobId, type: 'failed', error });
+  const failLog = (tail, code) => {
+    const log = tail.slice(-12).join('\n') || `Remotion keluar dengan kode ${code}`;
+    const gpuHint =
+      s.gl !== 'swiftshader' && /webgl|context lost|gpu|angle/i.test(log)
+        ? '\n\nKemungkinan kartu grafis bermasalah. Coba Pengaturan > Render > Kartu grafis: "CPU (cadangan)".'
+        : '';
+    failWith(log + gpuHint);
+  };
 
-  if (!s.remotionProjectPath || !fs.existsSync(s.remotionProjectPath)) {
-    return fail('Folder proyek Remotion belum diatur. Buka Pengaturan.');
-  }
+  if (!s.remotionProjectPath || !fs.existsSync(s.remotionProjectPath)) return failWith('Folder proyek Remotion belum diatur. Buka Pengaturan.');
   const bin = remotionBin(s.remotionProjectPath);
-  if (!bin) {
-    return fail('Remotion tidak ditemukan. Jalankan "npm install" di folder proyek Remotion terlebih dahulu.');
-  }
+  if (!bin) return failWith('Remotion tidak ditemukan. Jalankan "npm install" di folder proyek Remotion terlebih dahulu.');
   const free = await freeGb(s.tempDir);
-  if (free !== null && free < 5) {
-    return fail(`Ruang disk tinggal ${free.toFixed(1)} GB. Render butuh minimal 5 GB kosong.`);
-  }
+  if (free !== null && free < 5) return failWith(`Ruang disk tinggal ${free.toFixed(1)} GB. Render butuh minimal 5 GB kosong.`);
 
   fs.mkdirSync(s.outputDir, { recursive: true });
   fs.mkdirSync(s.tempDir, { recursive: true });
-  const propsFile = path.join(s.tempDir, `props-${job.jobId}.json`);
-  fs.writeFileSync(propsFile, JSON.stringify(withQuality(s, job.props)));
   const outFile = path.join(s.outputDir, job.fileName);
-
-  const args = [
-    'render',
-    quote(s.remotionEntry),
-    quote(job.composition || s.defaultComposition),
-    quote(outFile),
-    `--props=${quote(propsFile)}`,
-    `--concurrency=${Number(s.concurrency) || 1}`,
-    '--codec=h264',
-    `--crf=${Number(s.crf) || 18}`,
-    `--scale=${Number(s.scale) || 1}`,
-    // Scene three.js + post-processing bisa > 30 detik per frame di GPU lama (default Remotion 30 dtk).
-    `--timeout=${Number(s.frameTimeoutMs) || 300000}`,
-  ];
-
-  // .cmd di Windows wajib lewat shell.
-  const child = spawn(quote(bin), args, {
-    cwd: s.remotionProjectPath,
-    shell: true,
-    windowsHide: true,
-    // Bundle Remotion (salinan public/) ditulis ke TEMP dan tidak pernah dihapus (SKILL.md "Disk"),
-    // jadi arahkan TEMP/TMP ke folder sementara ANIMA yang bisa dibersihkan.
-    env: { ...process.env, REMOTION_TMP: s.tempDir, TEMP: s.tempDir, TMP: s.tempDir, FORCE_COLOR: '0' },
-  });
-  current = { jobId: job.jobId, child, cancelled: false };
+  const voiceDir = job.slug ? voiceOutDir(s, job.slug) : path.join(s.remotionProjectPath, s.voiceDir);
+  const propsFile = path.join(s.tempDir, `props-${job.jobId}.json`);
+  cleanups.push(() => fs.rmSync(propsFile, { force: true }));
   emit({ jobId: job.jobId, type: 'started', outFile });
 
-  const tail = [];
-  let lastPct = -1;
-  const onData = (buf) => {
-    for (const line of buf.toString().split(/\r?\n|\r/)) {
-      const t = line.trim();
-      if (!t) continue;
-      tail.push(t);
-      if (tail.length > 30) tail.shift();
-      // Remotion mencetak "Rendered 120/2010" dan "Encoded 120/2010".
-      const m = t.match(/(Rendered|Encoded|Stitched)[^\d]*(\d+)\s*\/\s*(\d+)/i);
-      if (m) {
-        const stage = m[1].toLowerCase();
-        const ratio = Number(m[2]) / Math.max(1, Number(m[3]));
-        // Render frame = 0-80%, encode = 80-88%; sisanya untuk mix audio + gabung.
-        const pct = Math.floor(stage === 'rendered' ? ratio * 80 : 80 + ratio * 8);
-        if (pct !== lastPct) {
-          lastPct = pct;
-          emit({ jobId: job.jobId, type: 'progress', progress: pct, stage });
-        }
-      }
-    }
-  };
-  child.stdout.on('data', onData);
-  child.stderr.on('data', onData);
+  let entry;
+  try {
+    entry = anima2d.syncAnima(s.remotionProjectPath);
+  } catch (e) {
+    return failWith(`Gagal menyiapkan mesin video di folder Remotion: ${e.message}`);
+  }
 
-  child.on('close', async (code) => {
-    fs.rm(propsFile, { force: true }, () => {});
-    cleanBundles(s.tempDir);
-    if (current && current.cancelled) {
-      current = null;
-      emit({ jobId: job.jobId, type: 'cancelled' });
-    } else if (code === 0 && fs.existsSync(outFile)) {
-      const warning = await finishAudio(job.jobId, s, outFile);
-      const cancelled = current && current.cancelled;
-      current = null;
-      emit(cancelled ? { jobId: job.jobId, type: 'cancelled' } : { jobId: job.jobId, type: 'done', outFile, warning });
-    } else {
-      current = null;
-      emit({ jobId: job.jobId, type: 'failed', error: tail.slice(-12).join('\n') || `Remotion keluar dengan kode ${code}` });
+  if (job.kind === '2d') {
+    const pub = anima2d.smallPublicDir(s.tempDir, job.jobId);
+    cleanups.push(pub.cleanup);
+    fs.writeFileSync(propsFile, JSON.stringify(anima2d.build2DProps(job.comic, voiceDir)));
+    const r = await remotionRun(s, job, bin, ['render', quote(entry), 'AnimaComic2D', quote(outFile), `--props=${quote(propsFile)}`, `--public-dir=${quote(pub.dir)}`, ...commonArgs(s)], 0, 92);
+    if (current.cancelled) return finish(null);
+    if (r.code !== 0 || !fs.existsSync(outFile)) return failLog(r.tail, r.code);
+    const voice = anima2d.voiceFile(voiceDir);
+    let warning = '';
+    if (!voice) warning = 'Suara belum dibuat, video tanpa audio. Buat suara di tab Render lalu render ulang.';
+    else if (s.muxAudio) {
+      emit({ jobId: job.jobId, type: 'progress', progress: 95, stage: 'mux' });
+      const tmp = outFile.replace(/\.mp4$/i, '.audio.mp4');
+      // apad + shortest: audio diperpanjang hening sampai video selesai.
+      const m = await ffmpeg(s, ['-y', '-i', outFile, '-i', voice, '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-af', 'apad', '-shortest', tmp], { trackJob: true });
+      if (m.ok && fs.existsSync(tmp)) fs.renameSync(tmp, outFile);
+      else warning = `Gagal menggabung suara:\n${m.log.split('\n').slice(-4).join('\n')}`;
     }
-    runNext();
-  });
+    return finish({ jobId: job.jobId, type: 'done', outFile, warning });
+  }
+
+  // 3D: komposisi buatan pengguna dari entry pengguna (seperti sebelumnya), lalu lapisan teks lewat mesin aplikasi.
+  fs.writeFileSync(propsFile, JSON.stringify(withQuality(s, job.props)));
+  const withText = Boolean(job.overlay && job.overlay.shots?.some((x) => x.text));
+  const raw3d = withText ? path.join(s.tempDir, `video3d-${job.jobId}.mp4`) : outFile;
+  if (withText) cleanups.push(() => fs.rmSync(raw3d, { force: true }));
+  const r = await remotionRun(
+    s,
+    job,
+    bin,
+    ['render', quote(s.remotionEntry), quote(job.composition || s.defaultComposition), quote(raw3d), `--props=${quote(propsFile)}`, `--scale=${Number(s.scale) || 1}`, ...commonArgs(s)],
+    0,
+    withText ? 78 : 88,
+  );
+  if (current.cancelled) return finish(null);
+  if (r.code !== 0 || !fs.existsSync(raw3d)) return failLog(r.tail, r.code);
+
+  if (withText) {
+    // Lapisan teks wajib: video 3D + teks per kata, render ringan tanpa scene 3D.
+    const pub = anima2d.smallPublicDir(s.tempDir, job.jobId);
+    cleanups.push(pub.cleanup);
+    const scale = Number(s.scale) || 1;
+    const props = anima2d.buildOverlayProps(pub.dir, raw3d, { ...job.overlay, width: Math.round(1080 * scale), height: Math.round(1920 * scale) }, voiceDir);
+    const overlayProps = path.join(s.tempDir, `props-text-${job.jobId}.json`);
+    fs.writeFileSync(overlayProps, JSON.stringify(props));
+    cleanups.push(() => fs.rmSync(overlayProps, { force: true }));
+    const t = await remotionRun(s, job, bin, ['render', quote(entry), 'AnimaTextOverlay', quote(outFile), `--props=${quote(overlayProps)}`, `--public-dir=${quote(pub.dir)}`, ...commonArgs(s)], 78, 88);
+    if (current.cancelled) return finish(null);
+    if (t.code !== 0 || !fs.existsSync(outFile)) return failLog(t.tail, t.code);
+  }
+  const warning = await finishAudio(job.jobId, s, outFile);
+  finish({ jobId: job.jobId, type: 'done', outFile, warning });
 }
 
 /** Hapus sisa bundle Remotion di folder sementara ANIMA (hanya folder buatan Remotion/puppeteer). */
@@ -448,7 +520,7 @@ async function runBench(s, kind, { concurrency, frames: nFrames }) {
   const frames = kind === 'still' ? 1 : nFrames || 10;
   const conc = concurrency || Number(s.concurrency) || 1;
   const out = path.join(outDir, kind === 'still' ? `frame-${frame}-${stamp}.png` : `kecepatan-${stamp}.mp4`);
-  const common = [`--scale=${Number(s.scale) || 1}`, `--timeout=${Number(s.frameTimeoutMs) || 300000}`, `--props=${quote(propsFile)}`];
+  const common = [`--scale=${Number(s.scale) || 1}`, glArg(s), `--timeout=${Number(s.frameTimeoutMs) || 300000}`, `--props=${quote(propsFile)}`];
   const args =
     kind === 'still'
       ? ['still', quote(s.remotionEntry), quote(s.defaultComposition), quote(out), `--frame=${frame}`, ...common]
@@ -504,6 +576,7 @@ async function runBench(s, kind, { concurrency, frames: nFrames }) {
     width: Math.round(1080 * (Number(s.scale) || 1)),
     height: Math.round(1920 * (Number(s.scale) || 1)),
     quality: s.renderQuality,
+    gl: s.gl === 'swiftshader' ? 'swiftshader' : 'angle',
     concurrency: kind === 'still' ? 1 : conc,
     seconds,
     secPerFrame,
@@ -558,18 +631,57 @@ async function vibiPoll(s, p, onProgress) {
 
 const voiceOutDir = (s, slug) => path.join(s.outputDir, slug);
 
-ipcMain.handle('vibi:voices', async (_e, search) => {
+/**
+ * Daftar suara per provider. indo = hanya suara penutur asli bahasa Indonesia:
+ * - ElevenLabs: voice library (shared-voices) dengan required_languages=id. Suara bawaan (default-voices)
+ *   semuanya penutur Inggris, jadi bahasa Indonesianya berlogat asing.
+ * - MiniMax: system voices language=Indonesian.  - CapCut: system voices language=id.
+ */
+ipcMain.handle('vibi:voices', async (_e, arg) => {
   const s = readSettings();
-  const q = new URLSearchParams({ page_size: '50', ...(search ? { search } : {}) });
-  const r = await vibi(s, `/v1/default-voices?${q}`);
-  return (r.voices || []).map((v) => ({
-    id: v.voice_id,
-    name: v.name,
-    description: v.description,
-    gender: v.gender,
-    accent: v.accent,
-    preview: v.preview_url,
-  }));
+  const { provider = 'elevenlabs', search = '', indo = true } = typeof arg === 'object' && arg ? arg : { search: arg };
+  const q = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) => v !== '' && v != null)).toString();
+
+  if (provider === 'minimax') {
+    const r = await vibi(s, `/v1/minimax/system-voices?${q({ page: 1, page_size: 50, search, language: indo ? 'Indonesian' : '' })}`);
+    return (r.voice_list || []).map((v) => ({
+      id: v.uniq_id || v.voice_id,
+      name: v.voice_name,
+      description: v.description,
+      gender: (v.tag_list || []).find((t) => /^(male|female)$/i.test(t)),
+      accent: (v.tag_list || []).filter((t) => !/^(male|female)$/i.test(t)).join(', '),
+      preview: v.sample_audio,
+    }));
+  }
+  if (provider === 'capcut') {
+    const r = await vibi(s, `/v1/capcut/system-voices?${q({ page: 1, page_size: 50, search, language: indo ? 'id' : '' })}`);
+    return (r.voice_list || []).map((v) => ({
+      id: v.voice_id,
+      name: v.name,
+      description: (v.tags || []).join(', '),
+      gender: v.gender,
+      accent: v.language,
+      // Contoh suara CapCut lewat api.vibi.pro butuh header API key, jadi tidak bisa diputar langsung.
+      preview: null,
+    }));
+  }
+  if (!indo) {
+    const r = await vibi(s, `/v1/default-voices?${q({ page_size: 50, search })}`);
+    return (r.voices || []).map((v) => ({ id: v.voice_id, name: v.name, description: v.description, gender: v.gender, accent: v.accent, preview: v.preview_url }));
+  }
+  const r = await vibi(s, `/v1/shared-voices?${q({ page_size: 50, search, required_languages: 'id', sort: 'usage_character_count_1y' })}`);
+  return (r.voices || []).map((v) => {
+    const idLang = (v.verified_languages || []).find((l) => l.language_id === 'id');
+    return {
+      id: v.voice_id,
+      name: v.name,
+      description: v.description,
+      gender: v.gender,
+      accent: idLang ? [idLang.language, idLang.accent].filter(Boolean).join(' ') : v.accent,
+      // Contoh dalam bahasa Indonesia kalau ada.
+      preview: idLang?.preview_url || v.preview_url,
+    };
+  });
 });
 
 ipcMain.handle('voice:status', (_e, slug) => {
@@ -685,7 +797,9 @@ ipcMain.handle('voice:generate', async (_e, { slug, text, lines }) => {
     say('Membuat timing per kata', 0);
     const form = new FormData();
     form.append('file', new Blob([fs.readFileSync(mp3)], { type: 'audio/mpeg' }), 'voice.mp3');
-    form.append('language_code', s.vibiLanguage);
+    // STT butuh kode ISO ("id"); MiniMax memakai nama bahasa ("Indonesian").
+    const lang = String(s.vibiLanguage || 'id');
+    form.append('language_code', /^indonesia/i.test(lang) ? 'id' : lang.length <= 3 ? lang : 'id');
     form.append('timestamps_granularity', 'word');
     form.append('tag_audio_events', 'false');
     const stt = await vibi(s, '/v1/speech-to-text', { method: 'POST', body: form });
@@ -767,8 +881,8 @@ ipcMain.handle('render:cancel', (_e, jobId) => {
     current.cancelled = true;
     // Matikan seluruh pohon proses (shell -> node -> chrome headless).
     if (process.platform === 'win32') {
-      execFile('taskkill', ['/pid', String(current.child.pid), '/T', '/F'], () => {});
-    } else {
+      if (current.child) execFile('taskkill', ['/pid', String(current.child.pid), '/T', '/F'], () => {});
+    } else if (current.child) {
       current.child.kill('SIGTERM');
     }
     return true;
@@ -937,7 +1051,17 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session }) => 
   const mcpConfig = JSON.stringify({
     mcpServers: { anima: { type: 'stdio', command: node, args: [mcpServerPath()], env: { ANIMA_SESSION_FILE: genSession } } },
   });
-  const tools = ['mcp__anima__anima_get_project', 'mcp__anima__anima_save_story', 'mcp__anima__anima_patch_shot', 'WebSearch', 'WebFetch'];
+  const tools = [
+    'mcp__anima__anima_get_project',
+    'mcp__anima__anima_save_story',
+    'mcp__anima__anima_patch_shot',
+    // style 2D: latar SVG + foto referensi Wikimedia (sejarah/fakta)
+    'mcp__anima__anima_save_background',
+    'mcp__anima__anima_find_photos',
+    'mcp__anima__anima_view_photo',
+    'WebSearch',
+    'WebFetch',
+  ];
   const args = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--mcp-config', mcpConfig, '--allowedTools', ...tools];
   const say = (line) => win && !win.isDestroyed() && win.webContents.send('claude:event', { projectId, line });
   say('Menyiapkan Claude...');
@@ -949,7 +1073,8 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session }) => 
     let result = null;
     let saved = false;
     const errTail = [];
-    const timer = setTimeout(() => child.kill(), 20 * 60 * 1000);
+    // Style 2D ikut menggambar latar, jadi bisa lebih lama.
+    const timer = setTimeout(() => child.kill(), 40 * 60 * 1000);
 
     child.stdout.on('data', (b) => {
       buf += b.toString();
@@ -971,6 +1096,9 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session }) => 
             if (n.endsWith('get_project')) say('Membaca brief & aturan jenis konten...');
             else if (n === 'WebSearch') say(`Mencari sumber: ${c.input?.query ?? ''}`);
             else if (n === 'WebFetch') say(`Membaca sumber: ${c.input?.url ?? ''}`);
+            else if (n.endsWith('find_photos')) say(`Mencari foto referensi: ${c.input?.query ?? ''}`);
+            else if (n.endsWith('view_photo')) say('Melihat foto referensi...');
+            else if (n.endsWith('save_background')) say(`Menggambar latar: ${c.input?.bgId ?? ''}`);
             else if (n.endsWith('save_story')) {
               say('Menyimpan hook, script, dan shot...');
               saved = true;
@@ -1103,13 +1231,16 @@ function setupAutoUpdate() {
   });
   ipcMain.handle('update:install', () => {
     // Hentikan render yang berjalan supaya installer bisa mengganti file aplikasi.
-    if (current && process.platform === 'win32') execFile('taskkill', ['/pid', String(current.child.pid), '/T', '/F'], () => {});
+    if (current?.child && process.platform === 'win32') execFile('taskkill', ['/pid', String(current.child.pid), '/T', '/F'], () => {});
     setImmediate(() => autoUpdater.quitAndInstall(false, true));
   });
 }
 
 // Versi dari package.json (app.getVersion() bisa berisi versi Electron kalau dijalankan lewat skrip lain).
 const APP_VERSION = require('../package.json').version;
+// Karakter 2D: digambar Claude sebagai SVG ber-rig (electron/characters.cjs).
+require('./characters.cjs').register({ ipcMain, getWin: () => win, claudeCodePath, cwd: app.getPath('userData') });
+
 ipcMain.handle('update:state', () => ({ ...updateState, current: APP_VERSION }));
 if (!app.isPackaged) {
   ipcMain.handle('update:check', () => updateState);
@@ -1134,7 +1265,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 app.on('before-quit', () => {
-  if (current && process.platform === 'win32') {
+  if (current?.child && process.platform === 'win32') {
     execFile('taskkill', ['/pid', String(current.child.pid), '/T', '/F'], () => {});
   }
 });

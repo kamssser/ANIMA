@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('anima', {
     ipcRenderer.on('render:event', listener);
     return () => ipcRenderer.removeListener('render:event', listener);
   },
-  vibiVoices: (search) => ipcRenderer.invoke('vibi:voices', search),
+  vibiVoices: (opts) => ipcRenderer.invoke('vibi:voices', opts),
   voiceStatus: (slug) => ipcRenderer.invoke('voice:status', slug),
   generateVoice: (payload) => ipcRenderer.invoke('voice:generate', payload),
   onVoiceEvent: (cb) => {
@@ -53,6 +53,13 @@ contextBridge.exposeInMainWorld('anima', {
     const listener = (_e, event) => cb(event);
     ipcRenderer.on('claude:event', listener);
     return () => ipcRenderer.removeListener('claude:event', listener);
+  },
+  generateCharacter: (payload) => ipcRenderer.invoke('character:generate', payload),
+  cancelCharacter: () => ipcRenderer.invoke('character:cancel'),
+  onCharacterEvent: (cb) => {
+    const listener = (_e, event) => cb(event);
+    ipcRenderer.on('character:event', listener);
+    return () => ipcRenderer.removeListener('character:event', listener);
   },
   detectClaude: () => ipcRenderer.invoke('claude:detect'),
   installClaude: (payload) => ipcRenderer.invoke('claude:install', payload),

@@ -6,6 +6,25 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.5.0 - 2026-11-03
+
+**Baru**
+- **4 style video 2D baru**: Motion comic (manhwa), Drama Indonesia, Komedi garis tebal, dan Indie animasi. Render jauh lebih cepat dari Kartun 3D (1 video sekitar 3 sampai 5 menit).
+- **Format video per project**: tegak 9:16 (Shorts/TikTok/Reels) atau landscape 16:9 (YouTube) untuk style 2D.
+- Menu **Pengaturan > Karakter**: wajib 1 karakter utama, bisa sampai 10 karakter dengan nama panggilan dan sifat sendiri. Karakter digambar Claude (tanpa biaya gambar), bisa direvisi sampai cocok lalu disimpan. Mengubah karakter yang sudah disimpan meminta konfirmasi "Yakin / Tidak yakin".
+- Karakter 2D bisa berkedip, bicara mengikuti suara, dan tampil seluruh badan, setengah badan, atau close-up.
+- **Teks di layar wajib di semua style**, termasuk Kartun 3D: muncul per kata mengikuti suara dan menyorot kata yang sedang diucapkan.
+- Sejarah & Fakta (style 2D): Claude mencari **foto referensi** bebas pakai dari Wikimedia, lalu menggambar tempat atau bangunan yang bentuk dan posisinya mirip foto itu. Foto yang dipakai tercatat di project.
+- Pilihan **Kartu grafis: GPU / CPU** di Pengaturan > Render.
+
+**Perbaikan**
+- Render Kartun 3D sekitar **6 kali lebih cepat**: sekarang memakai kartu grafis, sebelumnya selalu memakai CPU. Hasil gambarnya sama.
+- **Suara bahasa Indonesia asli**: pencarian suara sekarang menampilkan penutur asli bahasa Indonesia dari ElevenLabs, MiniMax, dan CapCut (centang "Hanya suara asli bahasa Indonesia"), tidak lagi suara penutur asing yang berlogat bule.
+- Timing per kata tetap jalan saat suara A memakai MiniMax.
+
+**Perubahan**
+- Pemilik Supabase perlu menjalankan pembaruan database sekali (`supabase/migrations/003_styles_characters.sql`).
+
 ## 0.4.0 - 2026-11-02
 
 **Baru**

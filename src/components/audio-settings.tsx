@@ -28,7 +28,10 @@ function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
   const k = KEYS[slot];
   const provider = s[k.provider] as Provider;
   const [search, setSearch] = useState('');
+  const [indo, setIndo] = useState(true);
   const [voices, setVoices] = useState<VibiVoice[] | null>(null);
+  // Daftar suara milik provider lain tidak berlaku lagi.
+  useEffect(() => setVoices(null), [provider]);
   const [busy, setBusy] = useState(false);
   const [audio] = useState(() => new Audio());
   useEffect(() => () => audio.pause(), [audio]);
@@ -43,7 +46,7 @@ function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
     setBusy(true);
     try {
       await window.anima.saveSettings({ vibiApiKey: s.vibiApiKey });
-      setVoices(await window.anima.vibiVoices(search.trim() || undefined));
+      setVoices(await window.anima.vibiVoices({ provider, search: search.trim() || undefined, indo }));
     } catch (e) {
       toast.error(cleanErr(e));
     } finally {
@@ -121,16 +124,16 @@ function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
           />
           {(s[k.voiceName] as string) && <span className="text-sm text-muted-foreground">{s[k.voiceName] as string}</span>}
         </div>
-        {provider === 'elevenlabs' ? (
-          <div className="flex gap-2">
-            <Input placeholder="Cari suara (mis. narrator, female)..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} />
-            <Button variant="outline" onClick={load} disabled={busy}>
-              <Search /> {busy ? 'Memuat...' : 'Cari suara'}
-            </Button>
-          </div>
-        ) : (
-          <span className="text-xs text-muted-foreground">Untuk {provider}, salin voice_id dari dashboard vibi.pro.</span>
-        )}
+        <div className="flex gap-2">
+          <Input placeholder="Cari suara (kosongkan untuk semua)..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} />
+          <Button variant="outline" onClick={load} disabled={busy}>
+            <Search /> {busy ? 'Memuat...' : 'Cari suara'}
+          </Button>
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" className="size-4 accent-primary" checked={indo} onChange={(e) => setIndo(e.target.checked)} />
+          Hanya suara asli bahasa Indonesia (logat lokal, bukan penutur asing)
+        </label>
       </div>
 
       {voices && (

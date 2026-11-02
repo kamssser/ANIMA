@@ -16,6 +16,39 @@ export interface Project {
   content_type?: string;
   hook?: string;
   sources?: { title: string; url: string }[];
+  /** Style visual (shared/visual-styles.json). Kosong di database sebelum migrasi 003. */
+  visual_style?: string;
+  format?: '9:16' | '16:9';
+  assets?: ProjectAssets;
+}
+
+export interface ProjectAssets {
+  backgrounds?: Record<string, { description: string; svg: string }>;
+  references?: { title: string; url: string; image: string; license?: string }[];
+}
+
+export interface Character {
+  id: string;
+  /** kunci pendek unik (huruf kecil), dipakai shot: cast[].char */
+  key: string;
+  name: string;
+  nickname: string;
+  is_main: boolean;
+  personality: string;
+  appearance: string;
+  visual_style: string;
+  svg: string;
+  version: number;
+  updated_at: string;
+}
+
+/** Penataan 2D satu shot, disimpan di shots.world. */
+export interface Stage2D {
+  bg?: string;
+  camera?: 'static' | 'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right' | 'shake' | 'push-speaker';
+  cast?: { char: string; x: number; scale?: number; flip?: boolean; expr?: string }[];
+  framing?: 'wide' | 'medium' | 'close';
+  speaker?: string;
 }
 
 export interface Shot {
@@ -79,6 +112,7 @@ export interface Settings {
   muxAudio: boolean;
   frameTimeoutMs: number;
   renderQuality: 'full' | 'draft';
+  gl: 'angle' | 'swiftshader';
   benchFrame: number;
 }
 
@@ -104,6 +138,8 @@ export interface BenchResult {
   width: number;
   height: number;
   quality: 'full' | 'draft';
+  /** Kosong untuk hasil uji versi lama (sebelum 0.4.1, selalu CPU). */
+  gl?: 'angle' | 'swiftshader';
   concurrency: number;
   seconds: number;
   secPerFrame: number;
@@ -118,7 +154,7 @@ export interface VibiVoice {
   description?: string;
   gender?: string;
   accent?: string;
-  preview?: string;
+  preview?: string | null;
 }
 
 export interface VoiceStatus {
@@ -157,9 +193,34 @@ export type RenderEvent =
 
 export interface RenderRequest {
   jobId: string;
+  /** '3d' = komposisi pengguna + lapisan teks; '2d' = mesin AnimaComic2D */
+  kind: '3d' | '2d';
+  /** folder suara project (outputDir/<slug>) untuk timing kata + audio */
+  slug: string;
   composition: string;
   fileName: string;
   props: RenderProps;
+  /** 3D: teks wajib per shot */
+  overlay?: { shots: { durationInFrames: number; text: string }[]; look: string };
+  /** 2D: data video lengkap (tanpa words; ditambah aplikasi dari words.json) */
+  comic?: Comic2DRequest;
+}
+
+export interface Comic2DRequest {
+  style: string;
+  format: '9:16' | '16:9';
+  characters: Record<string, { name: string; svg: string }>;
+  backgrounds: Record<string, { svg: string }>;
+  shots: {
+    durationInFrames: number;
+    bg: string;
+    camera?: Stage2D['camera'];
+    framing?: 'wide' | 'medium' | 'close';
+    cast: NonNullable<Stage2D['cast']>;
+    speaker?: string;
+    text: string;
+  }[];
+  watermark?: string;
 }
 
 /** Data yang diterima komposisi Remotion lewat --props (baca dengan getInputProps()). */

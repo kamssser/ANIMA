@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input, Textarea } from '@/components/ui/input';
 import { Badge, Label, Skeleton } from '@/components/ui/misc';
 import { CONTENT_TYPES, contentType, type ContentTypeId } from '@/lib/content';
+import { VISUAL_STYLES, is2D, visualStyle, type VisualStyleId } from '@/lib/styles';
 import { cn } from '@/lib/utils';
 import { createProject, listProjects } from '@/lib/api';
 import type { Project } from '@/lib/types';
@@ -65,7 +66,10 @@ export default function ProjectsPage() {
                   </div>
                   <ProjectBadge status={p.status} />
                 </div>
-                <div className="mt-4 text-[11px] font-semibold tracking-wider text-primary uppercase">{contentType(p.content_type).label}</div>
+                <div className="mt-4 text-[11px] font-semibold tracking-wider text-primary uppercase">
+                  {contentType(p.content_type).label} · {visualStyle(p.visual_style).label}
+                  {is2D(p.visual_style) && p.format === '16:9' ? ' · 16:9' : ''}
+                </div>
                 <div className="mt-1 line-clamp-1 font-semibold group-hover:text-primary">{p.title}</div>
                 <div className="mt-1 line-clamp-2 min-h-10 text-sm text-muted-foreground">{p.topic || 'Tanpa topik'}</div>
                 <div className="mt-4 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
@@ -90,13 +94,23 @@ function NewProjectDialog() {
   const [topic, setTopic] = useState('');
   const [seconds, setSeconds] = useState(60);
   const [kind, setKind] = useState<ContentTypeId>('karangan');
+  const [style, setStyle] = useState<VisualStyleId>('kartun-3d');
+  const [format, setFormat] = useState<'9:16' | '16:9'>('9:16');
   const [busy, setBusy] = useState(false);
+  const two = is2D(style);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      const p = await createProject({ title: title.trim(), topic: topic.trim(), target_seconds: seconds, content_type: kind });
+      const p = await createProject({
+        title: title.trim(),
+        topic: topic.trim(),
+        target_seconds: Math.min(seconds, two ? 180 : 90),
+        content_type: kind,
+        // Kolom style/format baru ada setelah migrasi 003; project 3D 9:16 tidak perlu mengirimnya.
+        ...(style !== 'kartun-3d' || format !== '9:16' ? { visual_style: style, format: two ? format : '9:16' } : {}),
+      });
       setOpen(false);
       navigate(`/projects/${p.id}`);
     } catch (err) {
@@ -113,7 +127,7 @@ function NewProjectDialog() {
           <Plus /> Project baru
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
         <form onSubmit={submit} className="flex flex-col gap-4">
           <DialogHeader>
             <DialogTitle>Project baru</DialogTitle>
@@ -144,6 +158,43 @@ function NewProjectDialog() {
             <span className="text-xs text-muted-foreground">Semua jenis otomatis dibuatkan hook di 3 detik pertama supaya penonton bertahan sampai habis.</span>
           </div>
           <div className="grid gap-2">
+            <Label>Style video</Label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {VISUAL_STYLES.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setStyle(v.id)}
+                  className={cn(
+                    'flex flex-col gap-1 rounded-lg border p-3 text-left transition-colors hover:border-primary/60',
+                    style === v.id && 'border-primary bg-primary/10 ring-1 ring-primary/40',
+                  )}
+                >
+                  <span className="text-sm font-medium">{v.label}</span>
+                  <span className="mt-auto pt-1">
+                    <Badge variant={v.kind === '3d' ? 'warning' : 'success'}>{v.kind === '3d' ? 'Render lama' : 'Render cepat'}</Badge>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {visualStyle(style).description}
+              {two && ' Memakai karakter dari Pengaturan > Karakter.'}
+            </span>
+          </div>
+          {two && (
+            <div className="grid gap-2">
+              <Label>Format</Label>
+              <div className="flex gap-2">
+                {(['9:16', '16:9'] as const).map((f) => (
+                  <Button key={f} type="button" variant={format === f ? 'default' : 'outline'} onClick={() => setFormat(f)}>
+                    {f === '9:16' ? 'Tegak 9:16 (Shorts/TikTok/Reels)' : 'Landscape 16:9 (YouTube)'}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="grid gap-2">
             <Label htmlFor="title">Judul</Label>
             <Input id="title" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="The Bridge That Fell for a Song" />
           </div>
@@ -152,9 +203,20 @@ function NewProjectDialog() {
             <Textarea id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Jembatan tua yang jatuh cinta pada lagu pengamen..." />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="sec">Durasi target: {seconds} detik</Label>
-            <input id="sec" type="range" min={30} max={90} step={5} value={seconds} onChange={(e) => setSeconds(Number(e.target.value))} className="accent-primary" />
-            <span className="text-xs text-muted-foreground">Skill cartoon-3d-short ideal di 55 sampai 70 detik.</span>
+            <Label htmlFor="sec">Durasi target: {Math.min(seconds, two ? 180 : 90)} detik</Label>
+            <input
+              id="sec"
+              type="range"
+              min={30}
+              max={two ? 180 : 90}
+              step={5}
+              value={Math.min(seconds, two ? 180 : 90)}
+              onChange={(e) => setSeconds(Number(e.target.value))}
+              className="accent-primary"
+            />
+            <span className="text-xs text-muted-foreground">
+              {two ? 'Video 2D bisa sampai 3 menit.' : 'Skill cartoon-3d-short ideal di 55 sampai 70 detik.'}
+            </span>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={busy || !title.trim()}>

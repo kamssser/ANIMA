@@ -1,0 +1,71 @@
+{
+  "styles": [
+    {
+      "id": "kartun-3d",
+      "label": "Kartun 3D",
+      "kind": "3d",
+      "description": "Dunia 3D dengan karakter kartun datar, efek tinta dan blur kamera. Render paling lama.",
+      "draw": []
+    },
+    {
+      "id": "manhwa",
+      "label": "Motion comic (manhwa)",
+      "kind": "2d",
+      "description": "Ilustrasi ala manhwa/webtoon, latar lukisan yang diblur, kamera geser pelan. Cocok untuk drama romantis dan cerita sedih.",
+      "draw": [
+        "Proporsi realistis remaja/dewasa (kepala sekitar 1/7 tinggi badan), wajah tirus, mata sedang dengan kelopak dan bulu mata tipis, hidung cukup satu garis tipis, mulut kecil.",
+        "Garis tipis (stroke 3-4) warna #1b1720, rambut berlapis dengan beberapa helai lepas dan satu highlight lembut.",
+        "Shading lembut: 1 lapis bayangan semi transparan (opacity 0.15-0.25) di bawah dagu, leher, lipatan baju; blush tipis di pipi.",
+        "Warna natural sedikit pastel, pakaian kasual Indonesia modern (kaos, kemeja, jaket, hijab bila sesuai).",
+        "Latar: pemandangan atau ruangan dengan gradasi langit/cahaya hangat, banyak lapisan (jauh-tengah-dekat), detail sederhana tapi kaya warna; akan diblur di video."
+      ]
+    },
+    {
+      "id": "drama",
+      "label": "Drama Indonesia",
+      "kind": "2d",
+      "description": "Kartun drama keluarga/UMKM semi-realistis, latar Indonesia yang detail (warung, dapur, gang), figuran siluet abu-abu.",
+      "draw": [
+        "Semi-realistis: proporsi dewasa normal, wajah dengan tulang pipi, alis tebal, mata dengan iris berwarna dan highlight, garis kerut halus untuk orang tua.",
+        "Garis sedang (stroke 4-5) warna gelap hangat #2a1e1a, shading 2 tingkat (bayangan + highlight kecil) pada kulit, rambut, dan lipatan baju.",
+        "Pakaian khas Indonesia sehari-hari: daster, kemeja batik, celemek, hijab, kaos oblong, sandal; motif sederhana boleh.",
+        "Latar: tempat khas Indonesia (warung, dapur, gang, pasar, ruang tamu) dengan banyak benda (rak, toples, poster, kipas angin), perspektif satu titik, warna hangat.",
+        "Figuran di latar boleh berupa siluet abu-abu polos tanpa detail wajah."
+      ]
+    },
+    {
+      "id": "komedi",
+      "label": "Komedi garis tebal",
+      "kind": "2d",
+      "description": "Kartun komedi lucu: garis tebal, warna datar cerah, hidung besar, ekspresi berlebihan. Paling cepat dibuat.",
+      "draw": [
+        "Kepala besar (sekitar 1/3 tinggi badan), hidung besar dan menonjol, mata bulat putih dengan pupil kecil, badan sederhana, tangan bulat sederhana.",
+        "Garis tebal (stroke 8-10) warna #1b1720, sambungan dan ujung garis bulat (round).",
+        "Warna datar tanpa gradasi, cerah dan kontras (ungu, kuning, toska, oranye), tanpa shading atau paling banyak 1 bayangan datar.",
+        "Ekspresi dibuat berlebihan: mata melotot, alis tinggi, mulut lebar saat bicara.",
+        "Latar: bentuk sederhana dengan garis tebal yang sama, warna datar terang, langit polos, benda besar dan sedikit."
+      ]
+    },
+    {
+      "id": "indie",
+      "label": "Indie animasi",
+      "kind": "2d",
+      "description": "Gaya film pendek animasi indie: garis tangan, warna cel kalem, ekspresif. Garis sedikit bergetar seperti digambar tangan.",
+      "draw": [
+        "Karakter ekspresif dan agak bergaya (kepala sedikit besar, alis tebal, rambut berbentuk tegas, kulit dengan rona), pose santai.",
+        "Garis tangan sedang (stroke 4-6) warna #222630, ketebalan tidak harus rata.",
+        "Warna cel: 1 warna dasar + 1 warna bayangan datar yang lebih gelap dan sedikit kebiruan; palet kalem (biru abu, merah bata, hijau zaitun, krem).",
+        "Latar: ruangan atau kota dengan garis tipis, warna kalem kebiruan, pencahayaan dramatis (satu sumber cahaya), detail benda sehari-hari."
+      ]
+    }
+  ],
+  "rig": [
+    "Keluarkan SATU file SVG utuh: <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 600 1200\">. Tanpa width/height, tanpa <script>, tanpa <image>, tanpa font/teks.",
+    "Karakter berdiri menghadap kamera (boleh 3/4), kaki menyentuh bawah (y=1200), badan di tengah (x sekitar 300), kepala di sepertiga atas. Latar transparan.",
+    "Grup wajib dengan atribut data-part: \"head\" (seluruh kepala + rambut + wajah) dengan data-pivot=\"<x> <y>\" di titik leher; \"eyes-open\"; \"eyes-closed\" (garis kelopak); \"mouth-closed\"; \"mouth-open\" (mulut terbuka berwarna gelap). Keempat grup mata/mulut ada DI DALAM grup head.",
+    "Opsional: data-part=\"arm-l\" dan \"arm-r\" (lengan kiri/kanan) dengan data-pivot di bahu.",
+    "Opsional ekspresi: di dalam head, grup alis/mata khusus dengan data-expr=\"normal\" | \"senang\" | \"sedih\" | \"marah\" | \"kaget\". Kalau dipakai, WAJIB ada data-expr=\"normal\".",
+    "id (gradient, clipPath) boleh dipakai; aplikasi memberi awalan unik otomatis.",
+    "Ukuran file usahakan di bawah 25 KB: pakai path, jangan ribuan titik."
+  ]
+}

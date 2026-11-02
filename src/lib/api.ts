@@ -1,5 +1,5 @@
 import { sb } from './supabase';
-import type { JobStatus, Project, RenderJob, RenderProps, Shot } from './types';
+import type { Character, JobStatus, Project, RenderJob, RenderProps, Shot } from './types';
 import { FPS } from './utils';
 
 function check<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -7,6 +7,10 @@ function check<T>(res: { data: T | null; error: { message: string } | null }): T
     // Kolom 0.4 (jenis konten, hook, sumber, pembicara) belum ada: migrasi 002 belum dijalankan.
     if (/content_type|hook|sources|speaker/.test(res.error.message) && /column|schema cache/i.test(res.error.message)) {
       throw new Error('Database belum diperbarui. Pemilik Supabase perlu menjalankan supabase/migrations/002_content_types.sql di SQL Editor.');
+    }
+    // 0.5: style visual, format, aset, tabel karakter.
+    if (/visual_style|format|assets|characters/.test(res.error.message) && /column|schema cache|relation|does not exist/i.test(res.error.message)) {
+      throw new Error('Database belum diperbarui. Pemilik Supabase perlu menjalankan supabase/migrations/003_styles_characters.sql di SQL Editor.');
     }
     throw new Error(res.error.message);
   }
@@ -23,7 +27,7 @@ export async function getProject(id: string) {
   return check<Project>(await sb().from('projects').select('*').eq('id', id).single());
 }
 
-export async function createProject(input: Pick<Project, 'title' | 'topic' | 'target_seconds' | 'content_type'>) {
+export async function createProject(input: Pick<Project, 'title' | 'topic' | 'target_seconds' | 'content_type'> & Partial<Pick<Project, 'visual_style' | 'format'>>) {
   const { defaultComposition } = await window.anima.getSettings();
   return check<Project>(
     await sb()
@@ -71,6 +75,25 @@ export async function swapShots(a: Shot, b: Shot) {
   await updateShot(a.id, { idx: -1 });
   await updateShot(b.id, { idx: a.idx });
   await updateShot(a.id, { idx: b.idx });
+}
+
+// ---------- Karakter (maks 10 per akun, 1 utama wajib) ----------
+
+export const MAX_CHARACTERS = 10;
+
+export async function listCharacters() {
+  return check<Character[]>(await sb().from('characters').select('*').order('is_main', { ascending: false }).order('created_at'));
+}
+
+export async function saveCharacter(c: Partial<Character> & Pick<Character, 'key' | 'name'>) {
+  const row = { ...c };
+  delete (row as Partial<Character>).updated_at;
+  if (c.id) return check<Character>(await sb().from('characters').update(row).eq('id', c.id).select().single());
+  return check<Character>(await sb().from('characters').insert(row).select().single());
+}
+
+export async function deleteCharacter(id: string) {
+  check(await sb().from('characters').delete().eq('id', id));
 }
 
 // ---------- Render jobs ----------
