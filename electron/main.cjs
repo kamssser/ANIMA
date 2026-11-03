@@ -295,7 +295,10 @@ async function runNext() {
   if (job.kind === '2d') {
     const pub = anima2d.smallPublicDir(s.tempDir, job.jobId);
     cleanups.push(pub.cleanup);
-    fs.writeFileSync(propsFile, JSON.stringify(anima2d.build2DProps(job.comic, voiceDir)));
+    const props2d = anima2d.build2DProps(job.comic, voiceDir);
+    fs.writeFileSync(propsFile, JSON.stringify(props2d));
+    // Panjang video = jumlah frame semua shot (sama dengan comic2DDuration di Comic2D.tsx), 30 fps.
+    const videoSec = (Math.max(1, props2d.shots.reduce((n, x) => n + x.durationInFrames, 0)) / 30).toFixed(3);
     const r = await remotionRun(s, job, bin, ['render', quote(entry), 'AnimaComic2D', quote(outFile), `--props=${quote(propsFile)}`, `--public-dir=${quote(pub.dir)}`, ...commonArgs(s)], 0, 92);
     if (current.cancelled) return finish(null);
     if (r.code !== 0 || !fs.existsSync(outFile)) return failLog(r.tail, r.code);
@@ -305,8 +308,13 @@ async function runNext() {
     else if (s.muxAudio) {
       emit({ jobId: job.jobId, type: 'progress', progress: 95, stage: 'mux' });
       const tmp = outFile.replace(/\.mp4$/i, '.audio.mp4');
-      // apad + shortest: audio diperpanjang hening sampai video selesai.
-      const m = await ffmpeg(s, ['-y', '-i', outFile, '-i', voice, '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-af', 'apad', '-shortest', tmp], { trackJob: true });
+      // Audio diperpanjang hening sampai tepat sepanjang video. Jangan pakai `apad` tanpa batas + -shortest:
+      // dengan video -c:v copy ffmpeg bisa tidak pernah berhenti (render macet di 95%).
+      const m = await ffmpeg(
+        s,
+        ['-y', '-i', outFile, '-i', voice, '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-af', `apad=whole_dur=${videoSec}`, '-t', videoSec, tmp],
+        { trackJob: true },
+      );
       if (m.ok && fs.existsSync(tmp)) fs.renameSync(tmp, outFile);
       else warning = `Gagal menggabung suara:\n${m.log.split('\n').slice(-4).join('\n')}`;
     }
@@ -377,13 +385,31 @@ function runLong(cmd, args, opts = {}) {
     };
     child.stdout.on('data', onData);
     child.stderr.on('data', onData);
-    child.on('error', (err) => resolve({ ok: false, log: err.message }));
-    child.on('close', (code) => resolve({ ok: code === 0, log: tail.join('\n') }));
+    // Batas waktu (opsional): proses yang macet dihentikan beserta anak prosesnya.
+    let timedOut = false;
+    const timer =
+      opts.timeoutMs &&
+      setTimeout(() => {
+        timedOut = true;
+        if (process.platform === 'win32') execFile('taskkill', ['/pid', String(child.pid), '/T', '/F'], () => {});
+        else child.kill('SIGKILL');
+      }, opts.timeoutMs);
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      resolve({ ok: false, log: err.message });
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (timedOut) tail.push(`Dihentikan: lebih dari ${Math.round(opts.timeoutMs / 60000)} menit tanpa selesai.`);
+      resolve({ ok: code === 0 && !timedOut, log: tail.join('\n') });
+    });
   });
 }
 
 /** ffmpeg: pakai bawaan Remotion (`remotion ffmpeg`), kalau tidak ada pakai ffmpeg sistem. */
 async function ffmpeg(s, args, opts) {
+  // Menggabung audio biasanya beberapa detik; 10 menit berarti macet.
+  opts = { timeoutMs: 10 * 60 * 1000, ...opts };
   const bin = s.remotionProjectPath && remotionBin(s.remotionProjectPath);
   if (bin) return runLong(bin, ['ffmpeg', ...args], { cwd: s.remotionProjectPath, ...opts });
   const sys = await which('ffmpeg');

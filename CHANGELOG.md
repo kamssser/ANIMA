@@ -6,6 +6,12 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.6.2 - 2026-11-03
+
+**Perbaikan**
+- Render style 2D tidak lagi **macet di 95%** saat menggabung suara ke video. Langkah ini sekarang selesai dalam beberapa detik.
+- Kalau langkah menggabung audio tetap macet, aplikasi menghentikannya sendiri setelah 10 menit, jadi antrean render tidak tertahan selamanya.
+
 ## 0.6.1 - 2026-11-03
 
 **Perbaikan**
