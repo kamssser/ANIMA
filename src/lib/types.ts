@@ -27,6 +27,8 @@ export interface ProjectAssets {
   /** benda cerita (kereta, peta, ayam...) */
   props?: Record<string, { description: string; svg: string }>;
   references?: { title: string; url: string; image: string; license?: string }[];
+  /** Jumlah suara project (1 narator / 2 = suara A & B). Kosong = bawaan jenis konten. */
+  voices?: 1 | 2;
 }
 
 export interface Character {
@@ -76,7 +78,7 @@ export interface Shot {
   world: Record<string, unknown>;
   narration_text: string;
   notes: string;
-  /** 'A' | 'B' untuk dialog/film; '' untuk satu narator. */
+  /** 'A' | 'B' untuk project 2 suara; '' untuk satu narator. */
   speaker?: string;
 }
 
@@ -112,7 +114,7 @@ export interface Settings {
   vibiVoiceName: string;
   vibiLanguage: string;
   vibiSpeed: number;
-  /** Suara B (pembicara kedua untuk dialog/film), sengaja bisa beda provider/model dari suara A. */
+  /** Suara B (pembicara kedua, project 2 suara). Provider selalu sama dengan suara A; model/suara berbeda. */
   vibi2Provider: 'elevenlabs' | 'minimax' | 'capcut';
   vibi2Model: string;
   vibi2VoiceId: string;

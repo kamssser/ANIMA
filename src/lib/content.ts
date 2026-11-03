@@ -16,9 +16,26 @@ export interface ContentType {
 
 export const CONTENT_TYPES = data.types as ContentType[];
 export const HOOK_RULES = data.hookRules as string[];
+/** Aturan tambahan saat jenis satu-narator dipakai dengan 2 suara. */
+export const TWO_VOICE_RULES = data.twoVoiceRules as string[];
 
 export const contentType = (id: string | null | undefined): ContentType =>
   CONTENT_TYPES.find((t) => t.id === id) ?? CONTENT_TYPES.find((t) => t.id === 'karangan')!;
+
+/**
+ * Project memakai 2 suara (A & B)? Semua jenis konten bisa: pilihan disimpan di assets.voices (1/2);
+ * kalau belum dipilih, ikut bawaan jenisnya (Dialog & Film = 2 suara).
+ */
+export function usesTwoVoices(project: Pick<Project, 'content_type' | 'assets'>) {
+  const v = project.assets?.voices;
+  return v === 2 ? true : v === 1 ? false : contentType(project.content_type).twoVoices;
+}
+
+/** Aturan jenis konten + aturan 2 suara bila project memakainya. */
+function typeRules(project: Project) {
+  const t = contentType(project.content_type);
+  return usesTwoVoices(project) && !t.twoVoices ? [...t.rules, ...TWO_VOICE_RULES] : t.rules;
+}
 
 /**
  * Prompt pendek (hemat token): aturan lengkap diambil Claude sendiri lewat anima_get_project (field guide).
@@ -36,7 +53,7 @@ export function buildPrompt(project: Project) {
       : 'Kembangkan ide dari topik project menjadi cerita yang kuat.',
     `Tulis hook (0-3 detik), script narasi ~${words} kata untuk ${project.target_seconds} detik, dan shot list (${two ? '3-6' : '5-6'} detik per shot). Narasi tampil sebagai teks di layar.`,
   ];
-  if (t.twoVoices) steps.push("Dua pembicara: isi speaker 'A' atau 'B' di SETIAP shot; narration hanya kalimat yang diucapkan.");
+  if (usesTwoVoices(project)) steps.push("Dua pembicara (guide.twoSpeakers): isi speaker 'A' atau 'B' di SETIAP shot; narration hanya kalimat yang diucapkan.");
   if (two) {
     steps.push(`Style 2D "${st.label}", format ${project.format || '9:16'}: pakai karakter dari guide.characters (karakter utama wajib tampil). Isi world tiap shot: bg, camera, framing, cast, speaker.`);
     if (t.needsSources) steps.push('Untuk tempat/bangunan nyata: anima_find_photos lalu anima_view_photo, dan gambar latar yang bentuk + posisinya mirip foto (isi reference).');
@@ -71,7 +88,7 @@ export function buildAnimateBrief(project: Project, slug: string) {
     project.hook ? `- Hook yang sudah ada: ${project.hook}` : '',
     project.script.trim() ? `- Script yang sudah ada (boleh dipakai sebagai dasar, sesuaikan dengan grammar skill):\n\n${project.script.trim()}\n` : '',
     `- Jenis konten: ${t.label}. Aturan:`,
-    ...t.rules.map((r) => `  - ${r}`),
+    ...typeRules(project).map((r) => `  - ${r}`),
     ...HOOK_RULES.map((r) => `  - ${r}`),
     t.needsSources ? '- Wajib riset: setiap fakta di layar dicek dengan web search, minimal 2 sumber, dicatat di brief.md piece.' : '',
     '',
@@ -86,7 +103,7 @@ export function buildAnimateBrief(project: Project, slug: string) {
     '## Suara (voice-over narasi)',
     '- Sumber suara = **rekaman milik pengguna, satu file per kalimat** (SKILL.md > Voice-over langkah 3), dibuat lewat alat MCP **anima_vibi_voice** dengan suara yang sudah dipilih pengguna di HyperForge (vibi.pro).',
     '- Urutan: tulis `voice/script.json` -> panggil `anima_vibi_voice` dengan `estimate: true` -> sebutkan suara dan jumlah karakter (kredit) ke pengguna dan minta persetujuan -> panggil tanpa estimate -> `node <skill>/tools/voice.mjs pieces/' + slug + ' --model small` (model multibahasa untuk Bahasa Indonesia).',
-    t.twoVoices ? '- Jenis ini memakai **dua pembicara**: isi `"speaker": "A"` atau `"B"` di setiap kalimat script.json; anima_vibi_voice memakai suara A/B pengguna.' : '',
+    usesTwoVoices(project) ? '- Project ini memakai **dua pembicara**: isi `"speaker": "A"` atau `"B"` di setiap kalimat script.json; anima_vibi_voice memakai suara A/B pengguna.' : '',
     '- Boleh `--scratch` untuk timing sementara, tapi video akhir wajib memakai take dari anima_vibi_voice.',
     '- Musik: dikomposisi dalam kode (bawaan skill), kecuali pengguna memberi track sendiri.',
     '',
@@ -125,7 +142,7 @@ export function buildBangBrief(project: Project, slug: string) {
     project.hook ? `- Hook yang sudah ada: ${project.hook}` : '',
     project.script.trim() ? `- Naskah yang sudah ada (boleh dipakai sebagai dasar naskah VO):\n\n${project.script.trim()}\n` : '',
     `- Jenis konten HyperForge: ${t.label}. Aturan:`,
-    ...t.rules.map((r) => `  - ${r}`),
+    ...typeRules(project).map((r) => `  - ${r}`),
     ...HOOK_RULES.map((r) => `  - ${r}`),
     t.needsSources ? '- Wajib fakta bersumber: cek dengan web search, minimal 2 sumber, cantumkan.' : '',
     '',
@@ -137,7 +154,7 @@ export function buildBangBrief(project: Project, slug: string) {
     '## Suara (VO)',
     '- Suara: VO narasi. Bangun dulu dengan timing baca, lalu buat VO lewat alat MCP **anima_vibi_tts** (suara yang sudah dipilih pengguna di HyperForge, vibi.pro) sebagai "VO dari layanan TTS pilihan pengguna".',
     '- Urutan: naskah VO disetujui -> `anima_vibi_tts` dengan `estimate: true`, sebutkan suara dan jumlah karakter (kredit) -> setelah pengguna setuju, buat ke `' + slug + '/vo.mp3` -> retime ke VO (references/explainer.md "Retime ke VO").',
-    t.twoVoices ? '- Jenis ini memakai **dua pembicara**: panggil anima_vibi_tts per giliran dengan `speaker: "A"` atau `"B"` (file berbeda), lalu gabungkan dengan ffmpeg.' : '',
+    usesTwoVoices(project) ? '- Project ini memakai **dua pembicara**: panggil anima_vibi_tts per giliran dengan `speaker: "A"` atau `"B"` (file berbeda), lalu gabungkan dengan ffmpeg.' : '',
     '',
     '## Alat di folder kerja',
     '- Skrip skill sudah disalin utuh ke `tools/` (snap.mjs, export-frames.mjs, vo-pauses.html, ...) dan puppeteer sudah terpasang di folder kerja ini. Jalankan dari sini, mis. `node tools/snap.mjs ...`.',
@@ -164,7 +181,7 @@ export function buildStudioBrief(project: Project, slug: string, characters: { k
     project.hook ? `- Hook yang sudah ada: ${project.hook}` : '',
     project.script.trim() ? `- Naskah yang sudah ada (boleh dipakai sebagai dasar):\n\n${project.script.trim()}\n` : '',
     `- Jenis konten: ${t.label}. Aturan:`,
-    ...t.rules.map((r) => `  - ${r}`),
+    ...typeRules(project).map((r) => `  - ${r}`),
     ...HOOK_RULES.map((r) => `  - ${r}`),
     t.needsSources ? '- Wajib riset: setiap fakta dicek dengan web search, minimal 2 sumber, dicatat di naskah.md.' : '',
     '',
@@ -172,6 +189,9 @@ export function buildStudioBrief(project: Project, slug: string, characters: { k
     `- Format: ${project.format === '16:9' ? '16:9 (1920x1080)' : '9:16 (1080x1920)'}. Durasi: sekitar ${project.target_seconds} detik.`,
     `- Gaya: **${st.skillStyle}** (styles/${st.skillStyle}.md), sudah dipilih di HyperForge. Tetap tunjukkan 1 frame contoh untuk disetujui.`,
     '- Teks di layar wajib (subtitle per kata + kata kunci tebal).',
+    st.skillStyle === 'explainer-datar'
+      ? '- Gaya ini: tokoh & benda WAJIB dari pustaka `kit/explainer-datar.js` (XD), buat lembar tokoh & benda sebelum storyboard, dan **penutup wajib**: pamit + hook ke video berikutnya dengan kartu `XD.penutup` (styles/explainer-datar.md > Penutup). Tanyakan topik video berikutnya saat persetujuan naskah.'
+      : '',
     '',
     '## Karakter',
     characters.length
@@ -181,7 +201,9 @@ export function buildStudioBrief(project: Project, slug: string, characters: { k
     '',
     '## Suara',
     `- VO dengan \`anima_vibi_tts\` (suara pilihan pengguna di HyperForge): estimate dulu, sebutkan kreditnya, lalu buat ke \`${slug}/audio/vo.mp3\`. Timing kata: \`anima_vibi_words\` -> \`${slug}/audio/words.json\`.`,
-    t.twoVoices ? '- Dua pembicara: satu file per giliran dengan `speaker: "A"`/`"B"`, lalu gabungkan.' : '',
+    usesTwoVoices(project)
+      ? '- **Dua suara** (dipilih pengguna untuk project ini): A = narator/pembawa utama, B = tokoh kedua. Satu file per giliran dengan `speaker: "A"`/`"B"`, lalu gabungkan. Saat minta persetujuan naskah, tandai tiap kalimat dengan A/B.'
+      : '- Satu suara (narator, suara A).',
     '',
     '## Hasil',
     `- Folder proyek: \`${slug}/\`. Video akhir di \`${slug}/hasil/\` (video_final.mp4 + video_final_tanpa_musik.mp4); HyperForge mengambilnya dari sana.`,

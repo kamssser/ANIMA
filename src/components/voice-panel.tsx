@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, Progress } from '@/components/ui/misc';
 import type { Project, Shot, VoiceStatus } from '@/lib/types';
 import { WORDS_PER_SECOND, countWords, formatDate, slugify } from '@/lib/utils';
-import { contentType } from '@/lib/content';
+import { usesTwoVoices } from '@/lib/content';
 import { cleanErr, runTask, useTask } from '@/lib/tasks';
 import { WordTimingDialog } from '@/components/word-timing';
 
@@ -16,8 +16,8 @@ export function narrationText(project: Project, shots: Shot[]) {
 
 /** Teks yang dibacakan + kunci pembanding (untuk tahu apakah script berubah setelah suara dibuat). */
 export function voiceInput(project: Project, shots: Shot[]) {
-  const two = contentType(project.content_type).twoVoices;
-  // Dialog/film: satu giliran per shot dengan pembicara A/B (kosong dianggap A).
+  const two = usesTwoVoices(project);
+  // Project 2 suara: satu giliran per shot dengan pembicara A/B (kosong dianggap A).
   const lines = two ? shots.filter((s) => s.narration_text.trim()).map((s) => ({ speaker: s.speaker === 'B' ? 'B' : 'A', text: s.narration_text })) : undefined;
   const text = two ? lines!.map((l) => l.text).join(' ') : narrationText(project, shots);
   const key = two ? JSON.stringify(lines!.map((l) => [l.speaker, l.text.trim()])) : text.trim().replace(/\s+/g, ' ');

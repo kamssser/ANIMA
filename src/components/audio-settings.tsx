@@ -3,7 +3,7 @@ import { CheckCircle2, ExternalLink, Play, Search, XCircle } from 'lucide-react'
 import { toast } from 'sonner';
 import { runTask, useTask, useTaskFinished } from '@/lib/tasks';
 import { Button } from '@/components/ui/button';
-import { Input, NativeSelect } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Label } from '@/components/ui/misc';
 import type { PythonCheck, Settings, VibiVoice } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -11,13 +11,19 @@ import { cn } from '@/lib/utils';
 type Props = { s: Settings; setS: (s: Settings) => void };
 type Provider = Settings['vibiProvider'];
 
+// Model per provider. Urutan: [bawaan suara A, bawaan suara B, ...lainnya].
 const MODELS: Record<Provider, string[]> = {
   elevenlabs: ['eleven_multilingual_v2', 'eleven_v3', 'eleven_flash_v2_5', 'eleven_turbo_v2_5'],
-  minimax: ['speech-2.8-turbo'],
+  minimax: ['speech-2.8-turbo', 'speech-2.8-hd'],
   capcut: ['capcut'],
 };
+const PROVIDERS: { id: Provider; label: string }[] = [
+  { id: 'elevenlabs', label: 'ElevenLabs' },
+  { id: 'minimax', label: 'MiniMax' },
+  { id: 'capcut', label: 'CapCut' },
+];
 
-// Kunci pengaturan per slot suara: A = narator/tokoh 1, B = tokoh 2 (dialog & film).
+// Kunci pengaturan per slot suara: A = narator/tokoh 1, B = tokoh 2 (project 2 suara).
 const KEYS = {
   A: { provider: 'vibiProvider', model: 'vibiModel', voiceId: 'vibiVoiceId', voiceName: 'vibiVoiceName', language: 'vibiLanguage', speed: 'vibiSpeed' },
   B: { provider: 'vibi2Provider', model: 'vibi2Model', voiceId: 'vibi2VoiceId', voiceName: 'vibi2VoiceName', language: 'vibi2Language', speed: 'vibi2Speed' },
@@ -27,7 +33,8 @@ const cleanErr = (e: unknown) => (e as Error).message.replace(/^Error invoking r
 
 function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
   const k = KEYS[slot];
-  const provider = s[k.provider] as Provider;
+  // Satu provider untuk kedua suara (provider suara A).
+  const provider = s.vibiProvider;
   const [search, setSearch] = useState('');
   const [indo, setIndo] = useState(true);
   const [voices, setVoices] = useState<VibiVoice[] | null>(null);
@@ -56,7 +63,8 @@ function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
   }
 
   const other = KEYS[slot === 'A' ? 'B' : 'A'];
-  const sameAsOther = s[k.provider] === s[other.provider] && s[k.model] === s[other.model];
+  const sameModel = s[k.model] === s[other.model] && MODELS[provider].length > 1;
+  const sameVoice = Boolean(s[k.voiceId]) && s[k.voiceId] === s[other.voiceId];
 
   return (
     <div className="grid gap-4 rounded-lg border p-4">
@@ -67,35 +75,28 @@ function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
         <div>
           <div className="text-sm font-medium">{slot === 'A' ? 'Suara A (narator / tokoh 1)' : 'Suara B (tokoh 2)'}</div>
           <div className="text-xs text-muted-foreground">
-            {slot === 'A' ? 'Dipakai semua jenis konten.' : 'Hanya untuk Dialog dan Film. Sebaiknya provider/model berbeda dari suara A.'}
+            {slot === 'A' ? 'Narator. Dipakai semua project.' : 'Pembicara kedua untuk project 2 suara (semua jenis konten bisa). Pilih model dan suara yang berbeda dari suara A.'}
           </div>
         </div>
-        {slot === 'B' && sameAsOther && <Badge variant="warning">Model sama dengan suara A</Badge>}
+        {slot === 'B' && sameModel && <Badge variant="warning">Model sama dengan suara A</Badge>}
+        {slot === 'B' && sameVoice && <Badge variant="warning">Suara sama dengan suara A</Badge>}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
-        <div className="grid gap-2">
-          <Label>Provider</Label>
-          <NativeSelect
-            value={provider}
-            onChange={(e) => {
-              const p = e.target.value as Provider;
-              set({ [k.provider]: p, [k.model]: MODELS[p][0], [k.language]: p === 'minimax' ? 'Indonesian' : 'id' } as Partial<Settings>);
-            }}
-          >
-            <option value="elevenlabs">ElevenLabs</option>
-            <option value="minimax">MiniMax</option>
-            <option value="capcut">CapCut</option>
-          </NativeSelect>
-        </div>
+      <div className="grid gap-4 sm:grid-cols-3">
         <div className="grid gap-2">
           <Label>Model</Label>
-          <Input list={`vibi-models-${slot}`} value={s[k.model] as string} onChange={(e) => set({ [k.model]: e.target.value } as Partial<Settings>)} />
-          <datalist id={`vibi-models-${slot}`}>
-            {MODELS[provider].map((m) => (
-              <option key={m} value={m} />
-            ))}
-          </datalist>
+          {provider === 'capcut' ? (
+            <Input value="capcut" disabled />
+          ) : (
+            <>
+              <Input list={`vibi-models-${slot}`} value={s[k.model] as string} onChange={(e) => set({ [k.model]: e.target.value } as Partial<Settings>)} />
+              <datalist id={`vibi-models-${slot}`}>
+                {MODELS[provider].map((m) => (
+                  <option key={m} value={m} />
+                ))}
+              </datalist>
+            </>
+          )}
         </div>
         <div className="grid gap-2">
           <Label>Bahasa</Label>
@@ -170,14 +171,33 @@ function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
   );
 }
 
-/** Suara lewat vibi.pro: API key + suara A + suara B. Disimpan dengan tombol Simpan di Pengaturan. */
+/** Suara lewat vibi.pro: API key + satu provider + suara A + suara B. Disimpan dengan tombol Simpan di Pengaturan. */
 export function VoiceSettings({ s, setS }: Props) {
+  // Ganti provider: kedua suara ikut pindah, model bawaan A dan B dibuat berbeda, suara dipilih ulang
+  // (ID suara hanya berlaku di provider asalnya).
+  function setProvider(p: Provider) {
+    if (p === s.vibiProvider && p === s.vibi2Provider) return;
+    const lang = p === 'minimax' ? 'Indonesian' : 'id';
+    setS({
+      ...s,
+      vibiProvider: p,
+      vibi2Provider: p,
+      vibiModel: MODELS[p][0],
+      vibi2Model: MODELS[p][1] ?? MODELS[p][0],
+      vibiLanguage: lang,
+      vibi2Language: lang,
+      vibiVoiceId: '',
+      vibiVoiceName: '',
+      vibi2VoiceId: '',
+      vibi2VoiceName: '',
+    });
+  }
   return (
     <Card>
       <CardHeader>
         <CardTitle>Suara (vibi.pro)</CardTitle>
         <CardDescription>
-          Script diubah jadi suara oleh vibi.pro lalu disimpan sebagai voice/voice.wav 48 kHz untuk skill. Dialog & Film memakai dua suara (A dan B). Memakai kredit vibi.pro.
+          Script diubah jadi suara oleh vibi.pro. Semua jenis konten bisa memakai dua suara (A dan B): keduanya dari satu provider, dengan model dan suara berbeda. Memakai kredit vibi.pro.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -189,6 +209,21 @@ export function VoiceSettings({ s, setS }: Props) {
               Ambil key <ExternalLink />
             </Button>
           </div>
+        </div>
+        <div className="grid gap-2">
+          <Label>Provider (untuk suara A dan B)</Label>
+          <div className="flex flex-wrap gap-2">
+            {PROVIDERS.map((p) => (
+              <Button key={p.id} type="button" variant={s.vibiProvider === p.id ? 'default' : 'outline'} onClick={() => setProvider(p.id)}>
+                {p.label}
+              </Button>
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {s.vibiProvider === 'capcut'
+              ? 'CapCut hanya punya satu model: bedakan suara A dan B lewat pilihan suaranya.'
+              : 'Ganti provider akan mengosongkan pilihan suara A dan B (pilih ulang di bawah).'}
+          </span>
         </div>
         <VoiceSlot s={s} setS={setS} slot="A" />
         <VoiceSlot s={s} setS={setS} slot="B" />

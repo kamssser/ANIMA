@@ -29,7 +29,7 @@ import { onRender, queueRender } from '@/lib/render';
 import { sb } from '@/lib/supabase';
 import type { Project, ProjectStatus, RenderJob, Shot } from '@/lib/types';
 import { WORDS_PER_SECOND, cn, countWords, formatSeconds, framesToSeconds } from '@/lib/utils';
-import { CONTENT_TYPES, buildPrompt, contentType } from '@/lib/content';
+import { CONTENT_TYPES, buildPrompt, contentType, usesTwoVoices } from '@/lib/content';
 import { is2D, isSkill, styleImage, visualStyle, type VisualStyleId } from '@/lib/styles';
 import { StylePicker } from '@/components/style-picker';
 import { SkillPanel, SkillRenders } from '@/components/skill-video';
@@ -117,7 +117,7 @@ export default function ProjectDetailPage() {
           </TabsContent>
         )}
         <TabsContent value="shots">
-          <ShotEditor projectId={project.id} shots={shots} onChange={reloadShots} twoVoices={contentType(project.content_type).twoVoices} />
+          <ShotEditor projectId={project.id} shots={shots} onChange={reloadShots} twoVoices={usesTwoVoices(project)} />
         </TabsContent>
         <TabsContent value="render">
           <RenderTab project={project} shots={shots} onProject={setProject} />
@@ -190,7 +190,7 @@ function GeneratePanel({ project, onDone, beforeRun }: { project: Project; onDon
         <CardDescription>
           Claude menulis hook, script, dan shot sesuai jenis <b>{t.label}</b>
           {t.needsSources ? ', setelah riset sumber di web' : ''}
-          {t.twoVoices ? ', dengan dua pembicara (A & B)' : ''}. Memakai langganan Claude kamu, tanpa API key.
+          {usesTwoVoices(project) ? ', dengan dua pembicara (A & B)' : ''}. Memakai langganan Claude kamu, tanpa API key.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -247,7 +247,12 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
   const t = contentType(draft.content_type);
 
   async function persist() {
+    // Pilihan jumlah suara disimpan di assets: gabung dengan versi terbaru supaya latar/benda yang
+    // baru disimpan Claude tidak tertimpa.
+    const voices = draft.assets?.voices;
+    const assetsPatch = voices !== project.assets?.voices ? { assets: { ...((await getProject(project.id)).assets ?? {}), voices } } : {};
     const saved = await updateProject(project.id, {
+      ...assetsPatch,
       title: draft.title,
       topic: draft.topic,
       target_seconds: draft.target_seconds,
@@ -291,7 +296,6 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
                   <option key={c.id} value={c.id}>
                     {c.label}
                     {c.needsSources ? ' (wajib sumber)' : ''}
-                    {c.twoVoices ? ' (2 suara)' : ''}
                   </option>
                 ))}
               </NativeSelect>
@@ -369,6 +373,20 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
                   <option value="9:16">Tegak 9:16 (Shorts/TikTok/Reels)</option>
                   <option value="16:9">Landscape 16:9 (YouTube)</option>
                 </NativeSelect>
+              </div>
+            )}
+            {project.visual_style !== undefined && (
+              <div className="grid gap-2">
+                <Label htmlFor="voices">Suara</Label>
+                <NativeSelect
+                  id="voices"
+                  value={usesTwoVoices(draft) ? '2' : '1'}
+                  onChange={(e) => setDraft({ ...draft, assets: { ...draft.assets, voices: Number(e.target.value) as 1 | 2 } })}
+                >
+                  <option value="1">1 suara (narator)</option>
+                  <option value="2">2 suara (A & B bergantian)</option>
+                </NativeSelect>
+                <span className="text-xs text-muted-foreground">Suara A dan B diatur di Pengaturan &gt; Suara & audio.</span>
               </div>
             )}
             <div className="grid gap-2">

@@ -89,14 +89,17 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
 - Pilih format cerita yang cocok (sebutkan alasannya): *istilah → bahasa sehari-hari*, *bongkar benda*,
   *mitos vs fakta*, *asal-usul tiga babak*, *masalah kecil yang membesar*, *awas modus*, *perjalanan satu benda*.
 - Satu perumpamaan sehari-hari per langkah penjelasan. Penutup membalik anggapan awal atau menjawab hook.
-- Satu ajakan follow yang nyambung ke topik (beda tiap video). Angka ditulis seperti diucapkan.
+- Satu ajakan follow yang nyambung ke topik (beda tiap video). **Kalau file gaya punya bagian "Penutup"** (mis.
+  explainer datar: pamit + hook ke video berikutnya), ikuti itu sebagai pengganti ajakan follow. Angka ditulis seperti
+  diucapkan.
 - Cek fakta tiap klaim (web search, sumber di bawah naskah); tandai yang ragu dengan versi kalimat yang lebih aman.
 - Tampilkan naskah; jangan lanjut sebelum pengguna oke.
 
 ### 4. Suara → `audio/vo.mp3`, `audio/words.json`
 - `anima_vibi_tts` dengan `estimate: true` → sebutkan suara dan jumlah karakter (kredit), minta persetujuan, lalu
-  buat ke `<proyek>/audio/vo.mp3` (suara pilihan pengguna di HyperForge). Dua pembicara: satu file per giliran
-  (`speaker: "A"`/`"B"`), gabungkan dengan ffmpeg (jeda 0,25 dtk).
+  buat ke `<proyek>/audio/vo.mp3` (suara pilihan pengguna di HyperForge). Dua pembicara (brief menyebut **dua suara**;
+  semua jenis konten bisa): satu file per giliran (`speaker: "A"`/`"B"`, provider sama dengan model/suara berbeda),
+  gabungkan dengan ffmpeg (jeda 0,25 dtk). Tokoh yang sedang berbicara diberi `bicara: true` / mulut bergerak.
 - `anima_vibi_words` pada `vo.mp3` → `audio/words.json` (timing tiap kata, Bahasa Indonesia).
 - Durasi kepanjangan: rapatkan jeda dulu (ffmpeg `silenceremove`/`atempo` ≤ 1,08), kalau masih lebih usulkan kalimat
   yang dipangkas, jangan langsung dipotong. Durasi video = durasi suara + 0,6 dtk.
@@ -150,6 +153,10 @@ prompt/aturan yang terbukti jalan), lalu kerjakan langkah 3–6. Simpan pelajara
 (gerak "on twos"), `HF.boil(t, perDetik, n)` (getar garis), `HF.rng(seed)`, `HF.noise(x)`, `HF.loadJSON(url)`,
 `HF.safe(W,H)`, `HF.chunkWords(words, n)`, `HF.drawSubtitle(ctx, t, chunks, {keywords, hi, y, size})`.
 three.js: `import * as THREE from 'three'` (importmap di templat 3D, dari `node_modules`, tanpa internet).
+
+Pustaka gaya (dimuat setelah kit): `kit/explainer-datar.js` (`XD`: tokoh berparameter, benda, label, latar, kartu
+penutup) untuk gaya explainer datar. Gaya yang punya pustaka **wajib** memakainya; tokoh dan benda tidak digambar
+dari nol supaya tidak melenceng dari gaya.
 
 ## Alat (`tools/`)
 | alat | guna |

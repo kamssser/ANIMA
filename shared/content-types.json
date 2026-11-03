@@ -7,6 +7,12 @@
     "Akhiri dengan payoff yang memuaskan (jawaban/twist/hasil), boleh ditutup ajakan singkat 1 kalimat.",
     "Tulis isi hook (kalimat pembuka) juga di field 'hook' saat menyimpan."
   ],
+  "twoVoiceRules": [
+    "Project ini memakai DUA suara: A = narator/pembawa utama, B = tokoh kedua (penanya penasaran, saksi, atau tokoh cerita) dengan gaya bicara yang jelas berbeda.",
+    "B muncul di momen yang menghidupkan: bertanya seperti penonton, menyanggah, bereaksi kaget, atau memerankan tokoh. Minimal sepertiga giliran milik B, dan tidak lebih dari 3 giliran A berturut-turut.",
+    "Setiap shot = satu giliran bicara; isi field 'speaker' dengan 'A' atau 'B' dan 'narration' dengan kalimatnya saja (tanpa nama pembicara).",
+    "Fakta dan angka tetap disampaikan dengan akurat; B tidak boleh mengarang fakta."
+  ],
   "types": [
     {
       "id": "sejarah",

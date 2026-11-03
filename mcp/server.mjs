@@ -70,12 +70,14 @@ const shotSchema = z.object({
     .describe(
       'Style 3D: setting/props/cahaya bebas. Style 2D WAJIB: { bg: "<id latar>", camera: "static|zoom-in|zoom-out|pan-left|pan-right|shake|push-speaker", framing: "wide|medium|close", transition: "cut|fade|slide|zoom|flash|whip", cast: [{ char: "<key karakter>", x: 0..1, flip?: bool, expr?: "normal|senang|sedih|marah|kaget", pose?: "idle|point|wave|explain|shrug|cheer|think", enter?: "none|left|right|bottom|pop", toX?: 0..1 }], speaker: "<key karakter yang bicara>", props: [{ prop: "<id benda>", x: 0..1, y: 0..1, size: 0.05..1.2, anim?: "none|float|bob|pop|drop|slide-left|slide-right|across-left|across-right|spin|pulse|shake", delay?: detik, layer?: "back|front" }] }. cast boleh [] untuk shot sisipan (close-up benda/peta) asal ada props.',
     ),
-  speaker: z.enum(['A', 'B', '']).default('').describe("Untuk jenis dialog/film: 'A' atau 'B' (siapa yang bicara di shot ini)"),
+  speaker: z.enum(['A', 'B', '']).default('').describe("Untuk project 2 suara (guide.twoSpeakers): 'A' atau 'B' (siapa yang bicara di shot ini)"),
 });
 
 // Aturan per jenis konten (sama dengan yang dipakai aplikasi).
 const CONTENT = JSON.parse(fs.readFileSync(new URL('../shared/content-types.json', import.meta.url), 'utf8'));
 const typeOf = (id) => CONTENT.types.find((t) => t.id === id) ?? CONTENT.types.find((t) => t.id === 'karangan');
+/** 2 suara: pilihan project (assets.voices 1/2), kalau belum dipilih ikut bawaan jenis konten. */
+const twoVoicesOf = (p, t) => (p?.assets?.voices === 2 ? true : p?.assets?.voices === 1 ? false : Boolean(t.twoVoices));
 const VISUAL = JSON.parse(fs.readFileSync(new URL('../shared/visual-styles.json', import.meta.url), 'utf8'));
 const styleOf = (id) => VISUAL.styles.find((x) => x.id === (VISUAL.aliases?.[id] ?? id)) ?? VISUAL.styles[0];
 
@@ -125,18 +127,19 @@ server.tool(
   async ({ id, includeShots }) => {
     try {
       await auth();
-      let { data: p, error } = await db.from('projects').select('id,title,topic,target_seconds,script,status,content_type,hook,visual_style,format').eq('id', id).single();
+      let { data: p, error } = await db.from('projects').select('id,title,topic,target_seconds,script,status,content_type,hook,visual_style,format,assets').eq('id', id).single();
       // Database sebelum migrasi 003: kolom style belum ada -> anggap 3D.
-      if (error && /visual_style|format/.test(error.message)) ({ data: p, error } = await db.from('projects').select('id,title,topic,target_seconds,script,status,content_type,hook').eq('id', id).single());
+      if (error && /visual_style|format|assets/.test(error.message)) ({ data: p, error } = await db.from('projects').select('id,title,topic,target_seconds,script,status,content_type,hook').eq('id', id).single());
       if (error) return fail(error.message);
       const t = typeOf(p.content_type);
       const st = styleOf(p.visual_style);
+      const two = twoVoicesOf(p, t);
       const guide = {
         type: t.label,
         hook: CONTENT.hookRules,
-        rules: t.rules,
+        rules: two && !t.twoVoices ? [...t.rules, ...CONTENT.twoVoiceRules] : t.rules,
         sourcesRequired: t.needsSources,
-        twoSpeakers: t.twoVoices,
+        twoSpeakers: two,
         targetWords: Math.round(p.target_seconds * 3.7),
         onScreenText: 'Teks narasi WAJIB tampil di layar (subtitle otomatis per kata), jadi setiap shot yang berbicara harus punya narration.',
       };
@@ -173,7 +176,7 @@ server.tool(
 
 server.tool(
   'anima_save_story',
-  'Simpan hook + script + SELURUH shot list sebuah project (shot lama diganti). Untuk sejarah/fakta wajib isi sources; untuk dialog/film wajib isi speaker A/B tiap shot.',
+  'Simpan hook + script + SELURUH shot list sebuah project (shot lama diganti). Untuk sejarah/fakta wajib isi sources; untuk project 2 suara (guide.twoSpeakers) wajib isi speaker A/B tiap shot.',
   {
     id: z.string().uuid(),
     hook: z.string().min(1).describe('Kalimat hook 0-3 detik pertama'),
@@ -226,10 +229,10 @@ server.tool(
       if (t.needsSources && sources.filter((s) => /^https?:\/\//.test(s.url)).length < 2) {
         return fail(`Jenis "${t.label}" wajib minimal 2 sumber (judul + URL) yang benar-benar dibaca. Riset dulu lalu simpan ulang.`);
       }
-      if (t.twoVoices) {
+      if (twoVoicesOf(p, t)) {
         const bad = shots.findIndex((s) => s.speaker !== 'A' && s.speaker !== 'B');
-        if (bad >= 0) return fail(`Jenis "${t.label}" wajib isi speaker 'A' atau 'B' di setiap shot (shot ${bad + 1} kosong).`);
-        if (!shots.some((s) => s.speaker === 'B')) return fail(`Jenis "${t.label}" butuh dua pembicara: belum ada shot dengan speaker 'B'.`);
+        if (bad >= 0) return fail(`Project ini memakai 2 suara: wajib isi speaker 'A' atau 'B' di setiap shot (shot ${bad + 1} kosong).`);
+        if (!shots.some((s) => s.speaker === 'B')) return fail(`Project ini memakai 2 suara: belum ada shot dengan speaker 'B'.`);
       }
       const up = await db.from('projects').update({ script, hook, sources, status: 'ready' }).eq('id', id);
       if (up.error) return fail(up.error.message);
@@ -387,10 +390,20 @@ async function vibiCall(s, p, init = {}) {
   if (!res.ok) throw new Error(`vibi.pro ${res.status}: ${body.error || body.detail || body.message || text.slice(0, 200)}`);
   return body;
 }
-/** Suara A (bawaan) atau B (pembicara kedua) dari pengaturan HyperForge. */
+/**
+ * Suara A (bawaan) atau B (pembicara kedua) dari pengaturan HyperForge. Keduanya satu provider (provider suara A),
+ * beda model/suara. Suara B lama dari provider lain dianggap belum dipilih.
+ */
 const voiceOf = (s, who) =>
   who === 'B'
-    ? { provider: s.vibi2Provider, model: s.vibi2Model, voiceId: s.vibi2VoiceId, name: s.vibi2VoiceName, language: s.vibi2Language, speed: s.vibi2Speed }
+    ? {
+        provider: s.vibiProvider,
+        model: s.vibi2Model,
+        voiceId: !s.vibi2Provider || s.vibi2Provider === s.vibiProvider ? s.vibi2VoiceId : '',
+        name: s.vibi2VoiceName,
+        language: s.vibi2Language,
+        speed: s.vibi2Speed,
+      }
     : { provider: s.vibiProvider, model: s.vibiModel, voiceId: s.vibiVoiceId, name: s.vibiVoiceName, language: s.vibiLanguage, speed: s.vibiSpeed };
 
 async function vibiLine(s, v, text, outFile) {
@@ -441,7 +454,7 @@ server.tool(
       const s = hyperforgeSettings();
       if (!s.vibiVoiceId) return fail('Suara A belum dipilih di HyperForge > Pengaturan > Suara & audio.');
       const lines = (script.lines || []).filter((l) => l?.id && String(l.text || '').trim());
-      if (lines.some((l) => l.speaker === 'B') && !s.vibi2VoiceId) return fail('Ada kalimat speaker "B" tapi Suara B belum dipilih di HyperForge > Pengaturan > Suara & audio.');
+      if (lines.some((l) => l.speaker === 'B') && !voiceOf(s, 'B').voiceId) return fail('Ada kalimat speaker "B" tapi Suara B belum dipilih di HyperForge > Pengaturan > Suara & audio.');
       const label = (v) => `${v.name || v.voiceId} (${v.provider || 'elevenlabs'}${v.model ? `, ${v.model}` : ''})`;
       const voice = lines.some((l) => l.speaker === 'B') ? { A: label(voiceOf(s, 'A')), B: label(voiceOf(s, 'B')) } : label(voiceOf(s, 'A'));
       const todo = lines.filter((l) => (only?.length ? only.includes(l.id) : !(l.file && fs.existsSync(path.join(root, 'voice', l.file)))));

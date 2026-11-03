@@ -215,7 +215,7 @@
       "kind": "skill",
       "engine": "studio",
       "skillStyle": "explainer-datar",
-      "description": "2D datar ala video explainer edukasi: tokoh berkepala bulat dengan mata titik, bayangan lembut tanpa garis hitam, palet hangat, label pil dan peta infografis. Ringan. Cocok untuk explainer 3-5 menit di YouTube. Bisa memakai frame referensi gaya milikmu. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "description": "2D datar ala video explainer edukasi: tokoh berkepala besar dengan mata titik, bayangan lembut tanpa garis hitam, palet hangat, label pil dan peta infografis. Ditutup salam pamit + hook ke video berikutnya. Ringan. Cocok untuk explainer 3-5 menit di YouTube. Bisa memakai frame referensi gaya milikmu. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
       "draw": []
     },
     {

@@ -27,7 +27,7 @@ export async function getProject(id: string) {
   return check<Project>(await sb().from('projects').select('*').eq('id', id).single());
 }
 
-export async function createProject(input: Pick<Project, 'title' | 'topic' | 'target_seconds' | 'content_type'> & Partial<Pick<Project, 'visual_style' | 'format'>>) {
+export async function createProject(input: Pick<Project, 'title' | 'topic' | 'target_seconds' | 'content_type'> & Partial<Pick<Project, 'visual_style' | 'format' | 'assets'>>) {
   const { defaultComposition } = await window.anima.getSettings();
   return check<Project>(
     await sb()

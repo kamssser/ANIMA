@@ -61,12 +61,12 @@ const defaultSettings = () => ({
   vibiVoiceName: '',
   vibiLanguage: 'id',
   vibiSpeed: 1,
-  // Suara B untuk dialog/film: default MiniMax supaya modelnya beda dari suara A (ElevenLabs).
-  vibi2Provider: 'minimax',
-  vibi2Model: 'speech-2.8-turbo',
+  // Suara B (pembicara kedua): provider SAMA dengan suara A, model berbeda (mis. eleven_v3).
+  vibi2Provider: 'elevenlabs',
+  vibi2Model: 'eleven_v3',
   vibi2VoiceId: '',
   vibi2VoiceName: '',
-  vibi2Language: 'Indonesian',
+  vibi2Language: 'id',
   vibi2Speed: 1,
   wordTimestamps: true,
   // Pipeline audio skill: <proyek Remotion>/voice (input) dan /audio (mix.py).
@@ -77,9 +77,22 @@ const defaultSettings = () => ({
   muxAudio: true,
 });
 
+// Model bawaan suara B per provider: dibuat beda dari model bawaan suara A.
+const VOICE_B_MODEL = { elevenlabs: 'eleven_v3', minimax: 'speech-2.8-hd', capcut: 'capcut' };
+
+/**
+ * Suara A dan B memakai SATU provider (beda model). Pengaturan lama dengan provider B yang berbeda:
+ * suara B-nya milik provider lain, jadi dikosongkan dan harus dipilih ulang.
+ */
+function oneProvider(s) {
+  if (s.vibi2Provider === s.vibiProvider) return s;
+  const p = s.vibiProvider;
+  return { ...s, vibi2Provider: p, vibi2Model: VOICE_B_MODEL[p] || s.vibiModel, vibi2VoiceId: '', vibi2VoiceName: '', vibi2Language: p === 'minimax' ? 'Indonesian' : 'id' };
+}
+
 function readSettings() {
   try {
-    return { ...defaultSettings(), ...JSON.parse(fs.readFileSync(settingsFile(), 'utf8')) };
+    return oneProvider({ ...defaultSettings(), ...JSON.parse(fs.readFileSync(settingsFile(), 'utf8')) });
   } catch {
     return defaultSettings();
   }
@@ -859,19 +872,19 @@ async function writeReplacing(file, data) {
 }
 
 const voiceA = (s) => ({ provider: s.vibiProvider, model: s.vibiModel, voiceId: s.vibiVoiceId, language: s.vibiLanguage, speed: s.vibiSpeed });
-const voiceB = (s) => ({ provider: s.vibi2Provider, model: s.vibi2Model, voiceId: s.vibi2VoiceId, language: s.vibi2Language, speed: s.vibi2Speed });
+const voiceB = (s) => ({ provider: s.vibiProvider, model: s.vibi2Model, voiceId: s.vibi2VoiceId, language: s.vibi2Language, speed: s.vibi2Speed });
 
 /**
  * payload.text  : satu narator (suara A).
- * payload.lines : dialog/film [{ speaker: 'A'|'B', text }] -> tiap giliran pakai suara A atau B
- *                 (boleh beda provider/model), digabung dengan jeda 0,3 detik.
+ * payload.lines : project 2 suara [{ speaker: 'A'|'B', text }] -> tiap giliran pakai suara A atau B
+ *                 (provider sama, model/suara beda), digabung dengan jeda 0,3 detik.
  */
 ipcMain.handle('voice:generate', async (_e, { slug, text, lines, textKey }) => {
   const s = readSettings();
   const say = (step, progress) => win && !win.isDestroyed() && win.webContents.send('voice:event', { slug, step, progress });
   if (!s.vibiVoiceId) throw new Error('Pilih suara A dulu di Pengaturan > Suara & audio.');
   const dialog = Array.isArray(lines) && lines.some((l) => l.speaker === 'B');
-  if (dialog && !s.vibi2VoiceId) throw new Error('Jenis ini memakai 2 suara. Pilih suara B dulu di Pengaturan > Suara & audio.');
+  if (dialog && !s.vibi2VoiceId) throw new Error('Project ini memakai 2 suara. Pilih suara B dulu di Pengaturan > Suara & audio.');
   if (!dialog && !String(text || '').trim()) throw new Error('Script masih kosong.');
 
   const dir = voiceOutDir(s, slug);

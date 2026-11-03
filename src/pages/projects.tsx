@@ -108,6 +108,9 @@ function NewProjectDialog() {
   const [kind, setKind] = useState<ContentTypeId>('karangan');
   const [style, setStyle] = useState<VisualStyleId>('sinema');
   const [format, setFormat] = useState<'9:16' | '16:9'>('9:16');
+  // Jumlah suara: null = ikut bawaan jenis konten (Dialog & Film = 2 suara).
+  const [voices, setVoices] = useState<1 | 2 | null>(null);
+  const twoVoices = voices ? voices === 2 : contentType(kind).twoVoices;
   const [busy, setBusy] = useState(false);
   const two = is2D(style) || isSkill(style);
   // Semua style sampai 5 menit; Kartun 3D tetap paling lama dirender.
@@ -132,6 +135,8 @@ function NewProjectDialog() {
         content_type: kind,
         // Kolom style/format baru ada setelah migrasi 003; project 3D 9:16 tidak perlu mengirimnya.
         ...(style !== 'kartun-3d' || format !== '9:16' ? { visual_style: style, format: two ? format : '9:16' } : {}),
+        // Simpan hanya kalau beda dari bawaan jenisnya (kolom assets ada sejak migrasi 003).
+        ...(twoVoices !== contentType(kind).twoVoices ? { assets: { voices: twoVoices ? 2 : 1 } } : {}),
       });
       setOpen(false);
       navigate(`/projects/${p.id}`);
@@ -185,14 +190,17 @@ function NewProjectDialog() {
                     <button
                       key={t.id}
                       type="button"
-                      onClick={() => setKind(t.id)}
+                      onClick={() => {
+                        setKind(t.id);
+                        setVoices(null);
+                      }}
                       className={cn('flex flex-col gap-1 rounded-lg border p-3 text-left transition-colors hover:border-primary/60', kind === t.id && 'border-primary bg-primary/10 ring-1 ring-primary/40')}
                     >
                       <span className="text-sm font-medium">{t.label}</span>
                       <span className="line-clamp-3 text-[11px] leading-snug text-muted-foreground">{t.description}</span>
                       <span className="mt-auto flex flex-wrap gap-1 pt-1">
                         {t.needsSources && <Badge variant="warning">Wajib sumber</Badge>}
-                        {t.twoVoices && <Badge variant="secondary">2 suara</Badge>}
+                        {t.twoVoices && <Badge variant="secondary">bawaan 2 suara</Badge>}
                       </span>
                     </button>
                   ))}
@@ -236,6 +244,19 @@ function NewProjectDialog() {
                     </div>
                   </div>
                 )}
+                <div className="grid gap-2">
+                  <Label>Suara</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {([1, 2] as const).map((n) => (
+                      <Button key={n} type="button" variant={(twoVoices ? 2 : 1) === n ? 'default' : 'outline'} onClick={() => setVoices(n)}>
+                        {n === 1 ? '1 suara (narator)' : '2 suara (A & B bergantian)'}
+                      </Button>
+                    ))}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Semua jenis konten bisa 2 suara: A sebagai narator, B sebagai tokoh kedua yang bertanya atau menanggapi. Suara A dan B diatur di Pengaturan &gt; Suara & audio.
+                  </span>
+                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="sec">Durasi target: {Math.min(seconds, max)} detik</Label>
                   <input id="sec" type="range" min={20} max={max} step={5} value={Math.min(seconds, max)} onChange={(e) => setSeconds(Number(e.target.value))} className="accent-primary" />

@@ -6,6 +6,18 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.14.0 - 2026-11-03
+
+**Baru**
+- **Semua jenis konten bisa memakai 2 suara** (A & B bergantian), tidak hanya Dialog dan Film. Pilih **1 suara** atau **2 suara** saat membuat project baru, atau ubah nanti di tab Brief. Untuk sejarah, fakta, tutorial, dan lainnya, suara A menjadi narator dan suara B menjadi tokoh kedua yang bertanya, menyanggah, atau bereaksi.
+- Gaya **Studio: explainer datar** sekarang **ditutup dengan salam pamit dan hook ke video berikutnya**: pertanyaan atau fakta setengah yang membuat penonton penasaran, plus kartu penutup "Video berikutnya" (tokoh melambai dan cuplikan video selanjutnya). Claude menanyakan topik video berikutnya saat kamu menyetujui naskah.
+
+**Perbaikan**
+- Gambar tokoh dan benda di gaya **Studio: explainer datar** dipoles supaya tidak melenceng dari gayanya: kepala besar dengan mata titik, bayangan dan garis tepi terang yang selalu searah, serta pose, rambut, topi/helm/peci/kerudung, dan benda (emas, uang, kotak, batu, peta, rumah, dan lainnya) yang bentuknya sama di setiap video. Claude juga wajib menunjukkan lembar tokoh & benda sebelum storyboard. Gambar contoh gayanya ikut diperbarui.
+
+**Perubahan**
+- **Pengaturan > Suara**: suara A dan B sekarang memakai **satu provider** yang sama, dengan model dan suara masing-masing (bawaan ElevenLabs: A eleven_multilingual_v2, B eleven_v3). Kalau sebelumnya suara B memakai provider lain, pilih ulang suara B.
+
 ## 0.13.1 - 2026-11-03
 
 **Baru**
