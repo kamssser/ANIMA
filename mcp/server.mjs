@@ -17,7 +17,8 @@ import { createRequire } from 'node:module';
 const { sanitizeSvg, checkBackgroundSvg, checkPropSvg, extractSvg } = createRequire(import.meta.url)('../electron/svg.cjs');
 
 const SESSION_FILE = process.env.ANIMA_SESSION_FILE;
-if (!SESSION_FILE || !fs.existsSync(SESSION_FILE)) {
+// Sesi skill animate (dibuka dari HyperForge) tidak butuh login Supabase: hanya alat suara anima_vibi_voice.
+if ((!SESSION_FILE || !fs.existsSync(SESSION_FILE)) && !process.env.ANIMA_ANIMATE_DIR) {
   console.error('ANIMA MCP: sesi tidak ditemukan. Buka ANIMA Studio > Pengaturan > Integrasi Claude > Sambungkan.');
   process.exit(1);
 }
@@ -30,6 +31,7 @@ const noAuth = { persistSession: false, autoRefreshToken: false };
  */
 let db;
 async function auth() {
+  if (!SESSION_FILE || !fs.existsSync(SESSION_FILE)) throw new Error('Alat ini butuh sesi HyperForge (Pengaturan > Claude & akun > Sambungkan).');
   let s = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf8'));
   if (!s.expires_at || s.expires_at * 1000 < Date.now() + 60_000) {
     // Sesi pinjaman dari tombol Generate di aplikasi tidak punya refresh token.
@@ -358,6 +360,104 @@ server.tool(
       const up = await db.from('projects').update({ assets }).eq('id', id);
       if (up.error) return fail(up.error.message);
       return ok(`benda "${propId}" tersimpan (${Math.round(clean.length / 1024)} KB). Benda project: ${Object.keys(assets.props).join(', ')}`);
+    } catch (e) {
+      return fail(e.message);
+    }
+  },
+);
+
+// ---------- Skill animate: take suara per kalimat lewat vibi.pro (pengganti konektor ElevenLabs di skill) ----------
+
+const VIBI = 'https://api.vibi.pro';
+function hyperforgeSettings() {
+  const f = process.env.ANIMA_SETTINGS_FILE;
+  if (!f || !fs.existsSync(f)) throw new Error('Pengaturan HyperForge tidak ditemukan (buka sesi ini dari tombol "Buka di Claude Code" di HyperForge).');
+  return JSON.parse(fs.readFileSync(f, 'utf8'));
+}
+async function vibiCall(s, p, init = {}) {
+  if (!s.vibiApiKey) throw new Error('API key vibi.pro belum diisi di HyperForge > Pengaturan > Suara & audio.');
+  const res = await fetch(VIBI + p, { ...init, headers: { 'xi-api-key': s.vibiApiKey, ...(init.headers || {}) } });
+  const text = await res.text();
+  let body;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    body = { raw: text };
+  }
+  if (!res.ok) throw new Error(`vibi.pro ${res.status}: ${body.error || body.detail || body.message || text.slice(0, 200)}`);
+  return body;
+}
+/** Suara A (bawaan) atau B (pembicara kedua) dari pengaturan HyperForge. */
+const voiceOf = (s, who) =>
+  who === 'B'
+    ? { provider: s.vibi2Provider, model: s.vibi2Model, voiceId: s.vibi2VoiceId, name: s.vibi2VoiceName, language: s.vibi2Language, speed: s.vibi2Speed }
+    : { provider: s.vibiProvider, model: s.vibiModel, voiceId: s.vibiVoiceId, name: s.vibiVoiceName, language: s.vibiLanguage, speed: s.vibiSpeed };
+
+async function vibiLine(s, v, text, outFile) {
+  const provider = v.provider || 'elevenlabs';
+  const task = await vibiCall(s, `/v1/text-to-speech/${encodeURIComponent(v.voiceId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text,
+      provider,
+      ...(provider !== 'capcut' && v.model ? { model_id: v.model } : {}),
+      language_code: v.language,
+      voice_settings: provider === 'elevenlabs' ? { stability: 0.5, similarity_boost: 0.75, speed: Number(v.speed) || 1 } : { speed: Number(v.speed) || 1, pitch: 0 },
+    }),
+  });
+  for (let i = 0; i < 180; i++) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const t = await vibiCall(s, `/v1/history/${task.id}`);
+    if (t.status === 'failed') throw new Error(t.error || t.detail_error || 'tugas vibi.pro gagal');
+    if (t.status !== 'completed') continue;
+    const url = t.result?.audio_url;
+    if (!url) throw new Error('vibi.pro tidak mengembalikan audio_url');
+    const res = await fetch(url, url.startsWith(VIBI) ? { headers: { 'xi-api-key': s.vibiApiKey } } : {});
+    if (!res.ok) throw new Error(`gagal mengunduh audio (${res.status})`);
+    fs.writeFileSync(outFile, Buffer.from(await res.arrayBuffer()));
+    return t.credits_deducted ?? 0;
+  }
+  throw new Error('vibi.pro terlalu lama merespons');
+}
+
+server.tool(
+  'anima_vibi_voice',
+  'Skill animate, voice-over: buat take suara per kalimat dengan suara yang dipilih pengguna di HyperForge (Suara A, vibi.pro). Ini "rekaman milik pengguna, satu file per kalimat" untuk tools/voice.mjs. Membaca <piece>/voice/script.json, menyimpan voice/<id>.mp3, mengisi "file" di setiap kalimat. Panggil dulu dengan estimate=true untuk melihat suara dan jumlah karakter (kredit), sebutkan ke pengguna, lalu jalankan.',
+  {
+    piece: z.string().describe('folder piece relatif ke folder kerja, mis. "pieces/kereta-api"'),
+    only: z.array(z.string()).optional().describe('id kalimat yang dibuat (ulang). Kosong = semua kalimat yang belum punya file.'),
+    estimate: z.boolean().default(false).describe('true = hanya tampilkan suara + jumlah karakter, tanpa membuat suara'),
+  },
+  async ({ piece, only, estimate }) => {
+    try {
+      const base = process.env.ANIMA_ANIMATE_DIR;
+      if (!base) return fail('Alat ini hanya untuk sesi animate yang dibuka dari HyperForge.');
+      const root = path.resolve(base, piece);
+      if (!root.startsWith(path.resolve(base) + path.sep)) return fail('Folder piece harus di dalam folder kerja animate.');
+      const scriptFile = path.join(root, 'voice', 'script.json');
+      if (!fs.existsSync(scriptFile)) return fail(`Belum ada ${path.relative(base, scriptFile)}. Tulis script.json dulu (SKILL.md > Voice-over langkah 1).`);
+      const script = JSON.parse(fs.readFileSync(scriptFile, 'utf8'));
+      const s = hyperforgeSettings();
+      if (!s.vibiVoiceId) return fail('Suara A belum dipilih di HyperForge > Pengaturan > Suara & audio.');
+      const lines = (script.lines || []).filter((l) => l?.id && String(l.text || '').trim());
+      if (lines.some((l) => l.speaker === 'B') && !s.vibi2VoiceId) return fail('Ada kalimat speaker "B" tapi Suara B belum dipilih di HyperForge > Pengaturan > Suara & audio.');
+      const label = (v) => `${v.name || v.voiceId} (${v.provider || 'elevenlabs'}${v.model ? `, ${v.model}` : ''})`;
+      const voice = lines.some((l) => l.speaker === 'B') ? { A: label(voiceOf(s, 'A')), B: label(voiceOf(s, 'B')) } : label(voiceOf(s, 'A'));
+      const todo = lines.filter((l) => (only?.length ? only.includes(l.id) : !(l.file && fs.existsSync(path.join(root, 'voice', l.file)))));
+      const chars = todo.reduce((n, l) => n + String(l.text).length, 0);
+      if (estimate) return ok({ voice, lines: todo.length, characters: chars, note: 'Kredit vibi.pro kira-kira sebanding jumlah karakter.' });
+      if (!todo.length) return ok('Semua kalimat sudah punya file. Jalankan node tools/voice.mjs <piece> lalu build ulang.');
+      let credits = 0;
+      const done = [];
+      for (const l of todo) {
+        const id = String(l.id).replace(/[^\w-]/g, '_');
+        credits += await vibiLine(s, voiceOf(s, l.speaker), String(l.text), path.join(root, 'voice', `${id}.mp3`));
+        l.file = `${id}.mp3`;
+        done.push(l.id);
+        fs.writeFileSync(scriptFile, JSON.stringify(script, null, 2));
+      }
+      return ok({ voice, made: done, credits, next: 'Jalankan: node <skill>/tools/voice.mjs ' + piece + ' --model small (multibahasa, untuk bahasa Indonesia), lalu build ulang.' });
     } catch (e) {
       return fail(e.message);
     }

@@ -1,4 +1,5 @@
 import type {
+  AnimateCheck,
   BenchResult,
   QaReport,
   Word,
@@ -68,6 +69,13 @@ declare global {
       }): Promise<{ svg: string; sessionId?: string; problems?: string[] }>;
       cancelCharacter(): Promise<boolean>;
       onCharacterEvent(cb: (e: { id: string; line: string }) => void): () => void;
+      animateCheck(): Promise<AnimateCheck>;
+      animateSetup(opts: { withWhisper?: boolean }): Promise<AnimateCheck>;
+      animateSamples(): Promise<Record<string, string>>;
+      animateOpen(payload: { slug: string; title: string; brief: string }): Promise<{ workDir: string; briefFile: string }>;
+      animateStatus(slug: string): Promise<{ exists: boolean; dir?: string; hasBrief?: boolean; videos: { file: string; name: string; size: number; mtime: string }[] }>;
+      animateOpenFolder(slug: string): Promise<string>;
+      onAnimateEvent(cb: (e: { step: string; line?: string }) => void): () => void;
       detectClaude(): Promise<ClaudeDetect>;
       installClaude(payload: {
         session: { access_token: string; refresh_token: string; expires_at: number };

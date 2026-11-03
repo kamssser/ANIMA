@@ -30,6 +30,9 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
 - Upgrade `@react-three/postprocessing` di `remotion-template/` melewati 3.0.4 tanpa uji: 3.2.x membuat frame
   render kosong di Remotion (lihat `remotion-template/README.md`).
 - Mengganti `app.setPath('userData', ...ANIMA Studio)` di `electron/main.cjs`: data pengguna lama ada di sana.
+- Mengedit isi `animate-skill/animate/`: salinan utuh skill https://github.com/cth9191/animate (MIT). Pemilik minta
+  dipakai "persis 100%". Untuk memperbarui: salin ulang dari repo aslinya, ganti commit di `animate-skill/SOURCE.md` dan
+  `SKILL_COMMIT` di `electron/animate.cjs`.
 
 ## Catatan teknis
 
@@ -38,5 +41,5 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
   `remotion-template/` lewat Pengaturan > Proyek Remotion > Siapkan otomatis.
 - Laptop pemilik: i7-4710MQ, 16 GB RAM, tanpa GPU kuat. Render lengkap 540x960 sekitar 28 detik/frame;
   paralel justru lebih lambat. Uji kecepatan ada di Pengaturan > Render.
-- Struktur: `electron/` (proses utama, render, update, MCP install), `src/` (UI), `mcp/` (server MCP),
+- Struktur: `electron/` (proses utama, render, update, MCP install; `animate.cjs` = style animate), `src/` (UI), `mcp/` (server MCP),
   `supabase/schema.sql`, `scripts/release.mjs`, `remotion-template/`, `server/bench.sh`.

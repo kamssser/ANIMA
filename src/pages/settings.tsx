@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Bot, Clapperboard, FolderOpen, Mic, Palette, Save, Users, Wrench } from 'lucide-react';
+import { Bot, Clapperboard, FolderOpen, Mic, Palette, Save, Sparkles, Users, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageBody, PageHeader } from '@/components/layout';
 import { ClaudeIntegration } from '@/components/claude-integration';
 import { CharacterSettings } from '@/components/characters';
+import { AnimateSettings } from '@/components/animate';
 import { AudioMixSettings, VoiceSettings } from '@/components/audio-settings';
 import { RenderTest } from '@/components/render-test';
 import { RemotionSetup } from '@/components/remotion-setup';
@@ -43,6 +44,7 @@ const SECTIONS = [
   { id: 'claude', label: 'Claude & akun', icon: Bot, hint: 'MCP untuk Claude Code / Desktop' },
   { id: 'remotion', label: 'Proyek Remotion', icon: Wrench, hint: 'Template skill & folder' },
   { id: 'characters', label: 'Karakter', icon: Users, hint: 'Tokoh video 2D (maks 10)' },
+  { id: 'animate', label: 'Animate', icon: Sparkles, hint: 'Skill animate (7 style kanvas)' },
   { id: 'audio', label: 'Suara & audio', icon: Mic, hint: 'vibi.pro, SFX, musik' },
   { id: 'render', label: 'Render', icon: Clapperboard, hint: 'Kualitas, paralel, uji' },
   { id: 'look', label: 'Tampilan & update', icon: Palette, hint: 'Tema, mode hemat, versi' },
@@ -165,6 +167,8 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
           )}
 
           {section === 'characters' && <CharacterSettings />}
+
+          {section === 'animate' && <AnimateSettings />}
 
           {section === 'audio' && (
             <>

@@ -65,6 +65,17 @@ contextBridge.exposeInMainWorld('anima', {
     ipcRenderer.on('character:event', listener);
     return () => ipcRenderer.removeListener('character:event', listener);
   },
+  animateCheck: () => ipcRenderer.invoke('animate:check'),
+  animateSetup: (opts) => ipcRenderer.invoke('animate:setup', opts),
+  animateSamples: () => ipcRenderer.invoke('animate:samples'),
+  animateOpen: (payload) => ipcRenderer.invoke('animate:open', payload),
+  animateStatus: (slug) => ipcRenderer.invoke('animate:status', slug),
+  animateOpenFolder: (slug) => ipcRenderer.invoke('animate:openFolder', slug),
+  onAnimateEvent: (cb) => {
+    const listener = (_e, event) => cb(event);
+    ipcRenderer.on('animate:event', listener);
+    return () => ipcRenderer.removeListener('animate:event', listener);
+  },
   detectClaude: () => ipcRenderer.invoke('claude:detect'),
   installClaude: (payload) => ipcRenderer.invoke('claude:install', payload),
   removeClaude: () => ipcRenderer.invoke('claude:remove'),

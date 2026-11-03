@@ -49,3 +49,49 @@ export function buildPrompt(project: Project) {
     : `Pakai skill cartoon-3d-short. Kerjakan project HyperForge id "${project.id}" (jenis: ${t.label}).`;
   return [head, ...steps.map((x, i) => `${i + 1}. ${x}`), 'Bahasa Indonesia. Balas singkat saja: "selesai" + jumlah shot.'].join('\n');
 }
+
+/**
+ * Brief untuk skill animate (cth9191/animate) di Claude Code. Skill-nya tidak diubah: brief ini hanya
+ * menjawab sebagian pertanyaan intake dari isi project dan menjelaskan sumber suara HyperForge.
+ */
+export function buildAnimateBrief(project: Project, slug: string) {
+  const t = contentType(project.content_type);
+  const st = visualStyle(project.visual_style);
+  const custom = st.skillStyle === 'custom';
+  const lines = [
+    `# Brief HyperForge: ${project.title}`,
+    '',
+    'Brief ini dari aplikasi HyperForge. Jalankan skill animate seperti biasa (intake, check-in story, look, storyboard, build, review). Tanyakan hanya yang belum dijawab di sini.',
+    '',
+    '## Bahasa',
+    'Narasi, teks di layar, dan percakapan dengan pengguna memakai **Bahasa Indonesia**.',
+    '',
+    '## Isi',
+    `- Topik / ide: ${project.topic || project.title}`,
+    project.hook ? `- Hook yang sudah ada: ${project.hook}` : '',
+    project.script.trim() ? `- Script yang sudah ada (boleh dipakai sebagai dasar, sesuaikan dengan grammar skill):\n\n${project.script.trim()}\n` : '',
+    `- Jenis konten: ${t.label}. Aturan:`,
+    ...t.rules.map((r) => `  - ${r}`),
+    ...HOOK_RULES.map((r) => `  - ${r}`),
+    t.needsSources ? '- Wajib riset: setiap fakta di layar dicek dengan web search, minimal 2 sumber, dicatat di brief.md piece.' : '',
+    '',
+    '## Bentuk',
+    `- Panjang: sekitar ${project.target_seconds} detik.`,
+    `- Format utama: ${project.format === '16:9' ? '16:9 (YouTube)' : '9:16 (Shorts/TikTok/Reels)'}.`,
+    custom
+      ? '- Style: **dari referensi pengguna** (new-style.md). Minta link atau file referensinya.'
+      : `- Style: **${st.skillStyle}** (sudah dipilih di HyperForge, tidak perlu galeri kecuali pengguna mau ganti).`,
+    '- **Teks di layar wajib**: kalimat narasi atau caption tampil di layar di setiap beat (aturan HyperForge untuk semua style). Pastikan lolos text check di review.',
+    '',
+    '## Suara (voice-over narasi)',
+    '- Sumber suara = **rekaman milik pengguna, satu file per kalimat** (SKILL.md > Voice-over langkah 3), dibuat lewat alat MCP **anima_vibi_voice** dengan suara yang sudah dipilih pengguna di HyperForge (vibi.pro).',
+    '- Urutan: tulis `voice/script.json` -> panggil `anima_vibi_voice` dengan `estimate: true` -> sebutkan suara dan jumlah karakter (kredit) ke pengguna dan minta persetujuan -> panggil tanpa estimate -> `node <skill>/tools/voice.mjs pieces/' + slug + ' --model small` (model multibahasa untuk Bahasa Indonesia).',
+    t.twoVoices ? '- Jenis ini memakai **dua pembicara**: isi `"speaker": "A"` atau `"B"` di setiap kalimat script.json; anima_vibi_voice memakai suara A/B pengguna.' : '',
+    '- Boleh `--scratch` untuk timing sementara, tapi video akhir wajib memakai take dari anima_vibi_voice.',
+    '- Musik: dikomposisi dalam kode (bawaan skill), kecuali pengguna memberi track sendiri.',
+    '',
+    '## Hasil',
+    `- Piece: \`pieces/${slug}/\`. Video akhir \`renders/share.mp4\` (HyperForge mengambilnya dari sana).`,
+  ];
+  return lines.filter((l) => l !== '').join('\n') + '\n';
+}

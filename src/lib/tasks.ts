@@ -147,4 +147,8 @@ export function wireTaskEvents() {
     patchTask('setup', { ...(e.step ? { step: e.step } : {}), ...(e.line ? { log: [e.line] } : {}) });
   });
   window.anima.onBenchEvent((e) => patchTask('bench', { step: e.step, progress: e.progress }));
+  window.anima.onAnimateEvent((e) => {
+    if (!tasks['animate-setup']?.running) return;
+    patchTask('animate-setup', { step: e.step, ...(e.line ? { log: [e.line] } : {}) });
+  });
 }

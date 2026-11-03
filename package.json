@@ -1,7 +1,7 @@
 {
   "name": "anima-studio",
   "productName": "HyperForge",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "HyperForge - aplikasi Windows untuk mengelola produksi video pendek 3D (Claude + Remotion)",
   "main": "electron/main.cjs",
@@ -25,6 +25,7 @@
       "mcp/**",
       "shared/**",
       "remotion-template/**",
+      "animate-skill/**",
       "app-defaults.json",
       "package.json"
     ],

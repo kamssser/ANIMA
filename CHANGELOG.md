@@ -6,6 +6,19 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.9.0 - 2026-11-03
+
+**Baru**
+- **8 style "Animate"** dari skill animate (github.com/cth9191/animate, dipakai utuh tanpa diubah): kertas sobek, tinta arsir, cetak riso, buku sketsa, matematika, piksel, isometrik, dan **dari referensi saya** (skill membuat style baru dari video/gambar yang kamu berikan). Gambar contoh tiap style tampil saat membuat project.
+- Project dengan style Animate punya tombol **Buka di Claude Code**: brief project (topik, jenis konten, durasi, format, style, suara) dikirim otomatis, lalu kamu menjawab check-in **story**, **look**, dan **storyboard** di jendela Claude persis seperti skill aslinya sebelum video dianimasikan dan dirender.
+- Suara narasi Animate memakai **Suara A/B dari Pengaturan (vibi.pro)**, satu file per kalimat. Claude menyebutkan jumlah karakter (kredit) dulu sebelum membuat suara.
+- Tab Render project Animate menampilkan video yang sudah jadi; klik **Masukkan ke daftar render** supaya masuk ke tabel render dan ikut diperiksa otomatis.
+- Menu **Pengaturan > Animate**: cek dan **Siapkan otomatis** semua kebutuhan (skill, Playwright + Chromium, ffmpeg lengkap, faster-whisper opsional).
+
+**Catatan**
+- Timing per kata di dalam kalimat untuk narasi Bahasa Indonesia sebagian diperkirakan (alat timing skill memakai pengenal suara bahasa Inggris); awal dan akhir setiap kalimat tetap tepat.
+- Pertama kali memakai Animate di laptop baru butuh internet untuk mengunduh Chromium dan ffmpeg (sekitar 250 MB).
+
 ## 0.8.0 - 2026-11-03
 
 **Baru**

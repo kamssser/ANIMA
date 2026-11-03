@@ -73,6 +73,70 @@
         "Tekstur lembut seperti cat air: beberapa bentuk transparan (opacity 0.15-0.3) bertumpuk, tanpa tepi tajam.",
         "Latar: pemandangan luas dan tenang (laut, langit dengan awan bulat, gurun retak, tebing, hujan tipis), horizon rendah, banyak ruang kosong."
       ]
+    },
+    {
+      "id": "animate-cut-paper",
+      "label": "Animate: kertas sobek",
+      "kind": "animate",
+      "skillStyle": "cut-paper",
+      "description": "Kertas sobek dengan bayangan, krayon, pola, dan karakter berwajah. Cocok untuk sejarah dan cerita. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": []
+    },
+    {
+      "id": "animate-crosshatch",
+      "label": "Animate: tinta arsir",
+      "kind": "animate",
+      "skillStyle": "crosshatch",
+      "description": "Tinta sketsa yang bergetar, arsiran dan pensil, kertas hangat dan dunia biru tua \"di dalam mesin\". Cocok untuk penjelasan teknologi. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": []
+    },
+    {
+      "id": "animate-riso",
+      "label": "Animate: cetak riso",
+      "kind": "animate",
+      "skillStyle": "riso",
+      "description": "Cetakan risograph tiga tinta: raster halftone, tinta bertumpuk, cetakan sedikit meleset. Nuansa editorial yang lembut. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": []
+    },
+    {
+      "id": "animate-sketchbook",
+      "label": "Animate: buku sketsa",
+      "kind": "animate",
+      "skillStyle": "sketchbook",
+      "description": "Grafit dan satu warna aksen di halaman buku sketsa, dengan tulisan tangan. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": []
+    },
+    {
+      "id": "animate-math",
+      "label": "Animate: matematika",
+      "kind": "animate",
+      "skillStyle": "math",
+      "description": "Penjelasan matematika ala manim: panggung hitam, sumbu dan grafik, variabel berwarna, gerak halus. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": []
+    },
+    {
+      "id": "animate-pixel",
+      "label": "Animate: piksel",
+      "kind": "animate",
+      "skillStyle": "pixel",
+      "description": "Era resolusi rendah: digambar di resolusi asli lalu diperbesar, font bitmap. Cocok untuk sejarah komputer dan game. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": []
+    },
+    {
+      "id": "animate-isometric",
+      "label": "Animate: isometrik",
+      "kind": "animate",
+      "skillStyle": "isometric",
+      "description": "Gambar garis isometrik presisi: garis tipis rata, permukaan putih, satu aksen gelap. Cocok untuk produk, alat, dan infrastruktur. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": []
+    },
+    {
+      "id": "animate-custom",
+      "label": "Animate: dari referensi saya",
+      "kind": "animate",
+      "skillStyle": "custom",
+      "description": "Kamu memberi video/gambar/web referensi; skill mengukur gayanya, mencocokkan frame bersamamu, lalu menyimpannya sebagai style baru. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": []
     }
   ],
   "rig": [

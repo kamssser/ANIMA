@@ -281,3 +281,19 @@ export interface RenderProps {
     speaker: string;
   }[];
 }
+
+/** Kebutuhan skill animate (Pengaturan > Animate). */
+export interface AnimateCheck {
+  node: boolean;
+  claude: boolean;
+  playwright: boolean;
+  chromium: boolean;
+  /** path ffmpeg lengkap, null kalau belum ada */
+  ffmpeg: string | null;
+  /** versi faster-whisper (opsional) */
+  whisper: string | null;
+  python: boolean;
+  skill: { installed: boolean; exists: boolean; foreign: boolean };
+  workDir: string;
+  commit: string;
+}
