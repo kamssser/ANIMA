@@ -79,14 +79,44 @@ ${shelves(0)}${shelves(1)}
 <rect x="455" y="500" width="170" height="380" fill="#9fd3e6" stroke="${INK}" stroke-width="4"/>
 </svg>`;
 
+// Benda cerita contoh: lokomotif uap (melintas) dan peta (shot sisipan).
+export const DEMO_TRAIN = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420">
+<g stroke="${INK}" stroke-width="8" stroke-linejoin="round">
+  <ellipse cx="120" cy="60" rx="70" ry="40" fill="#e9eef2" opacity="0.9"/><ellipse cx="60" cy="25" rx="45" ry="25" fill="#e9eef2" opacity="0.7"/>
+  <rect x="150" y="70" width="50" height="90" fill="#2d2a32"/>
+  <rect x="110" y="150" width="420" height="150" rx="40" fill="#2f4858"/>
+  <rect x="520" y="90" width="240" height="210" fill="#b8423a"/>
+  <rect x="560" y="120" width="70" height="70" fill="#f6d57a"/><rect x="660" y="120" width="70" height="70" fill="#f6d57a"/>
+  <rect x="500" y="70" width="290" height="35" fill="#2d2a32"/>
+  <path d="M110 300 L60 360 L140 360 Z" fill="#2d2a32"/>
+  <rect x="80" y="300" width="720" height="30" fill="#2d2a32"/>
+  <circle cx="220" cy="350" r="55" fill="#6b6f76"/><circle cx="370" cy="350" r="55" fill="#6b6f76"/><circle cx="640" cy="345" r="62" fill="#6b6f76"/>
+  <circle cx="220" cy="350" r="14" fill="${INK}"/><circle cx="370" cy="350" r="14" fill="${INK}"/><circle cx="640" cy="345" r="16" fill="${INK}"/>
+  <path d="M220 350 L640 345" stroke-width="12"/>
+</g></svg>`;
+
+export const DEMO_MAP = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+<g stroke="${INK}" stroke-width="7" stroke-linejoin="round">
+  <path d="M40 60 L280 20 L520 70 L760 30 L760 540 L520 580 L280 530 L40 570 Z" fill="#f1dfb5"/>
+  <path d="M280 20 L280 530 M520 70 L520 580" stroke-width="4" opacity="0.5"/>
+  <path d="M120 420 Q260 300 360 330 T620 200 L700 120" fill="none" stroke="#b8423a" stroke-width="10" stroke-dasharray="26 16"/>
+  <circle cx="120" cy="420" r="20" fill="#2f4858"/><circle cx="700" cy="120" r="20" fill="#2f4858"/>
+  <path d="M520 400 q40 -60 90 -20 q50 40 100 -10" fill="none" stroke="#3f88c5" stroke-width="8"/>
+</g>
+<text x="400" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="64" fill="${INK}">1901</text>
+</svg>`;
+
 export const DEMO: Comic2DProps = {
   style: 'sinema',
   format: '9:16',
   characters: { budi: { name: 'Budi', svg: DEMO_BUDI }, sari: { name: 'Sari', svg: DEMO_SARI } },
   backgrounds: { toko: { svg: DEMO_SHOP } },
+  props: { kereta: { svg: DEMO_TRAIN }, peta: { svg: DEMO_MAP } },
   shots: [
-    { durationInFrames: 90, bg: 'toko', camera: 'zoom-in', framing: 'wide', speaker: 'budi', cast: [{ char: 'budi', x: 0.3 }, { char: 'sari', x: 0.72, flip: true }], text: 'Sari, kamu lihat dompetku nggak?' },
-    { durationInFrames: 90, bg: 'toko', camera: 'push-speaker', speaker: 'sari', cast: [{ char: 'budi', x: 0.3 }, { char: 'sari', x: 0.72, flip: true }], text: 'Lho, bukannya tadi kamu titip ke aku?' },
-    { durationInFrames: 75, bg: 'toko', camera: 'shake', framing: 'close', speaker: 'budi', cast: [{ char: 'budi', x: 0.5 }], text: 'Terus yang bayar siapa dong?!' },
+    { durationInFrames: 90, bg: 'toko', camera: 'zoom-in', framing: 'wide', speaker: 'budi', cast: [{ char: 'budi', x: 0.3, enter: 'left', pose: 'wave' }, { char: 'sari', x: 0.72, flip: true }], text: 'Sari, kamu tahu kereta pertama kita?' },
+    { durationInFrames: 90, bg: 'toko', camera: 'push-speaker', transition: 'whip', speaker: 'sari', cast: [{ char: 'budi', x: 0.3 }, { char: 'sari', x: 0.72, flip: true, pose: 'explain' }], text: 'Tahun 1867, kereta uap mulai jalan.', props: [{ prop: 'kereta', x: 0.5, y: 0.42, size: 0.8, anim: 'across-left', layer: 'back' }] },
+    { durationInFrames: 75, bg: 'toko', transition: 'zoom', cast: [], text: 'Peta tahun 1901 sudah mencatatnya.', props: [{ prop: 'peta', x: 0.5, y: 0.45, size: 0.86, anim: 'pop', delay: 0.2 }] },
+    { durationInFrames: 75, bg: 'toko', camera: 'shake', framing: 'close', transition: 'flash', speaker: 'budi', cast: [{ char: 'budi', x: 0.5, pose: 'shrug', expr: 'kaget' }], text: 'Serius? Setua itu?!' },
+    { durationInFrames: 90, bg: 'toko', camera: 'pan-right', framing: 'wide', transition: 'slide', speaker: 'sari', cast: [{ char: 'sari', x: 0.25, toX: 0.65, pose: 'point' }, { char: 'budi', x: 0.8, flip: true, pose: 'cheer', enter: 'pop' }], text: 'Ayo kita lihat stasiunnya!' },
   ],
 };

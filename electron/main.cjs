@@ -827,8 +827,34 @@ async function vibiTts(s, voice, text, outFile, onProgress) {
   if (!audioUrl) throw new Error('vibi.pro tidak mengembalikan audio_url.');
   const res = await fetch(audioUrl, audioUrl.startsWith(VIBI) ? { headers: { 'xi-api-key': s.vibiApiKey } } : {});
   if (!res.ok) throw new Error(`Gagal mengunduh audio (${res.status})`);
-  fs.writeFileSync(outFile, Buffer.from(await res.arrayBuffer()));
+  await writeReplacing(outFile, Buffer.from(await res.arrayBuffer()));
   return done.credits_deducted ?? 0;
+}
+
+/**
+ * Tulis file lewat file sementara lalu ganti file lama. Di Windows file yang sedang dibuka pemutar musik
+ * (mis. Windows Media Player dari tombol Dengar versi lama) terkunci: coba lagi beberapa kali, lalu beri
+ * pesan yang jelas daripada "EBUSY: resource busy or locked".
+ */
+async function writeReplacing(file, data) {
+  const tmp = `${file}.baru`;
+  fs.writeFileSync(tmp, data);
+  for (let i = 0; ; i++) {
+    try {
+      fs.rmSync(file, { force: true });
+      fs.renameSync(tmp, file);
+      return;
+    } catch (e) {
+      if (!/EBUSY|EPERM|EACCES/.test(e.code || e.message) || i >= 10) {
+        fs.rmSync(tmp, { force: true });
+        if (/EBUSY|EPERM|EACCES/.test(e.code || e.message)) {
+          throw new Error(`File ${path.basename(file)} sedang dibuka program lain (mis. Windows Media Player). Tutup pemutarnya, lalu klik Buat ulang suara lagi.`);
+        }
+        throw e;
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
 }
 
 const voiceA = (s) => ({ provider: s.vibiProvider, model: s.vibiModel, voiceId: s.vibiVoiceId, language: s.vibiLanguage, speed: s.vibiSpeed });
@@ -1178,6 +1204,7 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session, style
     'mcp__anima__anima_patch_shot',
     // style 2D: latar SVG + foto referensi Wikimedia (sejarah/fakta)
     'mcp__anima__anima_save_background',
+    'mcp__anima__anima_save_prop',
     'mcp__anima__anima_find_photos',
     'mcp__anima__anima_view_photo',
     'mcp__anima__anima_style_references',
@@ -1221,6 +1248,7 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session, style
             else if (n.endsWith('find_photos')) say(`Mencari foto referensi: ${c.input?.query ?? ''}`);
             else if (n.endsWith('view_photo')) say('Melihat foto referensi...');
             else if (n.endsWith('save_background')) say(`Menggambar latar: ${c.input?.bgId ?? ''}`);
+            else if (n.endsWith('save_prop')) say(`Menggambar benda: ${c.input?.propId ?? ''}`);
             else if (n.endsWith('style_references')) say('Melihat potongan referensi gaya...');
             else if (n.endsWith('save_story')) {
               say('Menyimpan hook, script, dan shot...');
@@ -1369,7 +1397,7 @@ async function renderSvgPng(svg, width, height, outFile) {
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
   const w = new BrowserWindow({ show: false, width, height, useContentSize: true, webPreferences: { offscreen: true, javascript: false } });
   try {
-    const body = svg.replace(/<svg([^>]*)>/, (_m, a) => `<svg${a.replace(/\s(width|height|preserveAspectRatio)="[^"]*"/g, '')} width="${width}" height="${height}" preserveAspectRatio="xMidYMax meet">`);
+    const body = svg.replace(/<svg\b([^>]*)>/, (_m, a) => `<svg${a.replace(/\s(width|height|preserveAspectRatio)="[^"]*"/g, '')} width="${width}" height="${height}" preserveAspectRatio="xMidYMax meet">`);
     await w.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`<html><body style="margin:0;background:#eef1f4;overflow:hidden">${body}</body></html>`)}`);
     await new Promise((r) => setTimeout(r, 300));
     const img = await w.webContents.capturePage();

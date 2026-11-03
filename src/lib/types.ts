@@ -24,6 +24,8 @@ export interface Project {
 
 export interface ProjectAssets {
   backgrounds?: Record<string, { description: string; svg: string }>;
+  /** benda cerita (kereta, peta, ayam...) */
+  props?: Record<string, { description: string; svg: string }>;
   references?: { title: string; url: string; image: string; license?: string }[];
 }
 
@@ -43,12 +45,25 @@ export interface Character {
 }
 
 /** Penataan 2D satu shot, disimpan di shots.world. */
+export type PropPlacement = {
+  prop: string;
+  x: number;
+  y: number;
+  size: number;
+  anim?: string;
+  delay?: number;
+  layer?: 'back' | 'front';
+  flip?: boolean;
+};
+
 export interface Stage2D {
   bg?: string;
   camera?: 'static' | 'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right' | 'shake' | 'push-speaker';
-  cast?: { char: string; x: number; scale?: number; flip?: boolean; expr?: string }[];
+  cast?: { char: string; x: number; scale?: number; flip?: boolean; expr?: string; pose?: string; enter?: string; toX?: number }[];
   framing?: 'wide' | 'medium' | 'close';
   speaker?: string;
+  transition?: 'cut' | 'fade' | 'slide' | 'zoom' | 'flash' | 'whip';
+  props?: PropPlacement[];
 }
 
 export interface Shot {
@@ -233,9 +248,12 @@ export interface Comic2DRequest {
   format: '9:16' | '16:9';
   characters: Record<string, { name: string; svg: string }>;
   backgrounds: Record<string, { svg: string }>;
+  props: Record<string, { svg: string }>;
   shots: {
     durationInFrames: number;
     bg: string;
+    transition?: Stage2D['transition'];
+    props?: PropPlacement[];
     camera?: Stage2D['camera'];
     framing?: 'wide' | 'medium' | 'close';
     cast: NonNullable<Stage2D['cast']>;

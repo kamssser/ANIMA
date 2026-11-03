@@ -6,6 +6,24 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.8.0 - 2026-11-03
+
+**Baru**
+- **Benda cerita di video 2D.** Claude sekarang menggambar benda, kendaraan, hewan, dokumen, dan angka tahun yang disebut narasi (mis. kereta uap, peta 1901, ayam), lalu menaruhnya di shot yang menyebutnya. Benda bisa melintas, muncul, jatuh, atau melayang. Benda yang digambar tampil di kartu Latar pada halaman project.
+- **Shot sisipan**: close-up peta, dokumen, atau benda tanpa karakter, supaya video tidak hanya karakter berdiri di depan latar.
+- **Gerakan karakter lebih hidup**, memakai prinsip animasi kartun: pose (menunjuk, menjelaskan, melambai, angkat bahu, bersorak, berpikir) dengan ancang-ancang dan gerak lanjutan, masuk dari samping/bawah atau "muncul", berjalan, mengangguk mengikuti kata, efek memantul (squash & stretch). Karakter bergerak "on twos" seperti anime TV, kamera tetap mulus.
+- **Transisi antar-shot**: geser, whip, zoom, kilat putih, dan fade.
+- Claude membuat storyboard dulu dan memakai latar berbeda untuk setiap tempat dan zaman, lalu ditolak otomatis kalau terlalu sedikit benda cerita atau ada 3 shot yang sama persis.
+
+**Perbaikan**
+- Error **"EBUSY: resource busy or locked ... voice.mp3"** saat membuat ulang suara. Tombol **Dengar** sekarang memutar suara di dalam aplikasi (tidak membuka Windows Media Player yang mengunci file). Kalau file tetap dikunci program lain, muncul pesan yang jelas.
+- Suara di **editor timing kata** (0.7.0) tidak berbunyi di aplikasi yang terpasang.
+- Pratinjau latar di halaman project sekarang terpotong rapi sesuai kotaknya.
+
+**Perubahan**
+- Karakter baru wajib punya lengan terpisah yang digambar lurus ke bawah, supaya bisa berpose. **Karakter lama sebaiknya digambar ulang** (Pengaturan > Karakter > Ubah > Gambar ulang dari awal) agar pose terlihat benar.
+- Kecepatan render 2D tetap sama (diukur: selisih sekitar 1,5%), walau ada benda dan gerakan tambahan.
+
 ## 0.7.0 - 2026-11-03
 
 **Baru**

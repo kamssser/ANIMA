@@ -1,7 +1,8 @@
 // Pembersih dan pemeriksa SVG buatan Claude (karakter + latar). SVG ini nanti dirender di Chrome
 // (Remotion) dan ditampilkan di aplikasi, jadi semua yang bisa menjalankan kode atau memuat file luar dibuang.
 
-const REQUIRED_PARTS = ['head', 'eyes-open', 'eyes-closed', 'mouth-closed', 'mouth-open'];
+// arm-l / arm-r wajib sejak 0.8.0 supaya pose (menunjuk, melambai, angkat bahu...) bisa dipakai.
+const REQUIRED_PARTS = ['head', 'eyes-open', 'eyes-closed', 'mouth-closed', 'mouth-open', 'arm-l', 'arm-r'];
 
 /** Ambil blok <svg>...</svg> pertama dari jawaban teks Claude. */
 function extractSvg(text) {
@@ -41,4 +42,15 @@ function checkBackgroundSvg(svg) {
   return problems;
 }
 
-module.exports = { extractSvg, sanitizeSvg, checkCharacterSvg, checkBackgroundSvg, REQUIRED_PARTS };
+/** Benda cerita (kereta, peta, ayam...): viewBox bebas, latar transparan. */
+function checkPropSvg(svg) {
+  const problems = [];
+  if (!/^<svg\b/i.test(svg)) problems.push('Bukan SVG.');
+  const m = svg.match(/viewBox="\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)\s*"/);
+  if (!m) problems.push('Wajib ada viewBox, mis. "0 0 800 600".');
+  else if (Number(m[1]) / Number(m[2]) > 8 || Number(m[2]) / Number(m[1]) > 8) problems.push('Perbandingan lebar/tinggi viewBox terlalu ekstrem.');
+  if (svg.length > 120_000) problems.push(`SVG terlalu besar (${Math.round(svg.length / 1024)} KB, maks 120 KB).`);
+  return problems;
+}
+
+module.exports = { extractSvg, sanitizeSvg, checkCharacterSvg, checkBackgroundSvg, checkPropSvg, REQUIRED_PARTS };

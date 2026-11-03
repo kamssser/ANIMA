@@ -87,21 +87,27 @@ export function buildComic2D(project: Project, shots: Shot[], characters: Charac
   const out = shots.map((s) => {
     const st = (s.world ?? {}) as Stage2D;
     let cast = (st.cast ?? []).filter((m) => characters.some((c) => c.key === m.char));
-    // Shot tanpa penataan: tampilkan karakter yang disebut di shot, atau karakter utama.
-    if (!cast.length) {
+    const props = (st.props ?? []).filter((x) => project.assets?.props?.[x.prop]);
+    // Shot sisipan (cast [] + benda) tetap tanpa karakter. Shot tanpa penataan: karakter yang disebut, atau utama.
+    const insert = Array.isArray(st.cast) && st.cast.length === 0 && props.length > 0;
+    if (!cast.length && !insert) {
       const named = characters.filter((c) => s.characters.some((n) => [c.key, c.name, c.nickname].map((x) => x.toLowerCase()).includes(n.toLowerCase())));
       const pick = named.length ? named.slice(0, 3) : main ? [main] : [];
       cast = pick.map((c, i) => ({ char: c.key, x: pick.length === 1 ? 0.5 : 0.28 + (0.44 * i) / (pick.length - 1), flip: i > 0 && i === pick.length - 1 }));
     }
     cast.forEach((m) => used.add(m.char));
     const speaker = st.speaker ?? (s.speaker === 'B' ? cast[1]?.char : s.speaker === 'A' ? cast[0]?.char : undefined);
-    return { durationInFrames: s.duration_frames, bg: st.bg ?? '', camera: st.camera, framing: st.framing, cast, speaker, text: s.narration_text };
+    return { durationInFrames: s.duration_frames, bg: st.bg ?? '', camera: st.camera, framing: st.framing, transition: st.transition, cast, speaker, text: s.narration_text, props };
   });
   const chars: Comic2DRequest['characters'] = {};
   for (const c of characters) if (used.has(c.key) && c.svg) chars[c.key] = { name: c.nickname || c.name, svg: c.svg };
   const bgs: Comic2DRequest['backgrounds'] = {};
   for (const [k, b] of Object.entries(project.assets?.backgrounds ?? {})) bgs[k] = { svg: b.svg };
-  return { style: styleId(project.visual_style), format: project.format === '16:9' ? '16:9' : '9:16', characters: chars, backgrounds: bgs, shots: out };
+  // Hanya benda yang dipakai shot (hemat ukuran props render).
+  const usedProps = new Set(out.flatMap((s) => s.props.map((x) => x.prop)));
+  const props: Comic2DRequest['props'] = {};
+  for (const [k, b] of Object.entries(project.assets?.props ?? {})) if (usedProps.has(k)) props[k] = { svg: b.svg };
+  return { style: styleId(project.visual_style), format: project.format === '16:9' ? '16:9' : '9:16', characters: chars, backgrounds: bgs, props, shots: out };
 }
 
 export async function queueRender(project: Project) {

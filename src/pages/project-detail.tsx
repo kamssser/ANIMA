@@ -395,6 +395,7 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
 function AssetsCard({ project }: { project: Project }) {
   const bgs = Object.entries(project.assets?.backgrounds ?? {});
   const refs = project.assets?.references ?? [];
+  const props = Object.entries(project.assets?.props ?? {});
   return (
     <Card>
       <CardContent className="flex flex-col gap-3 p-5">
@@ -409,12 +410,25 @@ function AssetsCard({ project }: { project: Project }) {
               <div key={k} title={b.description} className="grid gap-1">
                 <div
                   className={cn('overflow-hidden rounded-md border bg-muted [&>svg]:size-full', project.format === '16:9' ? 'aspect-video' : 'aspect-[9/16]')}
-                  dangerouslySetInnerHTML={{ __html: b.svg.replace(/<svg/, '<svg preserveAspectRatio="xMidYMid slice"') }}
+                  dangerouslySetInnerHTML={{ __html: b.svg.replace(/<svg\b/, '<svg preserveAspectRatio="xMidYMid slice"') }}
                 />
                 <span className="truncate text-[11px] text-muted-foreground">{k}</span>
               </div>
             ))}
           </div>
+        )}
+        {props.length > 0 && (
+          <>
+            <Label className="mt-2">Benda cerita ({props.length})</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {props.map(([k, b]) => (
+                <div key={k} title={b.description} className="grid gap-1">
+                  <div className="aspect-square overflow-hidden rounded-md border bg-muted p-1 [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: b.svg }} />
+                  <span className="truncate text-[11px] text-muted-foreground">{k}</span>
+                </div>
+              ))}
+            </div>
+          </>
         )}
         {refs.length > 0 && (
           <>

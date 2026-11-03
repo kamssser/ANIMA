@@ -7,7 +7,7 @@ Proyek Remotion untuk skill **cartoon-3d-short**, dirakit dari
 | Folder | Isi |
 | --- | --- |
 | `src/videos/bridge/` | Template scene jembatan (komposisi `BridgeShort`, 1080x1920, 30 fps) |
-| `src/anima/` | Mesin video HyperForge (AnimaComic2D untuk style 2D, AnimaTextOverlay untuk teks di atas video 3D). **Dikelola aplikasi**: disalin ulang setiap render, jangan diedit |
+| `src/anima/` | Mesin video HyperForge (AnimaComic2D untuk style 2D, AnimaTextOverlay untuk teks di atas video 3D). **Dikelola aplikasi**: disalin ulang setiap render, jangan diedit. Fitur per shot: latar, benda cerita (`props` + `shots[].props`, dengan animasi melintas/muncul/jatuh), pose lengan (`cast[].pose`), masuk/berjalan (`enter`, `toX`), transisi (`transition`), shot sisipan (`cast: []`). Karakter & benda bergerak "on twos" seperti anime TV; kamera tetap mulus |
 | `src/Root.tsx` | Daftar komposisi. Video baru = salin `src/videos/bridge` ke `src/videos/<nama>` lalu daftarkan di sini |
 | `audio/` | SFX + musik sintetis + mix (Python, numpy + scipy). Jalankan `python mix.py` |
 | `voice/` | `voice.wav` (48 kHz) + `words.json`, dibuat ANIMA dari vibi.pro |

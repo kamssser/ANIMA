@@ -79,7 +79,7 @@
     "Keluarkan SATU file SVG utuh: <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 600 1200\">. Tanpa width/height, tanpa <script>, tanpa <image>, tanpa font/teks.",
     "Karakter berdiri menghadap kamera (boleh 3/4), kaki menyentuh bawah (y=1200), badan di tengah (x sekitar 300), kepala di sepertiga atas. Latar transparan.",
     "Grup wajib dengan atribut data-part: \"head\" (seluruh kepala + rambut + wajah) dengan data-pivot=\"<x> <y>\" di titik leher; \"eyes-open\"; \"eyes-closed\" (garis kelopak); \"mouth-closed\"; \"mouth-open\" (mulut terbuka berwarna gelap). Keempat grup mata/mulut ada DI DALAM grup head.",
-    "Opsional: data-part=\"arm-l\" dan \"arm-r\" (lengan kiri/kanan) dengan data-pivot di bahu.",
+    "WAJIB: data-part=\"arm-l\" (lengan di sisi KIRI gambar) dan data-part=\"arm-r\" (sisi KANAN), masing-masing dengan data-pivot=\"<x> <y>\" tepat di bahu. Gambar kedua lengan LURUS KE BAWAH santai di samping badan (tangan di dekat pinggul), terpisah dari badan, tidak memegang apa pun dan tidak menunjuk: aplikasi memutar lengan dari bahu untuk pose menunjuk, melambai, angkat bahu, dan bersorak. Lengan digambar di atas badan supaya tetap terlihat saat diangkat.",
     "Opsional ekspresi: di dalam head, grup alis/mata khusus dengan data-expr=\"normal\" | \"senang\" | \"sedih\" | \"marah\" | \"kaget\". Kalau dipakai, WAJIB ada data-expr=\"normal\".",
     "id (gradient, clipPath) boleh dipakai; aplikasi memberi awalan unik otomatis.",
     "Ukuran file usahakan di bawah 25 KB: pakai path, jangan ribuan titik."

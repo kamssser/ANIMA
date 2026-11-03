@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, AudioLines, Mic, Play } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AlertTriangle, AudioLines, Mic, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, Progress } from '@/components/ui/misc';
@@ -60,7 +60,37 @@ export function VoicePanel({ project, shots, voice }: { project: Project; shots:
     });
   }, []);
 
+  // Putar di dalam aplikasi: pemutar luar (Windows Media Player) mengunci voice.mp3 sehingga suara tidak bisa dibuat ulang.
+  const [playing, setPlaying] = useState(false);
+  const player = useRef<HTMLAudioElement | null>(null);
+  useEffect(
+    () => () => {
+      player.current?.pause();
+      if (player.current?.src) URL.revokeObjectURL(player.current.src);
+    },
+    [],
+  );
+  async function listen() {
+    if (playing && player.current) {
+      player.current.pause();
+      return;
+    }
+    try {
+      const { audio } = await window.anima.voiceWords(slug);
+      if (player.current?.src) URL.revokeObjectURL(player.current.src);
+      const a = new Audio(URL.createObjectURL(new Blob([audio as BlobPart], { type: 'audio/mpeg' })));
+      a.onplay = () => setPlaying(true);
+      a.onpause = () => setPlaying(false);
+      a.onended = () => setPlaying(false);
+      player.current = a;
+      await a.play();
+    } catch (e) {
+      toast.error('Gagal memutar suara', { description: cleanErr(e) });
+    }
+  }
+
   function generate() {
+    player.current?.pause();
     if (status?.mp3 && !window.confirm('Suara sudah ada. Buat ulang? Ini memakai kredit vibi.pro lagi.')) return;
     const title = project.title;
     runTask(`voice:${slug}`, { label: `Suara: ${title}`, href: `/projects/${project.id}`, step: 'Mulai' }, () => window.anima.generateVoice({ slug, text, lines, textKey: key })).then(
@@ -105,8 +135,8 @@ export function VoicePanel({ project, shots, voice }: { project: Project; shots:
           </div>
           <div className="flex gap-2">
             {status?.mp3 && (
-              <Button variant="outline" onClick={() => window.anima.openPath(status.mp3!)}>
-                <Play /> Dengar
+              <Button variant="outline" onClick={listen} disabled={Boolean(step)}>
+                {playing ? <Square /> : <Play />} {playing ? 'Berhenti' : 'Dengar'}
               </Button>
             )}
             {status?.mp3 && status.words != null && (

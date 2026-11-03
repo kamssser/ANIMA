@@ -14,7 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { createRequire } from 'node:module';
 
-const { sanitizeSvg, checkBackgroundSvg, extractSvg } = createRequire(import.meta.url)('../electron/svg.cjs');
+const { sanitizeSvg, checkBackgroundSvg, checkPropSvg, extractSvg } = createRequire(import.meta.url)('../electron/svg.cjs');
 
 const SESSION_FILE = process.env.ANIMA_SESSION_FILE;
 if (!SESSION_FILE || !fs.existsSync(SESSION_FILE)) {
@@ -66,7 +66,7 @@ const shotSchema = z.object({
     .record(z.string(), z.unknown())
     .default({})
     .describe(
-      'Style 3D: setting/props/cahaya bebas. Style 2D WAJIB: { bg: "<id latar>", camera: "static|zoom-in|zoom-out|pan-left|pan-right|shake|push-speaker", framing: "wide|medium|close", cast: [{ char: "<key karakter>", x: 0..1, flip?: bool, expr?: "normal|senang|sedih|marah|kaget" }], speaker: "<key karakter yang bicara>" }',
+      'Style 3D: setting/props/cahaya bebas. Style 2D WAJIB: { bg: "<id latar>", camera: "static|zoom-in|zoom-out|pan-left|pan-right|shake|push-speaker", framing: "wide|medium|close", transition: "cut|fade|slide|zoom|flash|whip", cast: [{ char: "<key karakter>", x: 0..1, flip?: bool, expr?: "normal|senang|sedih|marah|kaget", pose?: "idle|point|wave|explain|shrug|cheer|think", enter?: "none|left|right|bottom|pop", toX?: 0..1 }], speaker: "<key karakter yang bicara>", props: [{ prop: "<id benda>", x: 0..1, y: 0..1, size: 0.05..1.2, anim?: "none|float|bob|pop|drop|slide-left|slide-right|across-left|across-right|spin|pulse|shake", delay?: detik, layer?: "back|front" }] }. cast boleh [] untuk shot sisipan (close-up benda/peta) asal ada props.',
     ),
   speaker: z.enum(['A', 'B', '']).default('').describe("Untuk jenis dialog/film: 'A' atau 'B' (siapa yang bicara di shot ini)"),
 });
@@ -79,12 +79,23 @@ const styleOf = (id) => VISUAL.styles.find((x) => x.id === (VISUAL.aliases?.[id]
 
 // Aturan menata video 2D (latar SVG + pemeran per shot). Dikirim di guide untuk project ber-style 2D.
 const STAGE_RULES = [
-  'Pakai HANYA karakter dari daftar characters (field key). Karakter utama (is_main) wajib tampil di sebagian besar shot.',
-  'Setiap shot wajib isi world: { bg, camera, framing, cast, speaker }. cast maks 3 karakter, x 0.2-0.8, karakter kanan biasanya flip:true supaya saling menghadap.',
-  'framing: medium (pinggang ke atas) untuk percakapan, close untuk emosi/punchline, wide untuk pembuka tempat. Variasikan kamera.',
+  'Pikirkan seperti storyboard: untuk SETIAP shot, tanya "apa yang sedang diceritakan kalimat ini?" lalu TUNJUKKAN di layar (latar yang tepat + benda cerita), jangan hanya karakter berdiri di depan latar.',
+  'Pakai HANYA karakter dari daftar characters (field key). Karakter utama (is_main) tampil di sebagian besar shot sebagai pembawa cerita.',
+  'Setiap shot wajib isi world: { bg, camera, framing, transition, cast, speaker, props }. cast maks 3 karakter, x 0.2-0.8, karakter kanan biasanya flip:true supaya saling menghadap.',
+  'BENDA CERITA (props): setiap benda, kendaraan, hewan, dokumen, angka tahun penting, atau papan nama yang disebut narasi WAJIB digambar dengan anima_save_prop lalu ditaruh di shot itu. Contoh: "kereta uap mulai singgah" -> prop lokomotif anim across-left; "peta tahun 1901" -> shot sisipan peta; "memotong ayam" -> prop ayam + golok. Minimal sepertiga shot punya props.',
+  'SHOT SISIPAN: untuk peta, dokumen, foto lama, tanggal, atau benda yang perlu dilihat jelas, buat shot dengan cast [] dan props besar (size 0.6-0.95, x 0.5, y 0.45, anim pop/drop). Selipkan 2-4 per video supaya tidak monoton.',
+  'GERAK KARAKTER: pilih pose sesuai kalimat (point saat menunjuk benda/fakta, explain saat menjelaskan, shrug saat bingung/ironi, cheer saat senang/punchline, wave saat menyapa, think saat bertanya). Jangan pakai pose yang sama 3 shot berturut-turut. Pakai enter left/right/pop saat karakter baru muncul, toX untuk berjalan ke tempat/benda.',
+  'framing: medium untuk menjelaskan, close untuk emosi/punchline, wide untuk tempat dan saat ada benda besar. Variasikan kamera dan transition (cut paling sering; whip/slide untuk pindah tempat atau waktu, flash untuk kejutan, zoom untuk masuk ke detail, fade untuk lompatan tahun).',
+  'Taruh benda di area yang tidak tertutup karakter: y 0.25-0.5 untuk benda di belakang, atau di samping karakter (x 0.15-0.3 / 0.7-0.85). Subtitle ada di sekitar y 0.75-0.85, jangan taruh benda penting di sana.',
   'speaker = key karakter yang mengucapkan narration shot itu. Untuk narator (bukan tokoh) kosongkan speaker.',
-  'Setiap id bg yang dipakai WAJIB digambar dengan anima_save_background SEBELUM anima_save_story. Pakai ulang latar yang sama untuk tempat yang sama (biasanya 2-5 latar per video).',
+  'Setiap id bg dan prop yang dipakai WAJIB digambar (anima_save_background / anima_save_prop) SEBELUM anima_save_story. Buat latar berbeda untuk setiap tempat DAN zaman yang disebut (stasiun 1873 beda dengan stasiun sekarang), biasanya 4-8 latar per video.',
   'Teks narration tampil di layar sebagai subtitle; tulis kalimat lisan pendek.',
+];
+const PROP_RULES = [
+  'Satu benda per SVG dengan viewBox sesuai bentuknya (mis. "0 0 900 420" untuk kereta, "0 0 400 400" untuk ayam). Latar TRANSPARAN (jangan isi kotak latar), tanpa tokoh.',
+  'Gambar dengan gaya yang sama dengan karakter dan latar (garis, warna, bayangan sesuai guide.style.draw). Bentuk mengikuti zaman cerita (lokomotif uap 1873, bukan KRL modern).',
+  'Boleh <text> pendek untuk angka tahun, nama tempat, atau label peta (font-family Arial, sans-serif, tebal). Tanpa <script>, <image>, <style>.',
+  'Ukuran usahakan di bawah 30 KB.',
 ];
 const BG_RULES = [
   'Satu file SVG utuh, viewBox "0 0 1080 1920" untuk format 9:16 atau "0 0 1920 1080" untuk 16:9. Tanpa <script>, <image>, <style>, teks, atau font.',
@@ -92,7 +103,7 @@ const BG_RULES = [
   'Perspektif dan kedalaman: lapisan jauh-tengah-dekat. Ukuran usahakan di bawah 60 KB (pakai pola/pengulangan, bukan ribuan titik).',
 ];
 
-const server = new McpServer({ name: 'anima', version: '0.6.0' });
+const server = new McpServer({ name: 'anima', version: '0.8.0' });
 
 server.tool('anima_list_projects', 'Daftar project ANIMA (id, judul, status). Maks 20 terbaru.', {}, async () => {
   try {
@@ -140,6 +151,7 @@ server.tool(
           format: p.format || '9:16',
           characters: chars || [],
           stage: STAGE_RULES,
+          props: PROP_RULES,
           background: [...BG_RULES, 'Panggil anima_style_references dulu dan tiru gaya potongan referensinya (~90%) saat menggambar latar.'],
           referencePhotos: t.needsSources
             ? 'Untuk tempat/bangunan/benda nyata: cari foto dengan anima_find_photos, lihat dengan anima_view_photo, lalu gambar latar yang bentuk dan posisinya MIRIP foto itu. Simpan foto yang dipakai lewat field reference di anima_save_background.'
@@ -179,15 +191,34 @@ server.tool(
       const t = typeOf(p.content_type);
       if (styleOf(p.visual_style).kind === '2d') {
         const bgs = Object.keys(p.assets?.backgrounds ?? {});
+        const propIds = Object.keys(p.assets?.props ?? {});
         const { data: chars } = await db.from('characters').select('key');
         const keys = (chars || []).map((c) => c.key);
+        let withProps = 0;
         for (const [i, sh] of shots.entries()) {
           const w = sh.world || {};
           if (!w.bg || !bgs.includes(w.bg)) return fail(`Shot ${i + 1}: world.bg "${w.bg ?? ''}" belum digambar. Latar yang ada: ${bgs.join(', ') || '(belum ada)'}. Gambar dulu dengan anima_save_background.`);
           const cast = Array.isArray(w.cast) ? w.cast : [];
-          if (!cast.length) return fail(`Shot ${i + 1}: world.cast kosong. Isi minimal 1 karakter dari daftar: ${keys.join(', ')}.`);
+          const props = Array.isArray(w.props) ? w.props : [];
+          const badProp = props.find((x) => !propIds.includes(x?.prop));
+          if (badProp) return fail(`Shot ${i + 1}: benda "${badProp?.prop}" belum digambar. Benda yang ada: ${propIds.join(', ') || '(belum ada)'}. Gambar dulu dengan anima_save_prop.`);
+          if (props.length) withProps++;
+          if (!cast.length && !props.length) return fail(`Shot ${i + 1}: cast dan props kosong. Isi karakter dari daftar (${keys.join(', ')}) atau jadikan shot sisipan dengan props.`);
           const bad = cast.find((m) => !keys.includes(m?.char));
           if (bad) return fail(`Shot ${i + 1}: karakter "${bad?.char}" tidak ada. Pakai key: ${keys.join(', ')}.`);
+        }
+        if (shots.length >= 4 && withProps < Math.ceil(shots.length / 3)) {
+          return fail(`Baru ${withProps} dari ${shots.length} shot yang punya benda cerita (props). Minimal ${Math.ceil(shots.length / 3)}: gambar benda/kendaraan/dokumen/angka yang disebut narasi dengan anima_save_prop, taruh di shot yang menyebutnya (atau buat shot sisipan), lalu simpan ulang.`);
+        }
+        // Hindari monoton: latar + karakter + pose sama tiga shot berturut-turut tanpa benda.
+        const sig = (k) => {
+          const w = shots[k].world || {};
+          return `${w.bg}|${(w.cast || []).map((m) => `${m.char}:${m.pose || 'idle'}`).join(',')}|${(w.props || []).length}`;
+        };
+        for (let i = 2; i < shots.length; i++) {
+          if (sig(i) === sig(i - 1) && sig(i) === sig(i - 2) && !(shots[i].world?.props || []).length) {
+            return fail(`Shot ${i - 1}-${i + 1} sama persis (latar, karakter, pose, tanpa benda). Variasikan: ganti pose/framing, tambahkan benda yang disebut narasi, atau pindah latar.`);
+          }
         }
       }
       if (t.needsSources && sources.filter((s) => /^https?:\/\//.test(s.url)).length < 2) {
@@ -299,6 +330,34 @@ server.tool(
       const up = await db.from('projects').update({ assets }).eq('id', id);
       if (up.error) return fail(up.error.message);
       return ok(`latar "${bgId}" tersimpan (${Math.round(clean.length / 1024)} KB). Latar project: ${Object.keys(assets.backgrounds).join(', ')}`);
+    } catch (e) {
+      return fail(e.message);
+    }
+  },
+);
+
+server.tool(
+  'anima_save_prop',
+  'Style 2D: simpan SATU benda cerita (SVG transparan) untuk project, mis. "lokomotif-uap", "peta-1901", "ayam". Simpan ulang dengan id sama untuk mengganti. Lalu taruh di world.props shot yang menyebutnya.',
+  {
+    id: z.string().uuid().describe('ID project'),
+    propId: z.string().regex(/^[a-z0-9-]{1,32}$/).describe('id benda, huruf kecil/angka/strip'),
+    description: z.string().describe('Deskripsi singkat benda'),
+    svg: z.string().describe('SVG lengkap dengan viewBox sesuai bentuk benda, latar transparan'),
+  },
+  async ({ id, propId, description, svg }) => {
+    try {
+      await auth();
+      const clean = sanitizeSvg(extractSvg(svg) || svg);
+      const problems = checkPropSvg(clean);
+      if (problems.length) return fail(`Benda belum valid: ${problems.join(' ')}`);
+      const { data: p, error } = await db.from('projects').select('assets').eq('id', id).single();
+      if (error) return fail(error.message);
+      const assets = p.assets || {};
+      assets.props = { ...(assets.props || {}), [propId]: { description, svg: clean } };
+      const up = await db.from('projects').update({ assets }).eq('id', id);
+      if (up.error) return fail(up.error.message);
+      return ok(`benda "${propId}" tersimpan (${Math.round(clean.length / 1024)} KB). Benda project: ${Object.keys(assets.props).join(', ')}`);
     } catch (e) {
       return fail(e.message);
     }

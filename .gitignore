@@ -10,3 +10,6 @@ release/
 *.mp3
 *.wav
 sejarah-kereta/
+/*/words.json
+/*/meta.json
+/*/parts/
