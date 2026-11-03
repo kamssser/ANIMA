@@ -77,6 +77,8 @@ contextBridge.exposeInMainWorld('anima', {
   skillChatReset: (payload) => ipcRenderer.invoke('skillchat:reset', payload),
   skillChatImage: (payload) => ipcRenderer.invoke('skillchat:image', payload),
   skillChatResolve: (payload) => ipcRenderer.invoke('skillchat:resolve', payload),
+  skillChatLogs: (engines) => ipcRenderer.invoke('skillchat:logs', engines),
+  skillChatLogTail: (payload) => ipcRenderer.invoke('skillchat:logtail', payload),
   onSkillChatEvent: (cb) => {
     const listener = (_e, event) => cb(event);
     ipcRenderer.on('skillchat:event', listener);

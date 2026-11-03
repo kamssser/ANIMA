@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Bot, Clapperboard, FolderOpen, Mic, Palette, Save, Sparkles, Users, Wrench } from 'lucide-react';
+import { Bot, Clapperboard, FolderOpen, Mic, Palette, Save, ScrollText, Sparkles, Users, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageBody, PageHeader } from '@/components/layout';
 import { ClaudeIntegration } from '@/components/claude-integration';
 import { CharacterSettings } from '@/components/characters';
 import { SkillSettings } from '@/components/skill-video';
+import { LogSettings } from '@/components/skill-logs';
 import { AudioMixSettings, VoiceSettings } from '@/components/audio-settings';
 import { RenderTest } from '@/components/render-test';
 import { RemotionSetup } from '@/components/remotion-setup';
@@ -44,7 +45,8 @@ const SECTIONS = [
   { id: 'claude', label: 'Claude & akun', icon: Bot, hint: 'MCP untuk Claude Code / Desktop' },
   { id: 'remotion', label: 'Proyek Remotion', icon: Wrench, hint: 'Template skill & folder' },
   { id: 'characters', label: 'Karakter', icon: Users, hint: 'Tokoh video 2D (maks 10)' },
-  { id: 'skills', label: 'Skill video', icon: Sparkles, hint: 'Animate & Bang Motion (Claude Code)' },
+  { id: 'skills', label: 'Skill video', icon: Sparkles, hint: 'Studio, Animate, Bang Motion' },
+  { id: 'logs', label: 'Log', icon: ScrollText, hint: 'Log sesi Claude per project' },
   { id: 'audio', label: 'Suara & audio', icon: Mic, hint: 'vibi.pro, SFX, musik' },
   { id: 'render', label: 'Render', icon: Clapperboard, hint: 'Kualitas, paralel, uji' },
   { id: 'look', label: 'Tampilan & update', icon: Palette, hint: 'Tema, mode hemat, versi' },
@@ -169,6 +171,8 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
           {section === 'characters' && <CharacterSettings />}
 
           {section === 'skills' && <SkillSettings />}
+
+          {section === 'logs' && <LogSettings />}
 
           {section === 'audio' && (
             <>

@@ -2,7 +2,7 @@
 import { getValue, setValue } from './tasks';
 import type { ChatMessage, SkillEngine } from './types';
 
-export type ChatState = { loaded: boolean; messages: ChatMessage[]; running: boolean; hasSession: boolean };
+export type ChatState = { loaded: boolean; messages: ChatMessage[]; running: boolean; hasSession: boolean; activity?: { text: string; at: number } };
 export const chatKey = (engine: SkillEngine, slug: string) => `skillchat:${engine}:${slug}`;
 const EMPTY: ChatState = { loaded: false, messages: [], running: false, hasSession: false };
 
@@ -24,7 +24,12 @@ export function wireSkillChat() {
     const key = chatKey(e.engine, e.slug);
     setValue<ChatState>(
       key,
-      (s) => (e.type === 'message' ? { ...s, messages: [...s.messages, e.message], hasSession: true } : { ...s, running: e.running }),
+      (s) =>
+        e.type === 'message'
+          ? { ...s, messages: [...s.messages, e.message], hasSession: true, activity: { text: e.message.role === 'tool' ? e.message.text : 'Menulis balasan...', at: Date.now() } }
+          : e.type === 'activity'
+            ? { ...s, activity: { text: e.text, at: e.at } }
+            : { ...s, running: e.running, activity: e.running ? { text: 'Memulai Claude...', at: Date.now() } : undefined },
       EMPTY,
     );
   });

@@ -6,6 +6,15 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.13.1 - 2026-11-03
+
+**Baru**
+- **Pengaturan > Log**: catatan lengkap setiap sesi Claude per project (perintah yang dijalankan, hasilnya, dan error), diperbarui otomatis, bisa disalin. Berguna saat Claude terasa lama atau macet.
+- Tombol **Lihat log** di tab Claude untuk melihat log sesi project itu langsung.
+
+**Perbaikan**
+- Tab Claude tidak lagi hanya menulis "Claude sedang berpikir..." saat Claude menjalankan pekerjaan panjang (mis. render frame demi frame). Sekarang tampil langkah yang sedang berjalan dan sudah berapa lama, plus penjelasan kalau langkahnya memang lama.
+
 ## 0.13.0 - 2026-11-03
 
 **Baru**

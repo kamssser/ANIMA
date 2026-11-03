@@ -1,6 +1,6 @@
 // Panel obrolan Claude untuk project bergaya skill (Animate, Bang Motion, HyperForge Studio), di dalam aplikasi.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, ChevronDown, ChevronRight, FolderOpen, Loader2, Play, RotateCcw, Send, Sparkles, Square, Terminal, User, Wrench } from 'lucide-react';
+import { Bot, ChevronDown, ChevronRight, FolderOpen, Loader2, Play, ScrollText, RotateCcw, Send, Sparkles, Square, Terminal, User, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -14,8 +14,13 @@ import { cleanErr, runTask, usePersisted } from '@/lib/tasks';
 import type { ChatMessage, Project, SkillEngine } from '@/lib/types';
 import { cn, slugify } from '@/lib/utils';
 import { ENGINE_INFO } from '@/components/skill-video';
+import { LogView } from '@/components/skill-logs';
 
 const imgCache = new Map<string, string>();
+const fmtDur = (ms: number) => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return s < 60 ? `${s} dtk` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
 
 function ChatImage({ engine, file, onOpen }: { engine: SkillEngine; file: string; onOpen: (src: string) => void }) {
   const [src, setSrc] = useState<string | null | undefined>(imgCache.get(`${engine}:${file}`));
@@ -127,6 +132,14 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
   const [chat] = usePersisted<ChatState>(key, { loaded: false, messages: [], running: false, hasSession: false });
   const [text, setText] = useState('');
   const [big, setBig] = useState<string | null>(null);
+  const [showLog, setShowLog] = useState(false);
+  // detik berjalan sejak aktivitas terakhir (supaya jelas Claude masih bekerja, bukan macet)
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!chat.running) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [chat.running]);
   const [sending, setSending] = useState(false);
   // Folder frame referensi gaya (opsional), diingat per style di laptop ini.
   const refKey = `hf-ref:${st.id}`;
@@ -226,6 +239,11 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
           </Badge>
         )}
         <span className="ml-auto flex gap-1">
+          {chat.hasSession && (
+            <Button size="sm" variant="ghost" onClick={() => setShowLog(true)} title="Log lengkap: perintah, hasil, error">
+              <ScrollText /> Lihat log
+            </Button>
+          )}
           {busy && (
             <Button size="sm" variant="outline" onClick={() => window.anima.skillChatStop({ engine, slug })}>
               <Square /> Hentikan
@@ -327,9 +345,16 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
                 </div>
               ),
             )}
-            {busy && bl[bl.length - 1]?.kind !== 'tools' && (
-              <div className="flex items-center gap-2 pl-10 text-xs text-muted-foreground">
-                <Loader2 className="size-3.5 animate-spin" /> Claude sedang berpikir...
+            {busy && (
+              <div className="flex flex-wrap items-center gap-2 pl-10 text-xs text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin text-primary" />
+                <span className="max-w-[70%] truncate">{chat.activity?.text ?? 'Claude sedang bekerja...'}</span>
+                {chat.activity && <span className="tabular-nums">· {fmtDur(now - chat.activity.at)}</span>}
+                {chat.activity && now - chat.activity.at > 90_000 && (
+                  <span className="w-full pl-5 text-[11px]">
+                    Langkah ini lama, biasanya karena render frame atau pemrosesan suara. Klik <b>Lihat log</b> untuk melihat detailnya.
+                  </span>
+                )}
               </div>
             )}
             <div ref={end} />
@@ -357,6 +382,15 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
           </Button>
         </div>
       )}
+
+      <Dialog open={showLog} onOpenChange={setShowLog}>
+        <DialogContent className="sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Log sesi Claude · {project.title}</DialogTitle>
+          </DialogHeader>
+          {showLog && <LogView engine={engine} slug={slug} />}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(big)} onOpenChange={(o) => !o && setBig(null)}>
         <DialogContent className="max-h-[94vh] overflow-auto sm:max-w-6xl">

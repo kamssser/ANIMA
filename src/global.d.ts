@@ -83,7 +83,9 @@ declare global {
       skillChatReset(payload: { engine: SkillEngine; slug: string }): Promise<boolean>;
       skillChatImage(payload: { engine: SkillEngine; file: string }): Promise<{ url: string; mtime: number } | null>;
       skillChatResolve(payload: { engine: SkillEngine; file: string }): Promise<string | null>;
-      onSkillChatEvent(cb: (e: { engine: SkillEngine; slug: string; type: 'message'; message: ChatMessage } | { engine: SkillEngine; slug: string; type: 'status'; running: boolean }) => void): () => void;
+      skillChatLogs(engines: SkillEngine[]): Promise<{ engine: SkillEngine; slug: string; size: number; mtime: string; running: boolean }[]>;
+      skillChatLogTail(payload: { engine: SkillEngine; slug: string; kb?: number }): Promise<string>;
+      onSkillChatEvent(cb: (e: { engine: SkillEngine; slug: string; type: 'message'; message: ChatMessage } | { engine: SkillEngine; slug: string; type: 'status'; running: boolean } | { engine: SkillEngine; slug: string; type: 'activity'; text: string; at: number }) => void): () => void;
       onSkillEvent(cb: (e: { engine: SkillEngine; step: string; line?: string }) => void): () => void;
       detectClaude(): Promise<ClaudeDetect>;
       installClaude(payload: {

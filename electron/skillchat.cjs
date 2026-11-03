@@ -92,7 +92,25 @@ function toolLine(c) {
 function register({ ipcMain, getWin, engineOf, prepareSession }) {
   /** key "engine:slug" -> { child, stopped } */
   const running = new Map();
-  const files = (e, slug) => ({ hist: path.join(e.work, 'briefs', `${slug}.chat.json`), sess: path.join(e.work, 'briefs', `${slug}.session`) });
+  const files = (e, slug) => ({
+    hist: path.join(e.work, 'briefs', `${slug}.chat.json`),
+    sess: path.join(e.work, 'briefs', `${slug}.session`),
+    log: path.join(e.work, 'briefs', `${slug}.log`),
+  });
+  /** Log lengkap sesi (perintah, hasil, error) untuk Pengaturan > Log. Dipotong kalau > 4 MB. */
+  const logTo = (file) => (kind, text) => {
+    try {
+      if (fs.existsSync(file) && fs.statSync(file).size > 4 * 1024 * 1024) {
+        const keep = fs.readFileSync(file, 'utf8').slice(-2 * 1024 * 1024);
+        fs.writeFileSync(file, keep);
+      }
+      const t = new Date().toLocaleTimeString('id-ID', { hour12: false });
+      fs.appendFileSync(file, `[${t}] ${kind.padEnd(7)} ${String(text).replace(/\r/g, '')}\n`);
+    } catch {
+      /* log gagal ditulis: abaikan */
+    }
+  };
+  const clip = (s, n) => (String(s).length > n ? `${String(s).slice(0, n)} …(${String(s).length - n} karakter lagi)` : String(s));
   const readHist = (e, slug) => {
     try {
       return JSON.parse(fs.readFileSync(files(e, slug).hist, 'utf8'));
@@ -144,6 +162,8 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
     const child = spawn(isCmd ? `"${prep.claude}"` : prep.claude, isCmd ? args.map((a) => (/[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args, { cwd: e.work, env, windowsHide: true, shell: isCmd });
     const state = { child, stopped: false };
     running.set(key, state);
+    const log = logTo(f.log);
+    log('MULAI', `giliran ${sid ? 'lanjutan' : 'pertama'} · ${e.name} · ${slug}\n${clip(prompt, 2000)}`);
     emit({ engine, slug, type: 'status', running: true });
     child.stdin.end(prompt);
 
@@ -164,9 +184,21 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
           } catch {
             continue;
           }
-          if (ev.type === 'system' && ev.subtype === 'init' && ev.session_id) fs.writeFileSync(f.sess, ev.session_id);
-          else if (ev.type === 'assistant') {
+          if (ev.type === 'system' && ev.subtype === 'init' && ev.session_id) {
+            fs.writeFileSync(f.sess, ev.session_id);
+            log('SESI', `${ev.session_id} · model ${ev.model || '-'}`);
+          } else if (ev.type === 'user') {
+            // hasil alat (output perintah, isi file): ke log + kabar aktivitas ke panel
             for (const c of ev.message?.content || []) {
+              if (c.type !== 'tool_result') continue;
+              const body = Array.isArray(c.content) ? c.content.map((x) => (x.type === 'text' ? x.text : `[${x.type}]`)).join('\n') : String(c.content ?? '');
+              log(c.is_error ? 'ERROR' : 'HASIL', clip(body, 4000));
+              emit({ engine, slug, type: 'activity', text: c.is_error ? 'Perintah gagal, Claude memperbaiki...' : 'Langkah selesai, lanjut...', at: Date.now() });
+            }
+          } else if (ev.type === 'assistant') {
+            for (const c of ev.message?.content || []) {
+              if (c.type === 'tool_use') log('ALAT', `${c.name} ${clip(JSON.stringify(c.input), 1500)}`);
+              else if (c.type === 'text' && c.text.trim()) log('CLAUDE', clip(c.text, 3000));
               if (c.type === 'text' && c.text.trim()) {
                 const p = parseAssistant(c.text);
                 if (p.text || p.question || p.images.length || p.videos.length) push({ role: 'assistant', ...p });
@@ -175,15 +207,20 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
                 if (t) push({ role: 'tool', ...t });
               }
             }
-          } else if (ev.type === 'result') result = ev;
+          } else if (ev.type === 'result') {
+            result = ev;
+            log('SELESAI', `${ev.is_error ? 'error' : 'ok'} · ${Math.round((ev.duration_ms || 0) / 1000)} dtk · ${ev.num_turns ?? '-'} langkah${ev.is_error ? `\n${clip(ev.result, 2000)}` : ''}`);
+          }
         }
       });
       child.stderr.on('data', (b) => {
+        log('STDERR', clip(b.toString().trim(), 2000));
         errTail.push(b.toString().trim());
         if (errTail.length > 8) errTail.shift();
       });
       const done = (code) => {
         running.delete(key);
+        log('KELUAR', `kode ${code}${state.stopped ? ' (dihentikan pengguna)' : ''}`);
         if (state.stopped) push({ role: 'system', text: 'Dihentikan.' });
         else if (result?.is_error || (!result && code !== 0)) {
           const msg = String(result?.result || errTail.join('\n') || `Claude Code keluar dengan kode ${code}`);
@@ -198,6 +235,41 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
       });
       child.on('close', done);
     });
+  });
+
+  /** Semua log sesi (Pengaturan > Log), terbaru dulu. */
+  ipcMain.handle('skillchat:logs', (_e, engines) => {
+    const out = [];
+    for (const id of engines) {
+      const e = engineOf(id);
+      const dir = path.join(e.work, 'briefs');
+      let names = [];
+      try {
+        names = fs.readdirSync(dir).filter((n) => n.endsWith('.log'));
+      } catch {
+        continue;
+      }
+      for (const n of names) {
+        const st = fs.statSync(path.join(dir, n));
+        const slug = n.replace(/\.log$/, '');
+        out.push({ engine: id, slug, size: st.size, mtime: st.mtime.toISOString(), running: running.has(`${id}:${slug}`) });
+      }
+    }
+    return out.sort((a, b) => b.mtime.localeCompare(a.mtime));
+  });
+
+  /** Bagian akhir log satu sesi. */
+  ipcMain.handle('skillchat:logtail', (_e, { engine, slug, kb = 200 }) => {
+    const e = engineOf(engine);
+    const p = files(e, slug).log;
+    if (!fs.existsSync(p)) return '';
+    const size = fs.statSync(p).size;
+    const n = Math.min(size, kb * 1024);
+    const fd = fs.openSync(p, 'r');
+    const buf = Buffer.alloc(n);
+    fs.readSync(fd, buf, 0, n, size - n);
+    fs.closeSync(fd);
+    return (size > n ? '…\n' : '') + buf.toString('utf8');
   });
 
   ipcMain.handle('skillchat:stop', (_e, { engine, slug }) => {
