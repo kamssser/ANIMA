@@ -4,3 +4,9 @@ release/
 *.log
 .env
 .env.*
+
+# Hasil render/suara kalau folder output diarahkan ke repo ini
+*.mp4
+*.mp3
+*.wav
+sejarah-kereta/
