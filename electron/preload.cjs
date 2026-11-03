@@ -65,16 +65,16 @@ contextBridge.exposeInMainWorld('anima', {
     ipcRenderer.on('character:event', listener);
     return () => ipcRenderer.removeListener('character:event', listener);
   },
-  animateCheck: () => ipcRenderer.invoke('animate:check'),
-  animateSetup: (opts) => ipcRenderer.invoke('animate:setup', opts),
-  animateSamples: () => ipcRenderer.invoke('animate:samples'),
-  animateOpen: (payload) => ipcRenderer.invoke('animate:open', payload),
-  animateStatus: (slug) => ipcRenderer.invoke('animate:status', slug),
-  animateOpenFolder: (slug) => ipcRenderer.invoke('animate:openFolder', slug),
-  onAnimateEvent: (cb) => {
+  skillCheck: (engine) => ipcRenderer.invoke('skill:check', engine),
+  skillSetup: (payload) => ipcRenderer.invoke('skill:setup', payload),
+  skillSamples: (engine) => ipcRenderer.invoke('skill:samples', engine),
+  skillOpen: (payload) => ipcRenderer.invoke('skill:open', payload),
+  skillStatus: (payload) => ipcRenderer.invoke('skill:status', payload),
+  skillOpenFolder: (payload) => ipcRenderer.invoke('skill:openFolder', payload),
+  onSkillEvent: (cb) => {
     const listener = (_e, event) => cb(event);
-    ipcRenderer.on('animate:event', listener);
-    return () => ipcRenderer.removeListener('animate:event', listener);
+    ipcRenderer.on('skill:event', listener);
+    return () => ipcRenderer.removeListener('skill:event', listener);
   },
   detectClaude: () => ipcRenderer.invoke('claude:detect'),
   installClaude: (payload) => ipcRenderer.invoke('claude:install', payload),

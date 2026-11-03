@@ -29,8 +29,8 @@ import { sb } from '@/lib/supabase';
 import type { Project, ProjectStatus, RenderJob, Shot } from '@/lib/types';
 import { WORDS_PER_SECOND, cn, countWords, formatSeconds, framesToSeconds } from '@/lib/utils';
 import { CONTENT_TYPES, buildPrompt, contentType } from '@/lib/content';
-import { VISUAL_STYLES, is2D, isAnimate, visualStyle } from '@/lib/styles';
-import { AnimatePanel, AnimateRenders } from '@/components/animate';
+import { VISUAL_STYLES, is2D, isSkill, visualStyle } from '@/lib/styles';
+import { SkillPanel, SkillRenders } from '@/components/skill-video';
 import { cleanErr, runTask, usePersisted, useRunningTasks, useTask, useTaskFinished } from '@/lib/tasks';
 
 export default function ProjectDetailPage() {
@@ -59,7 +59,7 @@ export default function ProjectDetailPage() {
     <>
       <PageHeader
         title={project.title}
-        description={`${contentType(project.content_type).label} · ${visualStyle(project.visual_style).label}${is2D(project.visual_style) || isAnimate(project.visual_style) ? ` ${project.format || '9:16'}` : ''} · ${project.topic || 'Tanpa topik'}`}
+        description={`${contentType(project.content_type).label} · ${visualStyle(project.visual_style).label}${is2D(project.visual_style) || isSkill(project.visual_style) ? ` ${project.format || '9:16'}` : ''} · ${project.topic || 'Tanpa topik'}`}
         actions={
           <>
             <ProjectBadge status={project.status} />
@@ -341,7 +341,7 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
       </Card>
 
       <div className="flex flex-col gap-4">
-        {isAnimate(draft.visual_style) ? <AnimatePanel project={draft} beforeRun={persist} /> : <GeneratePanel project={draft} onDone={onGenerated} beforeRun={persist} />}
+        {isSkill(draft.visual_style) ? <SkillPanel project={draft} beforeRun={persist} /> : <GeneratePanel project={draft} onDone={onGenerated} beforeRun={persist} />}
         <Card>
           <CardContent className="flex flex-col gap-4 p-5">
             <div className="grid gap-2">
@@ -350,13 +350,13 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
                 {VISUAL_STYLES.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.label}
-                    {v.kind === '3d' ? ' (render lama)' : v.kind === 'animate' ? ' (Claude Code)' : ''}
+                    {v.kind === '3d' ? ' (render lama)' : v.kind === 'skill' ? ' (Claude Code)' : ''}
                   </option>
                 ))}
               </NativeSelect>
               <span className="text-xs text-muted-foreground">{visualStyle(draft.visual_style).description}</span>
             </div>
-            {(is2D(draft.visual_style) || isAnimate(draft.visual_style)) && (
+            {(is2D(draft.visual_style) || isSkill(draft.visual_style)) && (
               <div className="grid gap-2">
                 <Label htmlFor="fmt">Format</Label>
                 <NativeSelect id="fmt" value={draft.format || '9:16'} onChange={(e) => setDraft({ ...draft, format: e.target.value as '9:16' | '16:9' })}>
@@ -369,7 +369,7 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
               <Label htmlFor="sec">Durasi target (detik)</Label>
               <Input id="sec" type="number" min={15} max={180} value={draft.target_seconds} onChange={(e) => setDraft({ ...draft, target_seconds: Number(e.target.value) })} />
             </div>
-            {!is2D(draft.visual_style) && !isAnimate(draft.visual_style) && (
+            {!is2D(draft.visual_style) && !isSkill(draft.visual_style) && (
               <div className="grid gap-2">
                 <Label htmlFor="comp">Nama komposisi Remotion</Label>
                 <Input id="comp" value={draft.composition} onChange={(e) => setDraft({ ...draft, composition: e.target.value })} />
@@ -493,10 +493,10 @@ function RenderTab({ project, shots, onProject }: { project: Project; shots: Sho
     }
   }
 
-  if (isAnimate(project.visual_style)) {
+  if (isSkill(project.visual_style)) {
     return (
       <div className="flex flex-col gap-4">
-        <AnimateRenders project={project} onImported={load} />
+        <SkillRenders project={project} onImported={load} />
         <Card>
           <CardContent className="p-0">
             <JobTable jobs={jobs} onChanged={load} />

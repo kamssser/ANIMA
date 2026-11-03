@@ -13,14 +13,23 @@ export type VisualStyleId =
   | 'animate-math'
   | 'animate-pixel'
   | 'animate-isometric'
-  | 'animate-custom';
+  | 'animate-custom'
+  | 'bang-kartun-kolase'
+  | 'bang-jurnalisme'
+  | 'bang-katalog'
+  | 'bang-sketsa-vintage'
+  | 'bang-aksi-kontinu'
+  | 'bang-kartun-panggung'
+  | 'bang-opener';
 
 export interface VisualStyle {
   id: VisualStyleId;
   label: string;
-  /** animate = skill cth9191/animate di Claude Code (canvas, render sendiri) */
-  kind: '3d' | '2d' | 'animate';
-  /** nama style di skill animate (cut-paper, crosshatch, ...; custom = dari referensi) */
+  /** skill = dibuat skill Claude pihak ketiga (animate / bang-motion) di Claude Code, render sendiri */
+  kind: '3d' | '2d' | 'skill';
+  /** mesin skill untuk kind skill */
+  engine?: 'animate' | 'bang-motion';
+  /** nama style di skill (animate: cut-paper ... custom; bang-motion: kartun-kolase ... opener) */
   skillStyle?: string;
   description: string;
   draw: string[];
@@ -36,5 +45,5 @@ const ALIASES = (data as { aliases?: Record<string, string> }).aliases ?? {};
 export const styleId = (id: string | null | undefined) => (id && ALIASES[id]) || id || 'kartun-3d';
 export const visualStyle = (id: string | null | undefined): VisualStyle => VISUAL_STYLES.find((s) => s.id === styleId(id)) ?? VISUAL_STYLES[0];
 export const is2D = (id: string | null | undefined) => visualStyle(id).kind === '2d';
-export const isAnimate = (id: string | null | undefined) => visualStyle(id).kind === 'animate';
-export const STYLES_ANIMATE = VISUAL_STYLES.filter((s) => s.kind === 'animate');
+export const isSkill = (id: string | null | undefined) => visualStyle(id).kind === 'skill';
+export const STYLES_SKILL = VISUAL_STYLES.filter((s) => s.kind === 'skill');

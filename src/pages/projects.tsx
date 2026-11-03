@@ -9,8 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input, Textarea } from '@/components/ui/input';
 import { Badge, Label, Skeleton } from '@/components/ui/misc';
 import { CONTENT_TYPES, contentType, type ContentTypeId } from '@/lib/content';
-import { VISUAL_STYLES, is2D, isAnimate, visualStyle, type VisualStyleId } from '@/lib/styles';
-import { useAnimateSamples } from '@/components/animate';
+import { VISUAL_STYLES, is2D, isSkill, visualStyle, type VisualStyleId } from '@/lib/styles';
+import { useAllSkillSamples } from '@/components/skill-video';
 import { cn } from '@/lib/utils';
 import { createProject, listProjects } from '@/lib/api';
 import type { Project } from '@/lib/types';
@@ -98,8 +98,8 @@ function NewProjectDialog() {
   const [style, setStyle] = useState<VisualStyleId>('kartun-3d');
   const [format, setFormat] = useState<'9:16' | '16:9'>('9:16');
   const [busy, setBusy] = useState(false);
-  const two = is2D(style) || isAnimate(style);
-  const samples = useAnimateSamples();
+  const two = is2D(style) || isSkill(style);
+  const samples = useAllSkillSamples();
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -172,11 +172,11 @@ function NewProjectDialog() {
                     style === v.id && 'border-primary bg-primary/10 ring-1 ring-primary/40',
                   )}
                 >
-                  {v.skillStyle && samples[v.skillStyle] && <img src={samples[v.skillStyle]} alt="" className="mb-1 aspect-[9/16] w-full rounded object-cover" />}
+                  {v.skillStyle && samples[`${v.engine}:${v.skillStyle}`] && <img src={samples[`${v.engine}:${v.skillStyle}`]} alt="" className="mb-1 h-24 w-full rounded object-cover" />}
                   <span className="text-sm font-medium">{v.label}</span>
                   <span className="mt-auto pt-1">
-                    <Badge variant={v.kind === '3d' ? 'warning' : v.kind === 'animate' ? 'secondary' : 'success'}>
-                      {v.kind === '3d' ? 'Render lama' : v.kind === 'animate' ? 'Claude Code' : 'Render cepat'}
+                    <Badge variant={v.kind === '3d' ? 'warning' : v.kind === 'skill' ? 'secondary' : 'success'}>
+                      {v.kind === '3d' ? 'Render lama' : v.kind === 'skill' ? 'Claude Code' : 'Render cepat'}
                     </Badge>
                   </span>
                 </button>

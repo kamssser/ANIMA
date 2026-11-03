@@ -77,65 +77,136 @@
     {
       "id": "animate-cut-paper",
       "label": "Animate: kertas sobek",
-      "kind": "animate",
+      "kind": "skill",
       "skillStyle": "cut-paper",
-      "description": "Kertas sobek dengan bayangan, krayon, pola, dan karakter berwajah. Cocok untuk sejarah dan cerita. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
-      "draw": []
+      "description": "Kertas sobek dengan bayangan, krayon, pola, dan karakter berwajah. Cocok untuk sejarah dan cerita. Skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": [],
+      "engine": "animate"
     },
     {
       "id": "animate-crosshatch",
       "label": "Animate: tinta arsir",
-      "kind": "animate",
+      "kind": "skill",
       "skillStyle": "crosshatch",
-      "description": "Tinta sketsa yang bergetar, arsiran dan pensil, kertas hangat dan dunia biru tua \"di dalam mesin\". Cocok untuk penjelasan teknologi. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
-      "draw": []
+      "description": "Tinta sketsa yang bergetar, arsiran dan pensil, kertas hangat dan dunia biru tua \"di dalam mesin\". Cocok untuk penjelasan teknologi. Skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": [],
+      "engine": "animate"
     },
     {
       "id": "animate-riso",
       "label": "Animate: cetak riso",
-      "kind": "animate",
+      "kind": "skill",
       "skillStyle": "riso",
-      "description": "Cetakan risograph tiga tinta: raster halftone, tinta bertumpuk, cetakan sedikit meleset. Nuansa editorial yang lembut. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
-      "draw": []
+      "description": "Cetakan risograph tiga tinta: raster halftone, tinta bertumpuk, cetakan sedikit meleset. Nuansa editorial yang lembut. Skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": [],
+      "engine": "animate"
     },
     {
       "id": "animate-sketchbook",
       "label": "Animate: buku sketsa",
-      "kind": "animate",
+      "kind": "skill",
       "skillStyle": "sketchbook",
-      "description": "Grafit dan satu warna aksen di halaman buku sketsa, dengan tulisan tangan. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
-      "draw": []
+      "description": "Grafit dan satu warna aksen di halaman buku sketsa, dengan tulisan tangan. Skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": [],
+      "engine": "animate"
     },
     {
       "id": "animate-math",
       "label": "Animate: matematika",
-      "kind": "animate",
+      "kind": "skill",
       "skillStyle": "math",
-      "description": "Penjelasan matematika ala manim: panggung hitam, sumbu dan grafik, variabel berwarna, gerak halus. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
-      "draw": []
+      "description": "Penjelasan matematika ala manim: panggung hitam, sumbu dan grafik, variabel berwarna, gerak halus. Skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": [],
+      "engine": "animate"
     },
     {
       "id": "animate-pixel",
       "label": "Animate: piksel",
-      "kind": "animate",
+      "kind": "skill",
       "skillStyle": "pixel",
-      "description": "Era resolusi rendah: digambar di resolusi asli lalu diperbesar, font bitmap. Cocok untuk sejarah komputer dan game. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
-      "draw": []
+      "description": "Era resolusi rendah: digambar di resolusi asli lalu diperbesar, font bitmap. Cocok untuk sejarah komputer dan game. Skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": [],
+      "engine": "animate"
     },
     {
       "id": "animate-isometric",
       "label": "Animate: isometrik",
-      "kind": "animate",
+      "kind": "skill",
       "skillStyle": "isometric",
-      "description": "Gambar garis isometrik presisi: garis tipis rata, permukaan putih, satu aksen gelap. Cocok untuk produk, alat, dan infrastruktur. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
-      "draw": []
+      "description": "Gambar garis isometrik presisi: garis tipis rata, permukaan putih, satu aksen gelap. Cocok untuk produk, alat, dan infrastruktur. Skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": [],
+      "engine": "animate"
     },
     {
       "id": "animate-custom",
       "label": "Animate: dari referensi saya",
-      "kind": "animate",
+      "kind": "skill",
       "skillStyle": "custom",
-      "description": "Kamu memberi video/gambar/web referensi; skill mengukur gayanya, mencocokkan frame bersamamu, lalu menyimpannya sebagai style baru. Dibuat dengan skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "description": "Kamu memberi video/gambar/web referensi; skill mengukur gayanya, mencocokkan frame bersamamu, lalu menyimpannya sebagai style baru. Skill animate (cth9191) di Claude Code: kamu menyetujui story, look, dan storyboard sebelum dianimasikan.",
+      "draw": [],
+      "engine": "animate"
+    },
+    {
+      "id": "bang-kartun-kolase",
+      "label": "Bang Motion: kartun kolase",
+      "kind": "skill",
+      "engine": "bang-motion",
+      "skillStyle": "kartun-kolase",
+      "description": "Kertas krem, potongan ilustrasi flat, pil warna, tulisan tangan; kamera menyusuri kolase. Cocok untuk edukasi sains dan topik ringan. Skill bang-motion (Bang Tutorial) di Claude Code: kamu menyetujui style brief dan rundown sebelum dibangun.",
+      "draw": []
+    },
+    {
+      "id": "bang-jurnalisme",
+      "label": "Bang Motion: jurnalisme visual",
+      "kind": "skill",
+      "engine": "bang-motion",
+      "skillStyle": "jurnalisme",
+      "description": "Latar hitam, foto asli berlisensi bebas dengan tag sumber, stabilo kuning, anotasi putus-putus. Cocok untuk berita dan isu viral. Skill bang-motion (Bang Tutorial) di Claude Code: kamu menyetujui style brief dan rundown sebelum dibangun.",
+      "draw": []
+    },
+    {
+      "id": "bang-katalog",
+      "label": "Bang Motion: katalog putih",
+      "kind": "skill",
+      "engine": "bang-motion",
+      "skillStyle": "katalog",
+      "description": "Latar putih bergrid, potongan foto, tipografi campur, coretan. Cocok untuk produk, brand, dan profil. Skill bang-motion (Bang Tutorial) di Claude Code: kamu menyetujui style brief dan rundown sebelum dibangun.",
+      "draw": []
+    },
+    {
+      "id": "bang-sketsa-vintage",
+      "label": "Bang Motion: sketsa vintage",
+      "kind": "skill",
+      "engine": "bang-motion",
+      "skillStyle": "sketsa-vintage",
+      "description": "Kertas sepia, gambar ukiran/etsa, serif klasik, catatan berwarna karat. Cocok untuk sejarah, biografi, dan penemuan. Skill bang-motion (Bang Tutorial) di Claude Code: kamu menyetujui style brief dan rundown sebelum dibangun.",
+      "draw": []
+    },
+    {
+      "id": "bang-aksi-kontinu",
+      "label": "Bang Motion: aksi kontinu",
+      "kind": "skill",
+      "engine": "bang-motion",
+      "skillStyle": "aksi-kontinu",
+      "description": "Dunia vektor yang terus mengalir dengan satu subjek, angka dan peta hidup di dalam dunia. Cocok untuk kecepatan, rute, dan proses. Skill bang-motion (Bang Tutorial) di Claude Code: kamu menyetujui style brief dan rundown sebelum dibangun.",
+      "draw": []
+    },
+    {
+      "id": "bang-kartun-panggung",
+      "label": "Bang Motion: kartun panggung",
+      "kind": "skill",
+      "engine": "bang-motion",
+      "skillStyle": "kartun-panggung",
+      "description": "Flat cerah, satu panggung hidup per adegan, tokoh bersendi beraksi, tanpa caption. Cocok untuk edukasi berkarakter. Skill bang-motion (Bang Tutorial) di Claude Code: kamu menyetujui style brief dan rundown sebelum dibangun.",
+      "draw": []
+    },
+    {
+      "id": "bang-opener",
+      "label": "Bang Motion: opener / promo",
+      "kind": "skill",
+      "engine": "bang-motion",
+      "skillStyle": "opener",
+      "description": "Opener, promo produk, bumper, intro kanal, dan kinetic typography yang bergerak seperti video, bukan slide. Skill bang-motion (Bang Tutorial) di Claude Code: kamu menyetujui style brief dan rundown sebelum dibangun.",
       "draw": []
     }
   ],

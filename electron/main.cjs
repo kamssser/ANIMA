@@ -1410,8 +1410,8 @@ async function renderSvgPng(svg, width, height, outFile) {
 
 // Karakter 2D: digambar Claude sebagai SVG ber-rig (electron/characters.cjs).
 require('./characters.cjs').register({ ipcMain, getWin: () => win, claudeCodePath, cwd: app.getPath('userData'), refDir: refDir(), renderSvgPng });
-// Style animate (skill cth9191/animate, utuh): pasang, buka Claude Code interaktif, baca hasil.
-require('./animate.cjs').register({ ipcMain, getWin: () => win, which, claudeCodePath, mcpServerPath, settingsFile });
+// Style dari skill Claude pihak ketiga (animate, bang-motion; utuh): pasang, buka Claude Code interaktif, baca hasil.
+require('./skills.cjs').register({ ipcMain, getWin: () => win, which, claudeCodePath, mcpServerPath, settingsFile });
 
 ipcMain.handle('update:state', () => ({ ...updateState, current: APP_VERSION }));
 if (!app.isPackaged) {

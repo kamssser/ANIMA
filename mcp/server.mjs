@@ -17,8 +17,8 @@ import { createRequire } from 'node:module';
 const { sanitizeSvg, checkBackgroundSvg, checkPropSvg, extractSvg } = createRequire(import.meta.url)('../electron/svg.cjs');
 
 const SESSION_FILE = process.env.ANIMA_SESSION_FILE;
-// Sesi skill animate (dibuka dari HyperForge) tidak butuh login Supabase: hanya alat suara anima_vibi_voice.
-if ((!SESSION_FILE || !fs.existsSync(SESSION_FILE)) && !process.env.ANIMA_ANIMATE_DIR) {
+// Sesi skill animate / bang-motion (dibuka dari HyperForge) tidak butuh login Supabase: hanya alat suara vibi.
+if ((!SESSION_FILE || !fs.existsSync(SESSION_FILE)) && !process.env.ANIMA_ANIMATE_DIR && !process.env.ANIMA_BANG_DIR) {
   console.error('ANIMA MCP: sesi tidak ditemukan. Buka ANIMA Studio > Pengaturan > Integrasi Claude > Sambungkan.');
   process.exit(1);
 }
@@ -458,6 +458,35 @@ server.tool(
         fs.writeFileSync(scriptFile, JSON.stringify(script, null, 2));
       }
       return ok({ voice, made: done, credits, next: 'Jalankan: node <skill>/tools/voice.mjs ' + piece + ' --model small (multibahasa, untuk bahasa Indonesia), lalu build ulang.' });
+    } catch (e) {
+      return fail(e.message);
+    }
+  },
+);
+
+server.tool(
+  'anima_vibi_tts',
+  'Skill bang-motion: buat file VO dari naskah dengan suara yang dipilih pengguna di HyperForge (vibi.pro), sebagai "VO dari layanan TTS pilihan pengguna". Panggil dulu dengan estimate=true untuk menyebutkan suara dan jumlah karakter (kredit) ke pengguna, lalu jalankan setelah disetujui. Satu panggilan = satu file mp3.',
+  {
+    file: z.string().describe('path file mp3 relatif ke folder kerja, mis. "sejarah-kereta/vo.mp3"'),
+    text: z.string().min(1).max(5000).describe('naskah VO, angka ditulis dengan kata'),
+    speaker: z.enum(['A', 'B']).default('A').describe('Suara A (bawaan) atau B (pembicara kedua)'),
+    estimate: z.boolean().default(false),
+  },
+  async ({ file, text, speaker, estimate }) => {
+    try {
+      const base = process.env.ANIMA_BANG_DIR;
+      if (!base) return fail('Alat ini hanya untuk sesi bang-motion yang dibuka dari HyperForge.');
+      const out = path.resolve(base, file);
+      if (!out.startsWith(path.resolve(base) + path.sep) || !/\.mp3$/i.test(out)) return fail('File harus .mp3 di dalam folder kerja bang-motion.');
+      const s = hyperforgeSettings();
+      const v = voiceOf(s, speaker);
+      if (!v.voiceId) return fail(`Suara ${speaker} belum dipilih di HyperForge > Pengaturan > Suara & audio.`);
+      const voice = `${v.name || v.voiceId} (${v.provider || 'elevenlabs'}${v.model ? `, ${v.model}` : ''})`;
+      if (estimate) return ok({ voice, characters: text.length, note: 'Kredit vibi.pro kira-kira sebanding jumlah karakter.' });
+      fs.mkdirSync(path.dirname(out), { recursive: true });
+      const credits = await vibiLine(s, v, text, out);
+      return ok({ voice, file: path.relative(base, out).replace(/\\/g, '/'), credits, next: 'Retime ke VO ini (silencedetect / tools/vo-pauses.html), lalu verifikasi frame.' });
     } catch (e) {
       return fail(e.message);
     }

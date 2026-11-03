@@ -95,3 +95,57 @@ export function buildAnimateBrief(project: Project, slug: string) {
   ];
   return lines.filter((l) => l !== '').join('\n') + '\n';
 }
+
+const BANG_GAYA: Record<string, string> = {
+  'kartun-kolase': '1 (Kartun kolase)',
+  jurnalisme: '2 (Jurnalisme visual)',
+  katalog: '3 (Katalog putih)',
+  'sketsa-vintage': '4 (Sketsa vintage)',
+  'aksi-kontinu': '5 (Aksi kontinu, vektor)',
+  'kartun-panggung': '6 (Kartun panggung)',
+};
+
+/** Brief untuk skill bang-motion (Bang Tutorial) di Claude Code. Skill-nya tidak diubah. */
+export function buildBangBrief(project: Project, slug: string) {
+  const t = contentType(project.content_type);
+  const st = visualStyle(project.visual_style);
+  const opener = st.skillStyle === 'opener';
+  const lines = [
+    `# Brief HyperForge: ${project.title}`,
+    '',
+    'Brief ini dari aplikasi HyperForge. Jalankan skill bang-motion seperti biasa: kenali jenisnya, tanyakan hanya yang belum dijawab di sini, tulis style brief + rundown dan minta persetujuan pengguna sebelum menulis kode, bangun, lalu verifikasi frame.',
+    '',
+    '## Jenis',
+    opener
+      ? '- Opener / promo / bumper / kinetic typography (tentukan yang paling cocok dari topik; ikuti references/opener-konsep.md).'
+      : `- Explainer, **gaya ${BANG_GAYA[st.skillStyle ?? ''] ?? st.label}** (sudah dipilih di HyperForge; references/explainer.md).`,
+    '',
+    '## Isi',
+    `- Topik / ide: ${project.topic || project.title}`,
+    project.hook ? `- Hook yang sudah ada: ${project.hook}` : '',
+    project.script.trim() ? `- Naskah yang sudah ada (boleh dipakai sebagai dasar naskah VO):\n\n${project.script.trim()}\n` : '',
+    `- Jenis konten HyperForge: ${t.label}. Aturan:`,
+    ...t.rules.map((r) => `  - ${r}`),
+    ...HOOK_RULES.map((r) => `  - ${r}`),
+    t.needsSources ? '- Wajib fakta bersumber: cek dengan web search, minimal 2 sumber, cantumkan.' : '',
+    '',
+    '## Bentuk',
+    `- Rasio: ${project.format === '16:9' ? '16:9' : '9:16'}. Durasi: sekitar ${project.target_seconds} detik.`,
+    '- Bahasa: Indonesia.',
+    '- Teks di layar: pengguna HyperForge ingin kata kunci/angka penting terbaca di layar. Tampilkan sejauh hukum gaya mengizinkan (mis. kartun panggung tetap tanpa caption, maksimal dua tingkat teks per adegan).',
+    '',
+    '## Suara (VO)',
+    '- Suara: VO narasi. Bangun dulu dengan timing baca, lalu buat VO lewat alat MCP **anima_vibi_tts** (suara yang sudah dipilih pengguna di HyperForge, vibi.pro) sebagai "VO dari layanan TTS pilihan pengguna".',
+    '- Urutan: naskah VO disetujui -> `anima_vibi_tts` dengan `estimate: true`, sebutkan suara dan jumlah karakter (kredit) -> setelah pengguna setuju, buat ke `' + slug + '/vo.mp3` -> retime ke VO (references/explainer.md "Retime ke VO").',
+    t.twoVoices ? '- Jenis ini memakai **dua pembicara**: panggil anima_vibi_tts per giliran dengan `speaker: "A"` atau `"B"` (file berbeda), lalu gabungkan dengan ffmpeg.' : '',
+    '',
+    '## Alat di folder kerja',
+    '- Skrip skill sudah disalin utuh ke `tools/` (snap.mjs, export-frames.mjs, vo-pauses.html, ...) dan puppeteer sudah terpasang di folder kerja ini. Jalankan dari sini, mis. `node tools/snap.mjs ...`.',
+    '- ffmpeg lengkap tersedia di PATH.',
+    '',
+    '## Hasil',
+    `- Folder proyek: \`${slug}/\` (index.html satu berkas).`,
+    `- Pengguna HyperForge **meminta MP4**: setelah pengguna menyetujui hasilnya, export frame-by-frame (tools/export-frames.mjs) lalu gabungkan dengan ffmpeg (beserta VO bila ada) menjadi \`${slug}/render/${slug}.mp4\`. HyperForge mengambil video dari folder proyek itu.`,
+  ];
+  return lines.filter((l) => l !== '').join('\n') + '\n';
+}

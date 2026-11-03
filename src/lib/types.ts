@@ -282,18 +282,16 @@ export interface RenderProps {
   }[];
 }
 
-/** Kebutuhan skill animate (Pengaturan > Animate). */
-export interface AnimateCheck {
-  node: boolean;
-  claude: boolean;
-  playwright: boolean;
-  chromium: boolean;
-  /** path ffmpeg lengkap, null kalau belum ada */
-  ffmpeg: string | null;
-  /** versi faster-whisper (opsional) */
-  whisper: string | null;
-  python: boolean;
-  skill: { installed: boolean; exists: boolean; foreign: boolean };
+/** Mesin style dari skill Claude pihak ketiga. */
+export type SkillEngine = 'animate' | 'bang-motion';
+
+/** Kebutuhan satu mesin skill (Pengaturan > Skill video). */
+export interface SkillCheck {
+  engine: SkillEngine;
+  ready: boolean;
+  items: { id: string; label: string; ok: boolean; optional?: boolean; detail?: string }[];
   workDir: string;
   commit: string;
+  url: string;
+  optionalLabel: string;
 }

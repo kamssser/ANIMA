@@ -6,6 +6,17 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.10.0 - 2026-11-03
+
+**Baru**
+- **7 style "Bang Motion"** dari skill bang-motion karya Bang Tutorial (github.com/bangtutorial/bang-motion, dipakai utuh tanpa diubah): kartun kolase, jurnalisme visual, katalog putih, sketsa vintage, aksi kontinu, kartun panggung, dan opener/promo (opener, bumper, intro kanal, kinetic typography). Motion graphic yang bergerak seperti video, bukan slide.
+- Sama seperti Animate: tombol **Buka di Claude Code** di project, lalu kamu menyetujui **style brief dan rundown** di jendela Claude sebelum dibangun. Claude memeriksa frame dan mengekspor MP4; video yang jadi tinggal dimasukkan ke daftar render dari tab Render.
+- Suara VO Bang Motion memakai **Suara A/B dari Pengaturan (vibi.pro)**; Claude menyebutkan jumlah karakter (kredit) dulu sebelum membuatnya.
+
+**Perubahan**
+- Menu Pengaturan **Animate** menjadi **Skill video**, berisi Animate dan Bang Motion dengan tombol **Siapkan otomatis** masing-masing (Bang Motion memasang Puppeteer + Chrome sekitar 170 MB).
+- Gambar contoh style di form project baru dibuat lebih kecil supaya daftar style tidak terlalu panjang.
+
 ## 0.9.0 - 2026-11-03
 
 **Baru**
