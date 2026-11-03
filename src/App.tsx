@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { initSupabase } from '@/lib/supabase';
 import { markOrphanJobs } from '@/lib/api';
 import { wireRenderEvents } from '@/lib/render';
+import { wireTaskEvents } from '@/lib/tasks';
 import type { Settings } from '@/lib/types';
 import { Layout } from '@/components/layout';
 import { SetupPage } from '@/pages/setup';
@@ -39,6 +40,7 @@ export function App() {
   useEffect(() => {
     if (!session) return;
     wireRenderEvents();
+    wireTaskEvents();
     window.anima
       .activeRenders()
       .then((a) => markOrphanJobs([...(a.current ? [a.current] : []), ...a.queued]))

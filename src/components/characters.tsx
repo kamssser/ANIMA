@@ -10,8 +10,7 @@ import { RigPreview } from '@/lib/rig-preview';
 import { STYLES_2D, visualStyle } from '@/lib/styles';
 import type { Character } from '@/lib/types';
 import { cn } from '@/lib/utils';
-
-const cleanErr = (e: unknown) => (e as Error).message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
+import { cleanErr, runTask, setValue, usePersisted, useTask } from '@/lib/tasks';
 
 /** kunci pendek dari nama: "Budi Santoso" -> "budi-santoso" */
 const keyOf = (name: string) =>
@@ -35,50 +34,53 @@ const emptyDraft = (isMain: boolean): Draft => ({
   svg: '',
 });
 
-function Editor({ initial, others, onClose, onSaved }: { initial: Draft; others: Character[]; onClose: () => void; onSaved: () => void }) {
-  const [d, setD] = useState<Draft>(initial);
-  const [busy, setBusy] = useState(false);
-  const [step, setStep] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [sessionId, setSessionId] = useState<string | undefined>();
-  const [problems, setProblems] = useState<string[]>([]);
+type EditorState = { initial: Draft; d: Draft; feedback: string; sessionId?: string; problems: string[] };
+/** Isian editor disimpan global supaya tidak hilang saat pindah halaman (termasuk hasil gambar yang belum disimpan). */
+const EDITOR = 'characters:editor';
+const startEditor = (initial: Draft): EditorState => ({ initial, d: initial, feedback: '', problems: [] });
+
+function Editor({ others, onClose, onSaved }: { others: Character[]; onClose: () => void; onSaved: () => void }) {
+  const [ed, setEd] = usePersisted<EditorState | null>(EDITOR, null);
+  const task = useTask('character');
+  const generating = Boolean(task?.running);
+  const [saving, setSaving] = useState(false);
+  const busy = generating || saving;
+  const step = generating ? task!.step : '';
   const [talking, setTalking] = useState(false);
-  const eventId = initial.id ?? 'baru';
+  if (!ed) return null;
+  const { initial, d, feedback, sessionId, problems } = ed;
   const unsaved = Boolean(d.svg) && JSON.stringify(d) !== JSON.stringify(initial);
   const close = () => {
     if (unsaved && !window.confirm('Karakter belum disimpan. Tutup dan buang perubahan?')) return;
     onClose();
   };
-  const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }));
+  const set = (p: Partial<Draft>) => setEd((x) => (x ? { ...x, d: { ...x.d, ...p } } : x));
+  const setFeedback = (feedback: string) => setEd((x) => (x ? { ...x, feedback } : x));
 
-  useEffect(() => window.anima.onCharacterEvent((e) => e.id === eventId && setStep(e.line)), [eventId]);
-
-  async function generate(withFeedback: boolean) {
+  function generate(withFeedback: boolean) {
     if (!d.name.trim()) {
       toast.error('Isi nama karakter dulu.');
       return;
     }
-    setBusy(true);
-    setStep('Menyiapkan Claude...');
-    try {
-      const r = await window.anima.generateCharacter({
-        id: eventId,
+    const name = d.name.trim();
+    runTask('character', { label: `Menggambar ${name}`, href: '/settings', step: 'Menyiapkan Claude...' }, () =>
+      window.anima.generateCharacter({
+        id: 'editor',
         character: { name: d.name, nickname: d.nickname, is_main: d.is_main, personality: d.personality, appearance: d.appearance, visual_style: d.visual_style },
         feedback: withFeedback ? feedback.trim() : undefined,
         sessionId: withFeedback ? sessionId : undefined,
-      });
-      set({ svg: r.svg });
-      setSessionId(r.sessionId);
-      setProblems(r.problems ?? []);
-      if (withFeedback) setFeedback('');
-      if (r.problems?.length) toast.warning('Gambar jadi, tapi ada bagian animasi yang kurang', { description: r.problems.join(' ') });
-      else toast.success('Gambar jadi', { description: 'Kalau sudah cocok, klik "Simpan karakter". Kalau belum, tulis revisi.' });
-    } catch (e) {
-      toast.error('Gagal menggambar', { description: cleanErr(e) });
-    } finally {
-      setBusy(false);
-      setStep('');
-    }
+      }),
+    ).then(
+      (r) => {
+        // Ditulis ke store, bukan state komponen: hasil tetap masuk walau halaman Pengaturan sedang ditutup.
+        setValue<EditorState | null>(EDITOR, (x) =>
+          x ? { ...x, d: { ...x.d, svg: r.svg }, sessionId: r.sessionId, problems: r.problems ?? [], feedback: withFeedback ? '' : x.feedback } : x,
+        );
+        if (r.problems?.length) toast.warning(`Gambar ${name} jadi, tapi ada bagian animasi yang kurang`, { description: r.problems.join(' ') });
+        else toast.success(`Gambar ${name} jadi`, { description: 'Buka Pengaturan > Karakter. Kalau sudah cocok, klik "Simpan karakter".' });
+      },
+      (e) => toast.error('Gagal menggambar', { description: cleanErr(e) }),
+    );
   }
 
   async function save() {
@@ -86,7 +88,7 @@ function Editor({ initial, others, onClose, onSaved }: { initial: Draft; others:
     if (!d.svg) return toast.error('Generate gambar karakter dulu sampai cocok, baru simpan.');
     const key = d.key || keyOf(d.nickname || d.name);
     if (others.some((o) => o.key === key && o.id !== d.id)) return toast.error(`Nama panggilan "${key}" sudah dipakai karakter lain.`);
-    setBusy(true);
+    setSaving(true);
     try {
       await saveCharacter({ ...d, key, name: d.name.trim(), nickname: d.nickname.trim(), version: (d.version ?? 0) + (d.id ? 1 : 0) || 1 });
       toast.success(`Karakter ${d.name} disimpan`);
@@ -94,7 +96,7 @@ function Editor({ initial, others, onClose, onSaved }: { initial: Draft; others:
     } catch (e) {
       toast.error('Gagal menyimpan', { description: cleanErr(e) });
     } finally {
-      setBusy(false);
+      setSaving(false);
     }
   }
 
@@ -209,7 +211,7 @@ function Editor({ initial, others, onClose, onSaved }: { initial: Draft; others:
 /** Pengaturan > Karakter: 1 utama wajib, maks 10, digambar Claude. */
 export function CharacterSettings() {
   const [list, setList] = useState<Character[] | null>(null);
-  const [editing, setEditing] = useState<Draft | null>(null);
+  const [editing, setEditing] = usePersisted<EditorState | null>(EDITOR, null);
   const [confirm, setConfirm] = useState<Character | null>(null);
   const [toDelete, setToDelete] = useState<Character | null>(null);
 
@@ -230,7 +232,6 @@ export function CharacterSettings() {
   if (editing) {
     return (
       <Editor
-        initial={editing}
         others={list ?? []}
         onClose={() => setEditing(null)}
         onSaved={() => {
@@ -246,7 +247,7 @@ export function CharacterSettings() {
       <CardHeader>
         <CardTitle>Karakter</CardTitle>
         <CardDescription>
-          Dipakai style 2D (Motion comic, Drama, Komedi, Indie). Wajib 1 karakter utama, bisa ditambah sampai {MAX_CHARACTERS} karakter dengan sifat dan nama panggilan sendiri.
+          Dipakai style 2D (Motion comic, Indie sinematik, Sketsa muram, Pastel lembut). Wajib 1 karakter utama, bisa ditambah sampai {MAX_CHARACTERS} karakter dengan sifat dan nama panggilan sendiri.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -294,7 +295,7 @@ export function CharacterSettings() {
               ))}
             </div>
             <div>
-              <Button onClick={() => setEditing(emptyDraft(!hasMain))} disabled={full}>
+              <Button onClick={() => setEditing(startEditor(emptyDraft(!hasMain)))} disabled={full}>
                 <Plus /> {hasMain ? 'Tambah karakter' : 'Buat karakter utama'}
               </Button>
               {full && <span className="ml-3 text-sm text-muted-foreground">Sudah {MAX_CHARACTERS} karakter (maksimal).</span>}
@@ -317,7 +318,7 @@ export function CharacterSettings() {
             </Button>
             <Button
               onClick={() => {
-                if (confirm) setEditing({ ...confirm });
+                if (confirm) setEditing(startEditor({ ...confirm }));
                 setConfirm(null);
               }}
             >

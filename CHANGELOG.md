@@ -6,6 +6,16 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.6.1 - 2026-11-03
+
+**Perbaikan**
+- Proses yang sedang berjalan **tidak hilang lagi saat pindah halaman**. Generate hook + script + shot, menggambar karakter, membuat suara, uji render, Siapkan Remotion, dan pasang numpy/scipy tetap jalan dan tetap terlihat waktu kamu kembali ke halamannya. Tidak muncul lagi pesan "Claude sedang menulis project lain" untuk project yang sama.
+- Hasil gambar karakter yang selesai saat kamu sedang di halaman lain tetap masuk ke editor karakter, beserta isian yang sudah diketik.
+- Halaman Pengaturan dan tab project mengingat bagian yang terakhir dibuka.
+
+**Baru**
+- Daftar **"Sedang berjalan"** di sidebar kiri. Klik salah satunya untuk kembali ke halaman proses itu.
+
 ## 0.6.0 - 2026-11-03
 
 **Baru**

@@ -6,6 +6,7 @@ import { Card, CardContent, Progress } from '@/components/ui/misc';
 import type { Project, Shot, VoiceStatus } from '@/lib/types';
 import { WORDS_PER_SECOND, countWords, formatDate, slugify } from '@/lib/utils';
 import { contentType } from '@/lib/content';
+import { cleanErr, runTask, useTask, useTaskFinished } from '@/lib/tasks';
 
 /** Teks narasi: script project, atau gabungan narasi per shot kalau script kosong. */
 export function narrationText(project: Project, shots: Shot[]) {
@@ -15,7 +16,9 @@ export function narrationText(project: Project, shots: Shot[]) {
 export function VoicePanel({ project, shots }: { project: Project; shots: Shot[] }) {
   const slug = slugify(project.title);
   const [status, setStatus] = useState<VoiceStatus | null>(null);
-  const [step, setStep] = useState<{ step: string; progress: number } | null>(null);
+  // Status pembuatan suara disimpan global: tetap terlihat saat pindah halaman lalu kembali.
+  const task = useTask(`voice:${slug}`);
+  const step = task?.running ? { step: task.step, progress: task.progress ?? 0 } : null;
   const [voiceName, setVoiceName] = useState('');
 
   const two = contentType(project.content_type).twoVoices;
@@ -31,25 +34,20 @@ export function VoicePanel({ project, shots }: { project: Project; shots: Shot[]
       setVoiceName(s.vibiVoiceName || s.vibiVoiceId);
       setVoiceBName(s.vibi2VoiceName || s.vibi2VoiceId);
     });
-    return window.anima.onVoiceEvent((e) => e.slug === slug && setStep(e));
   }, [slug]);
 
-  async function generate() {
+  useTaskFinished(`voice:${slug}`, () => window.anima.voiceStatus(slug).then(setStatus));
+
+  function generate() {
     if (status?.mp3 && !window.confirm('Suara sudah ada. Buat ulang? Ini memakai kredit vibi.pro lagi.')) return;
-    setStep({ step: 'Mulai', progress: 0 });
-    try {
-      const r = await window.anima.generateVoice({ slug, text, lines });
-      toast.success('Suara narasi selesai', {
-        description: [r.credits != null && `${r.credits} kredit`, r.words != null && `${r.words} kata ber-timing`, ...r.notes]
-          .filter(Boolean)
-          .join(' · '),
-      });
-      setStatus(await window.anima.voiceStatus(slug));
-    } catch (e) {
-      toast.error('Gagal membuat suara', { description: (e as Error).message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') });
-    } finally {
-      setStep(null);
-    }
+    const title = project.title;
+    runTask(`voice:${slug}`, { label: `Suara: ${title}`, href: `/projects/${project.id}`, step: 'Mulai' }, () => window.anima.generateVoice({ slug, text, lines })).then(
+      (r) =>
+        toast.success(`Suara "${title}" selesai`, {
+          description: [r.credits != null && `${r.credits} kredit`, r.words != null && `${r.words} kata ber-timing`, ...r.notes].filter(Boolean).join(' · '),
+        }),
+      (e) => toast.error('Gagal membuat suara', { description: cleanErr(e) }),
+    );
   }
 
   return (

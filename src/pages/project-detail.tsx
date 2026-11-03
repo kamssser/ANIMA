@@ -30,12 +30,15 @@ import type { Project, ProjectStatus, RenderJob, Shot } from '@/lib/types';
 import { WORDS_PER_SECOND, cn, countWords, formatSeconds, framesToSeconds } from '@/lib/utils';
 import { CONTENT_TYPES, buildPrompt, contentType } from '@/lib/content';
 import { VISUAL_STYLES, is2D, visualStyle } from '@/lib/styles';
+import { cleanErr, runTask, usePersisted, useRunningTasks, useTask, useTaskFinished } from '@/lib/tasks';
 
 export default function ProjectDetailPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [shots, setShots] = useState<Shot[]>([]);
+  // Tab terakhir per project tetap diingat saat pindah halaman lalu kembali.
+  const [tab, setTab] = usePersisted(`project-tab:${id}`, 'brief');
 
   const reloadShots = useCallback(() => listShots(id).then(setShots).catch((e) => toast.error(e.message)), [id]);
 
@@ -76,7 +79,7 @@ export default function ProjectDetailPage() {
         }
       />
       <PageBody>
-      <Tabs defaultValue="brief">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="brief">
             <FileText /> Brief & Script
@@ -111,19 +114,22 @@ export default function ProjectDetailPage() {
 }
 
 function GeneratePanel({ project, onDone, beforeRun }: { project: Project; onDone: () => Promise<void>; beforeRun: () => Promise<Project> }) {
-  const [running, setRunning] = useState(false);
-  const [log, setLog] = useState<string[]>([]);
+  // Status generate disimpan global: tetap terlihat walau pengguna pindah halaman lalu kembali.
+  const key = `claude:${project.id}`;
+  const task = useTask(key);
+  const running = Boolean(task?.running);
+  const log = task?.log ?? [];
+  const other = useRunningTasks().find(([k]) => k.startsWith('claude:') && k !== key)?.[1];
   const t = contentType(project.content_type);
 
-  useEffect(
-    () =>
-      window.anima.onClaudeEvent((e) => {
-        if (e.projectId === project.id) setLog((l) => [...l.slice(-5), e.line]);
-      }),
-    [project.id],
-  );
+  // Muat ulang hook/script/shot saat generate selesai (juga kalau selesai ketika halaman ini sedang ditutup).
+  useTaskFinished(key, (t) => !t.error && onDone().catch(() => {}));
 
   async function run() {
+    if (other) {
+      toast.error('Claude sedang menulis project lain', { description: `"${String(other.data)}". Tunggu selesai dulu, atau batalkan di project itu.` });
+      return;
+    }
     if (is2D(project.visual_style)) {
       // Style 2D wajib punya karakter utama tersimpan; cek dulu supaya Claude tidak bekerja sia-sia.
       const chars = await listCharacters().catch(() => []);
@@ -136,9 +142,8 @@ function GeneratePanel({ project, onDone, beforeRun }: { project: Project; onDon
       }
     }
     if (project.script.trim() && !window.confirm('Script dan shot yang sekarang akan diganti hasil baru dari Claude. Lanjutkan?')) return;
-    setRunning(true);
-    setLog([]);
-    try {
+    const title = project.title;
+    runTask(key, { label: `Claude menulis: ${title}`, href: `/projects/${project.id}`, step: 'Menyiapkan...', data: title }, async () => {
       // Simpan perubahan brief dulu (jenis konten, topik, durasi) supaya Claude membaca versi terbaru.
       const fresh = await beforeRun();
       // Pinjamkan sesi login aplikasi ke Claude; perpanjang dulu kalau sisa umurnya < 30 menit.
@@ -147,19 +152,16 @@ function GeneratePanel({ project, onDone, beforeRun }: { project: Project; onDon
         data = (await sb().auth.refreshSession()).data;
       }
       if (!data.session) throw new Error('Sesi login habis. Keluar lalu masuk lagi.');
-      await window.anima.generateWithClaude({
+      return window.anima.generateWithClaude({
         projectId: fresh.id,
         prompt: buildPrompt(fresh),
         style: is2D(fresh.visual_style) ? visualStyle(fresh.visual_style).id : undefined,
         session: { access_token: data.session.access_token, expires_at: data.session.expires_at ?? 0 },
       });
-      await onDone();
-      toast.success('Claude selesai menulis', { description: 'Hook, script, dan shot sudah tersimpan.' });
-    } catch (e) {
-      toast.error('Generate gagal', { description: (e as Error).message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') });
-    } finally {
-      setRunning(false);
-    }
+    }).then(
+      () => toast.success(`Claude selesai menulis "${title}"`, { description: 'Hook, script, dan shot sudah tersimpan.' }),
+      (e) => toast.error(`Generate "${title}" gagal`, { description: cleanErr(e) }),
+    );
   }
 
   const prompt = buildPrompt(project);
@@ -177,7 +179,12 @@ function GeneratePanel({ project, onDone, beforeRun }: { project: Project; onDon
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <Button onClick={run} disabled={running}>
+        {other && !running && (
+          <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
+            Claude sedang menulis project lain: <b>{String(other.data)}</b>. Tombol Generate aktif lagi setelah itu selesai.
+          </div>
+        )}
+        <Button onClick={run} disabled={running || Boolean(other)}>
           {running ? <Loader2 className="animate-spin" /> : <Sparkles />} {running ? 'Claude sedang menulis...' : 'Generate hook + script + shot'}
         </Button>
         {running && (

@@ -14,6 +14,7 @@ import { Input, NativeSelect } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Skeleton } from '@/components/ui/misc';
 import type { Settings, SystemInfo } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { usePersisted } from '@/lib/tasks';
 
 function FolderField({ id, label, value, onChange, hint }: { id: string; label: string; value: string; onChange: (v: string) => void; hint?: string }) {
   return (
@@ -53,7 +54,7 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
   const [sys, setSys] = useState<SystemInfo | null>(null);
   const [hemat, setHemat] = useState(() => document.documentElement.classList.contains('hemat'));
   const [theme, setThemeState] = useState<Theme>(getTheme);
-  const [section, setSection] = useState<Section>('claude');
+  const [section, setSection] = usePersisted<Section>('settings:section', 'claude');
 
   useEffect(() => {
     window.anima.getSettings().then(setS);

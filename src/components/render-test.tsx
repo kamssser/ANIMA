@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Progress, TBody, TD, TH, THead, TR, Table } from '@/components/ui/misc';
 import type { BenchResult, Settings } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
-
-const cleanError = (e: unknown) => (e as Error).message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
+import { cleanErr, runTask, setValue, usePersisted, useTask, useTaskFinished } from '@/lib/tasks';
 
 function hours(h: number) {
   if (h < 1) return `${Math.round(h * 60)} menit`;
@@ -20,63 +19,53 @@ function hours(h: number) {
  */
 export function RenderTest({ s, setS, beforeRun }: { s: Settings; setS: (s: Settings) => void; beforeRun: () => Promise<void> }) {
   const [results, setResults] = useState<BenchResult[]>([]);
-  const [running, setRunning] = useState<null | 'still' | 'speed'>(null);
-  const [step, setStep] = useState<{ step: string; progress: number } | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  // Status uji disimpan global: uji bisa 10-20 menit dan tetap terlihat saat pindah halaman lalu kembali.
+  const task = useTask('bench');
+  const running = task?.running ? (task.data as 'still' | 'speed') : null;
+  const step = task?.running ? { step: task.step, progress: task.progress ?? 0 } : null;
+  const [preview] = usePersisted<string | null>('bench:preview', null);
   const [elapsed, setElapsed] = useState(0);
+  const [auto, setAuto] = usePersisted<Awaited<ReturnType<typeof window.anima.benchAuto>> | null>('bench:auto', null);
 
   useEffect(() => {
     window.anima.benchList().then(setResults);
-    return window.anima.onBenchEvent(setStep);
   }, []);
+  useTaskFinished('bench', () => window.anima.benchList().then(setResults));
 
+  const startedAt = task?.running ? task.startedAt : 0;
   useEffect(() => {
-    if (!running) return;
-    const t0 = Date.now();
-    const id = setInterval(() => setElapsed(Math.round((Date.now() - t0) / 1000)), 1000);
+    if (!startedAt) return;
+    const tick = () => setElapsed(Math.round((Date.now() - startedAt) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [running]);
+  }, [startedAt]);
 
-  const [auto, setAuto] = useState<Awaited<ReturnType<typeof window.anima.benchAuto>> | null>(null);
-
-  async function runAuto() {
-    setRunning('speed');
-    setElapsed(0);
+  function runAuto() {
     setAuto(null);
-    setStep({ step: 'Menyimpan pengaturan', progress: 0 });
-    try {
+    runTask('bench', { label: 'Uji render otomatis', href: '/settings', step: 'Menyimpan pengaturan', data: 'speed' }, async () => {
       await beforeRun();
       const r = await window.anima.benchAuto();
-      setAuto(r);
-      setResults(await window.anima.benchList());
-    } catch (e) {
-      toast.error('Uji otomatis gagal', { description: cleanError(e) });
-    } finally {
-      setRunning(null);
-      setStep(null);
-    }
+      setValue('bench:auto', r);
+      return r;
+    }).catch((e) => toast.error('Uji otomatis gagal', { description: cleanErr(e) }));
   }
 
-  async function run(kind: 'still' | 'speed') {
-    setRunning(kind);
-    setElapsed(0);
-    setStep({ step: 'Menyimpan pengaturan', progress: 0 });
-    try {
+  function run(kind: 'still' | 'speed') {
+    runTask('bench', { label: kind === 'still' ? 'Uji 1 frame' : 'Uji kecepatan render', href: '/settings', step: 'Menyimpan pengaturan', data: kind }, async () => {
       await beforeRun();
-      const r = await window.anima.benchRun(kind);
-      if (r.preview) setPreview(r.preview);
-      setResults(await window.anima.benchList());
-      toast.success(
-        kind === 'still'
-          ? `1 frame selesai dalam ${Math.round(r.seconds)} detik`
-          : `Kecepatan: ${r.secPerFrame.toFixed(1)} detik/frame, 1 video sekitar ${hours(r.estVideoHours ?? 0)}`,
-      );
-    } catch (e) {
-      toast.error('Uji render gagal', { description: cleanError(e) });
-    } finally {
-      setRunning(null);
-      setStep(null);
-    }
+      return window.anima.benchRun(kind);
+    }).then(
+      (r) => {
+        if (r.preview) setValue('bench:preview', r.preview);
+        toast.success(
+          kind === 'still'
+            ? `1 frame selesai dalam ${Math.round(r.seconds)} detik`
+            : `Kecepatan: ${r.secPerFrame.toFixed(1)} detik/frame, 1 video sekitar ${hours(r.estVideoHours ?? 0)}`,
+        );
+      },
+      (e) => toast.error('Uji render gagal', { description: cleanErr(e) }),
+    );
   }
 
   const latestSpeed = results.find((r) => r.kind === 'speed');

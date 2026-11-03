@@ -1,40 +1,24 @@
-import { useEffect, useState } from 'react';
 import { CheckCircle2, Download, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { cleanErr, runTask, useTask, useTaskFinished } from '@/lib/tasks';
 
 /** Satu klik: salin template skill, npm install, unduh Chrome render, lalu isi Pengaturan. */
 export function RemotionSetup({ found, onDone }: { found: boolean; onDone: () => Promise<void> }) {
-  const [busy, setBusy] = useState(false);
-  const [step, setStep] = useState('');
-  const [line, setLine] = useState('');
-  const [needNode, setNeedNode] = useState(false);
+  // Status disimpan global supaya tetap terlihat saat pindah halaman (npm install bisa beberapa menit).
+  const task = useTask('setup');
+  const busy = Boolean(task?.running);
+  const step = task?.step ?? '';
+  const line = task?.log.at(-1) ?? '';
+  const needNode = Boolean(task && !task.running && task.error && /Node\.js/.test(task.error));
 
-  useEffect(
-    () =>
-      window.anima.onSetupEvent((e) => {
-        if (e.step) setStep(e.step);
-        if (e.line) setLine(e.line);
-      }),
-    [],
-  );
+  useTaskFinished('setup', (t) => !t.error && onDone().catch(() => {}));
 
-  async function setup() {
-    setBusy(true);
-    setNeedNode(false);
-    setStep('Mulai');
-    setLine('');
-    try {
-      const r = await window.anima.setupRemotion();
-      toast.success('Proyek Remotion siap', { description: r.path });
-      await onDone();
-    } catch (e) {
-      const msg = (e as Error).message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
-      if (/Node\.js/.test(msg)) setNeedNode(true);
-      toast.error('Gagal menyiapkan', { description: msg.split('\n').slice(-3).join('\n') });
-    } finally {
-      setBusy(false);
-    }
+  function setup() {
+    runTask('setup', { label: 'Menyiapkan Remotion', href: '/settings', step: 'Mulai' }, () => window.anima.setupRemotion()).then(
+      (r) => toast.success('Proyek Remotion siap', { description: r.path }),
+      (e) => toast.error('Gagal menyiapkan', { description: cleanErr(e).split('\n').slice(-3).join('\n') }),
+    );
   }
 
   return (
@@ -51,7 +35,7 @@ export function RemotionSetup({ found, onDone }: { found: boolean; onDone: () =>
       {busy && (
         <div className="grid gap-1 text-xs text-muted-foreground">
           <span className="font-medium text-foreground">{step}...</span>
-          <span className="truncate font-mono">{line}</span>
+          {line !== step && <span className="truncate font-mono">{line}</span>}
         </div>
       )}
       {needNode && (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle2, ExternalLink, Play, Search, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { runTask, useTask, useTaskFinished } from '@/lib/tasks';
 import { Button } from '@/components/ui/button';
 import { Input, NativeSelect } from '@/components/ui/input';
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Label } from '@/components/ui/misc';
@@ -203,11 +204,12 @@ export function VoiceSettings({ s, setS }: Props) {
 /** Mix SFX + musik lewat skrip Python skill (audio/mix.py), lalu digabung ke MP4. */
 export function AudioMixSettings({ s, setS }: Props) {
   const [py, setPy] = useState<PythonCheck | null>(null);
-  const [installing, setInstalling] = useState(false);
+  const installing = Boolean(useTask('python')?.running);
 
   useEffect(() => {
     window.anima.pythonCheck().then(setPy);
   }, []);
+  useTaskFinished('python', () => window.anima.pythonCheck().then(setPy));
 
   return (
     <Card>
@@ -233,13 +235,12 @@ export function AudioMixSettings({ s, setS }: Props) {
             <Button
               size="sm"
               disabled={installing}
-              onClick={async () => {
-                setInstalling(true);
-                const r = await window.anima.pythonInstall();
-                setInstalling(false);
-                (r.ok ? toast.success : toast.error)(r.ok ? 'numpy & scipy terpasang' : 'Gagal memasang', { description: r.ok ? undefined : r.log });
-                setPy(await window.anima.pythonCheck());
-              }}
+              onClick={() =>
+                runTask('python', { label: 'Memasang numpy & scipy', href: '/settings', step: '1-3 menit' }, () => window.anima.pythonInstall()).then(
+                  (r) => (r.ok ? toast.success : toast.error)(r.ok ? 'numpy & scipy terpasang' : 'Gagal memasang', { description: r.ok ? undefined : r.log }),
+                  (e) => toast.error('Gagal memasang', { description: cleanErr(e) }),
+                )
+              }
             >
               {installing ? 'Memasang (1-3 menit)...' : 'Pasang numpy & scipy'}
             </Button>
