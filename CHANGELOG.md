@@ -6,6 +6,18 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.12.0 - 2026-11-03
+
+**Baru**
+- **Animate, Bang Motion, dan HyperForge Studio sekarang dikerjakan di dalam aplikasi**, tanpa jendela terminal. Project bergaya skill punya tab **Claude**: klik Mulai, lalu pertanyaan dan persetujuan skill muncul sebagai **tombol pilihan**, gambar contoh (frame gaya, storyboard, lembar karakter) tampil langsung, dan revisi cukup diketik. Langkah kerja Claude terlihat ringkas dan bisa dibuka. Prosesnya tetap jalan walau kamu pindah halaman, riwayat obrolan tersimpan per project, dan ada tombol Hentikan serta Percakapan baru.
+- **Semua style punya gambar contoh** (30 style), jadi kamu bisa melihat tampilannya sebelum memilih. Gaya HyperForge Studio digambar ulang dengan maskot yang sama supaya perbedaan gayanya jelas.
+- Kartu project di daftar Project menampilkan gambar style-nya.
+
+**Perubahan**
+- **Project baru dibuat dalam 3 langkah** (jenis konten, style video, detail) dengan tombol Kembali / Lanjut, tidak lagi semua isian di satu popup.
+- Pemilih style memakai kartu bergambar yang dikelompokkan (2D cepat, HyperForge Studio, Animate, Bang Motion, Kartun 3D). Di halaman project, style diganti lewat tombol **Ganti style** yang membuka pemilihnya sendiri.
+- Jendela terminal Claude Code tetap tersedia sebagai pilihan cadangan di kartu style pada tab Brief.
+
 ## 0.11.0 - 2026-11-03
 
 **Baru**

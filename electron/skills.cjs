@@ -311,6 +311,39 @@ const engineOf = (id) => {
   return e;
 };
 
+/**
+ * Siapkan sesi skill untuk satu project: cek kebutuhan, tulis brief + file pendukung + konfigurasi MCP.
+ * Dipakai jendela terminal (skill:open) dan panel obrolan di aplikasi (skillchat.cjs).
+ */
+async function prepareSession(e, { slug, title, brief, files }, { which, claudeCodePath, mcpServerPath, settingsFile, check }) {
+  if (!slugOk(slug)) throw new Error('Judul project tidak bisa dijadikan nama folder. Ganti judulnya.');
+  const st = await check(e.id);
+  const missing = st.items.filter((i) => !i.ok && !i.optional).map((i) => i.label);
+  if (missing.length) throw new Error(`Belum siap: ${missing.join(', ')}. Buka Pengaturan > Skill video lalu klik Siapkan otomatis.`);
+  fs.mkdirSync(path.join(e.work, 'briefs'), { recursive: true });
+  const briefFile = path.join(e.work, 'briefs', `${slug}.md`);
+  if (brief) fs.writeFileSync(briefFile, brief);
+  // File pendukung dari aplikasi (mis. SVG karakter HyperForge) ke folder proyek; nama file dibatasi.
+  for (const [rel, content] of Object.entries(files || {})) {
+    if (!/^[\w-]+(\/[\w.-]+)?$/.test(rel) || rel.includes('..')) continue;
+    const f = path.join(e.videoDir(slug), rel);
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, String(content));
+  }
+  // MCP HyperForge hanya untuk suara vibi.pro: membaca kunci vibi dari pengaturan aplikasi.
+  const node = await which('node');
+  const mcpFile = path.join(e.work, 'briefs', '.hyperforge-mcp.json');
+  fs.writeFileSync(mcpFile, JSON.stringify({ mcpServers: { anima: { type: 'stdio', command: node, args: [mcpServerPath()], env: { ANIMA_SETTINGS_FILE: settingsFile(), ...e.env(e.work) } } } }, null, 1));
+  const claude = await claudeCodePath();
+  const ffDir = path.dirname(await findFullFfmpeg(which));
+  const npmRoot = await npmGlobalRoot(which);
+  // Tanpa tanda kutip / karakter khusus cmd di dalam prompt (prompt diapit "..." di file .cmd).
+  const cleanTitle = String(title || slug).replace(/["%^&|<>()!]/g, '').slice(0, 80);
+  const prompt = e.prompt(slug, cleanTitle);
+  const allowed = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'Skill', 'Bash(node:*)', 'Bash(ffmpeg:*)', 'Bash(ffprobe:*)', 'Bash(python:*)', 'Bash(ls:*)', 'Bash(mkdir:*)', 'Bash(cp:*)', ...e.voiceTools];
+  return { mcpFile, ffDir, npmRoot, claude, prompt, allowed, briefFile };
+}
+
 function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, settingsFile }) {
   const sayFor = (engine) => (step, line) => {
     const w = getWin();
@@ -333,6 +366,9 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
   }
 
   ipcMain.handle('skill:check', (_e, id) => check(id));
+  const deps = { which, claudeCodePath, mcpServerPath, settingsFile, check };
+  // Panel obrolan Claude di dalam aplikasi (pengganti jendela terminal).
+  require('./skillchat.cjs').register({ ipcMain, getWin, engineOf, prepareSession: (e, p) => prepareSession(e, p, deps) });
 
   ipcMain.handle('skill:setup', async (_e, { engine, optional }) => {
     const e = engineOf(engine);
@@ -360,34 +396,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
   /** Tulis brief lalu buka jendela Claude Code dengan /<skill>. payload: { engine, slug, title, brief } */
   ipcMain.handle('skill:open', async (_e, { engine, slug, title, brief, files }) => {
     const e = engineOf(engine);
-    if (!slugOk(slug)) throw new Error('Judul project tidak bisa dijadikan nama folder. Ganti judulnya.');
-    const st = await check(engine);
-    const missing = st.items.filter((i) => !i.ok && !i.optional).map((i) => i.label);
-    if (missing.length) throw new Error(`Belum siap: ${missing.join(', ')}. Buka Pengaturan > Skill video lalu klik Siapkan otomatis.`);
-
-    fs.mkdirSync(path.join(e.work, 'briefs'), { recursive: true });
-    const briefFile = path.join(e.work, 'briefs', `${slug}.md`);
-    fs.writeFileSync(briefFile, brief);
-    // File pendukung dari aplikasi (mis. SVG karakter HyperForge) ke folder proyek; nama file dibatasi.
-    for (const [rel, content] of Object.entries(files || {})) {
-      if (!/^[\w-]+(\/[\w.-]+)?$/.test(rel) || rel.includes('..')) continue;
-      const f = path.join(e.videoDir(slug), rel);
-      fs.mkdirSync(path.dirname(f), { recursive: true });
-      fs.writeFileSync(f, String(content));
-    }
-
-    // MCP HyperForge hanya untuk suara vibi.pro: membaca kunci vibi dari pengaturan aplikasi.
-    const node = await which('node');
-    const mcpFile = path.join(e.work, 'briefs', '.hyperforge-mcp.json');
-    fs.writeFileSync(mcpFile, JSON.stringify({ mcpServers: { anima: { type: 'stdio', command: node, args: [mcpServerPath()], env: { ANIMA_SETTINGS_FILE: settingsFile(), ...e.env(e.work) } } } }, null, 1));
-
-    const claude = await claudeCodePath();
-    const ffDir = path.dirname(await findFullFfmpeg(which));
-    const npmRoot = await npmGlobalRoot(which);
-    // Tanpa tanda kutip / karakter khusus cmd di dalam prompt (prompt diapit "..." di file .cmd).
-    const cleanTitle = String(title).replace(/["%^&|<>()!]/g, '').slice(0, 80);
-    const prompt = e.prompt(slug, cleanTitle);
-    const allowed = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'Bash(node:*)', 'Bash(ffmpeg:*)', 'Bash(ffprobe:*)', 'Bash(python:*)', ...e.voiceTools];
+    const { mcpFile, ffDir, npmRoot, claude, prompt, allowed, briefFile } = await prepareSession(e, { slug, title, brief, files }, deps);
     if (!isWin) throw new Error(`Jendela Claude otomatis baru tersedia di Windows. Jalankan manual: cd ${e.work} && claude "${prompt}"`);
 
     // Peluncur .cmd: PATH berisi ffmpeg lengkap; NODE_PATH = modul global npm.
@@ -433,4 +442,4 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
   });
 }
 
-module.exports = { register, ENGINES, listMp4 };
+module.exports = { register, ENGINES, listMp4, slugOk };

@@ -1,0 +1,34 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Kertas guntingan</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script><script src="_common.js"></script></head><body><canvas id="c"></canvas>
+<script>
+const { W, H } = SAMPLE; const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+const C = SAMPLE.warna;
+
+const FPS = 24;
+function paper(path, fill, seed, t, sh = 14) {
+  const j = HF.rng(seed + HF.boil(t, 12, 3) * 17); const dx = (j() - 0.5) * 3, dy = (j() - 0.5) * 3;
+  ctx.save(); ctx.translate(dx, dy); ctx.shadowColor = 'rgba(40,20,0,0.35)'; ctx.shadowBlur = sh * 1.4; ctx.shadowOffsetY = sh * 0.7; ctx.fillStyle = fill; path(); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.translate(dx, dy); path(); ctx.clip(); const r = HF.rng(seed * 7); ctx.fillStyle = 'rgba(255,255,255,0.08)'; for (let i = 0; i < 260; i++) ctx.fillRect(r() * W, r() * H, 2 + r() * 10, 1); ctx.restore();
+  ctx.save(); ctx.translate(dx, dy); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 3; path(); ctx.stroke(); ctx.restore();
+}
+const wob = (cx, cy, r, seed, n = 40) => () => { ctx.beginPath(); for (let i = 0; i <= n; i++) { const a = (i / n) * Math.PI * 2, rr = r * (1 + 0.035 * (HF.noise(i * 0.9, seed) - 0.5) * 2); ctx.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } ctx.closePath(); };
+function draw(t) {
+  ctx.fillStyle = '#f3e3c3'; ctx.fillRect(0, 0, W, H);
+  paper(() => { ctx.beginPath(); ctx.moveTo(0, 1250); for (let x = 0; x <= W; x += 60) ctx.lineTo(x, 1250 - Math.sin(x / 140) * 70 - HF.noise(x / 50, 2) * 30); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); }, '#7cb66b', 1, t);
+  paper(() => { ctx.beginPath(); ctx.moveTo(0, 1420); for (let x = 0; x <= W; x += 60) ctx.lineTo(x, 1420 - Math.cos(x / 160) * 50); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); }, '#4f9a55', 2, t);
+  for (const [cx, cy, s] of [[230, 420, 1], [780, 330, 0.8]]) paper(() => { ctx.beginPath(); for (const [ox, oy, r] of [[0, 0, 90], [80, -30, 110], [170, 10, 80]]) { ctx.moveTo(cx + ox * s + r * s, cy + oy * s); ctx.arc(cx + ox * s, cy + oy * s, r * s, 0, 7); } }, '#ffffff', 3 + cx, t, 10);
+  paper(wob(860, 230, 90, 5), '#ffc94a', 4, t, 10);
+  const tt = HF.stepTime(t, 12);
+  paper(wob(W / 2, 980 - Math.sin(tt * 4) * 12, 260, 9), C.badan, 6, t, 22);
+  for (const x of [-90, 90]) { paper(wob(W / 2 + x, 920, 62, 11 + x), '#ffffff', 7 + x, t, 6); paper(wob(W / 2 + x + 6, 930, 32, 13 + x), C.mata, 8 + x, t, 3); }
+  paper(() => { ctx.beginPath(); ctx.ellipse(W / 2, 1080, 70, 34, 0, 0, Math.PI); ctx.closePath(); }, '#a52a2a', 12, t, 4);
+  // sendi paku keling
+  for (const [x, y] of [[W / 2 - 230, 1020], [W / 2 + 230, 1020]]) { ctx.fillStyle = '#c9a227'; ctx.beginPath(); ctx.arc(x, y, 12, 0, 7); ctx.fill(); ctx.fillStyle = '#fff6c2'; ctx.beginPath(); ctx.arc(x - 3, y - 3, 4, 0, 7); ctx.fill(); }
+  // subtitle sebagai label tempel
+  const ch = HF.chunkWords(SAMPLE.text, 4).find((c) => t >= c.s && t < c.e);
+  if (ch) { ctx.save(); ctx.translate(W / 2, 1460); ctx.rotate(-0.03); paper(() => { ctx.beginPath(); ctx.rect(-300, -60, 600, 120); }, '#fffaf0', 20, t, 8); ctx.restore(); HF.drawSubtitle(ctx, t, HF.chunkWords(SAMPLE.text, 4), { y: 1460, color: '#3b2f2f', stroke: 'rgba(255,255,255,0.9)', hi: '#d1495b' }); }
+}
+
+HF.setup({ width: W, height: H, fps: FPS, duration: 3, draw });
+</script></body></html>

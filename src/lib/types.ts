@@ -295,3 +295,15 @@ export interface SkillCheck {
   url: string;
   optionalLabel: string;
 }
+
+/** Satu pesan di panel obrolan skill (lihat electron/skillchat.cjs). */
+export interface ChatMessage {
+  id: string;
+  at: string;
+  role: 'user' | 'assistant' | 'tool' | 'system';
+  text: string;
+  question?: { pertanyaan: string; pilihan: string[]; multi: boolean } | null;
+  images?: string[];
+  videos?: string[];
+  error?: boolean;
+}

@@ -1,0 +1,26 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Cat air lembut</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script><script src="_common.js"></script></head><body><canvas id="c"></canvas>
+<script>
+const { W, H } = SAMPLE; const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+const C = SAMPLE.warna;
+
+const FPS = 24;
+function wash(path, color, seed, layers = 4) { ctx.save(); ctx.globalCompositeOperation = 'multiply'; for (let l = 0; l < layers; l++) { ctx.globalAlpha = 0.28; ctx.fillStyle = color; ctx.save(); ctx.translate((HF.noise(l * 3.3, seed) - 0.5) * 14, (HF.noise(l * 1.7, seed + 3) - 0.5) * 14); path(l); ctx.fill(); ctx.restore(); } ctx.restore(); }
+const blob = (cx, cy, rx, ry, seed) => (l) => { ctx.beginPath(); for (let i = 0; i <= 48; i++) { const a = (i / 48) * Math.PI * 2, k = 1 + 0.06 * (HF.noise(i * 0.7 + l, seed) - 0.5) * 2; ctx.lineTo(cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k); } ctx.closePath(); };
+function draw(t) {
+  ctx.fillStyle = '#fbf6ec'; ctx.fillRect(0, 0, W, H);
+  wash(blob(W / 2, 380, 700, 420, 1), '#9ad1e6', 1); wash(blob(820, 300, 110, 110, 2), '#ffd59a', 2);
+  wash((l) => { ctx.beginPath(); ctx.moveTo(0, 1100); for (let x = 0; x <= W; x += 40) ctx.lineTo(x, 1050 - Math.sin(x / 200 + l * 0.2) * 90); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); }, '#a7c957', 3);
+  wash((l) => { ctx.beginPath(); ctx.moveTo(0, 1300); for (let x = 0; x <= W; x += 40) ctx.lineTo(x, 1290 - Math.cos(x / 170 + l * 0.3) * 60); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); }, '#6a994e', 4);
+  const tt = HF.stepTime(t, 12); const y = 1000 - Math.sin(tt * 2) * 10;
+  wash(blob(W / 2, y, 240, 225, 6), '#ffc65c', 6, 5); wash(blob(W / 2 - 160, y + 50, 50, 26, 7), '#f4978e', 7, 3); wash(blob(W / 2 + 160, y + 50, 50, 26, 8), '#f4978e', 8, 3);
+  ctx.strokeStyle = 'rgba(92,58,33,0.75)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(W / 2, y, 236, 0.3, 2.6); ctx.stroke();
+  for (const x of [-80, 80]) { ctx.fillStyle = 'rgba(60,40,30,0.85)'; ctx.beginPath(); ctx.ellipse(W / 2 + x, y - 30, 18, 26, 0, 0, 7); ctx.fill(); }
+  ctx.beginPath(); ctx.arc(W / 2, y + 60, 40, 0.2, Math.PI - 0.2); ctx.stroke();
+  const r = HF.rng(9); ctx.fillStyle = 'rgba(120,100,80,0.05)'; for (let i = 0; i < 2600; i++) ctx.fillRect(r() * W, r() * H, 2, 2);
+  SAMPLE.sub(ctx, t, { font: 'Georgia, serif', color: '#5c3a21', hi: '#d1495b', stroke: 'rgba(255,250,240,0.95)' });
+}
+
+HF.setup({ width: W, height: H, fps: FPS, duration: 3, draw });
+</script></body></html>

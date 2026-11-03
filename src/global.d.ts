@@ -1,4 +1,5 @@
 import type {
+  ChatMessage,
   SkillCheck,
   SkillEngine,
   BenchResult,
@@ -76,6 +77,13 @@ declare global {
       skillOpen(payload: { engine: SkillEngine; slug: string; title: string; brief: string; files?: Record<string, string> }): Promise<{ workDir: string; briefFile: string }>;
       skillStatus(payload: { engine: SkillEngine; slug: string }): Promise<{ exists: boolean; dir?: string; hasBrief?: boolean; videos: { file: string; name: string; size: number; mtime: string }[] }>;
       skillOpenFolder(payload: { engine: SkillEngine; slug: string }): Promise<string>;
+      skillChatHistory(payload: { engine: SkillEngine; slug: string }): Promise<{ messages: ChatMessage[]; running: boolean; hasSession: boolean }>;
+      skillChatSend(payload: { engine: SkillEngine; slug: string; title: string; brief?: string; files?: Record<string, string>; text?: string }): Promise<{ ok: boolean }>;
+      skillChatStop(payload: { engine: SkillEngine; slug: string }): Promise<boolean>;
+      skillChatReset(payload: { engine: SkillEngine; slug: string }): Promise<boolean>;
+      skillChatImage(payload: { engine: SkillEngine; file: string }): Promise<{ url: string; mtime: number } | null>;
+      skillChatResolve(payload: { engine: SkillEngine; file: string }): Promise<string | null>;
+      onSkillChatEvent(cb: (e: { engine: SkillEngine; slug: string; type: 'message'; message: ChatMessage } | { engine: SkillEngine; slug: string; type: 'status'; running: boolean }) => void): () => void;
       onSkillEvent(cb: (e: { engine: SkillEngine; step: string; line?: string }) => void): () => void;
       detectClaude(): Promise<ClaudeDetect>;
       installClaude(payload: {

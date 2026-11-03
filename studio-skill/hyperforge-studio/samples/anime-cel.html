@@ -1,0 +1,34 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Anime cel</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script><script src="_common.js"></script></head><body><canvas id="c"></canvas>
+<script>
+const { W, H } = SAMPLE; const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+const C = SAMPLE.warna;
+
+const FPS = 24;
+function draw(t) {
+  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.75); sky.addColorStop(0, '#1f6fd1'); sky.addColorStop(1, '#8fd3ff'); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  // awan besar dilukis: sisi terang tegas
+  for (const [cx, cy, r] of [[260, 520, 170], [430, 460, 210], [640, 540, 160], [860, 640, 120]]) { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx + t * 6, cy, r, 0, 7); ctx.fill(); ctx.fillStyle = '#c9dcf3'; ctx.beginPath(); ctx.arc(cx + t * 6, cy + r * 0.45, r * 0.9, 0, Math.PI); ctx.fill(); }
+  ctx.fillStyle = '#5fa860'; ctx.fillRect(0, H * 0.72, W, H); ctx.fillStyle = '#3f7d45'; ctx.fillRect(0, H * 0.72, W, 30);
+  // focus lines
+  ctx.save(); ctx.translate(W / 2, H * 0.5); ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  const r = HF.rng(4 + HF.boil(t, 12, 3)); for (let i = 0; i < 70; i++) { const a = r() * Math.PI * 2, d0 = 430 + r() * 120; ctx.lineWidth = 2 + r() * 6; ctx.beginPath(); ctx.moveTo(Math.cos(a) * d0, Math.sin(a) * d0); ctx.lineTo(Math.cos(a) * 1400, Math.sin(a) * 1400); ctx.stroke(); } ctx.restore();
+  // karakter cel: warna datar + satu bayangan ungu-biru + tinta
+  const tt = HF.stepTime(t, 12); const y = H * 0.55 - Math.abs(Math.sin(tt * 4)) * 30;
+  ctx.save(); ctx.translate(W / 2, y); ctx.lineJoin = 'round';
+  ctx.fillStyle = C.badan; ctx.beginPath(); ctx.arc(0, 0, 250, 0, 7); ctx.fill();
+  ctx.fillStyle = '#c4782f'; ctx.beginPath(); ctx.arc(0, 0, 250, -0.2, Math.PI * 0.9); ctx.arc(-60, -40, 250, Math.PI * 0.9, -0.2, true); ctx.fill();
+  ctx.strokeStyle = '#1b1530'; ctx.lineWidth = 12; ctx.beginPath(); ctx.arc(0, 0, 250, 0, 7); ctx.stroke();
+  for (const x of [-85, 85]) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, -40, 62, 80, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#2a1b5e'; ctx.beginPath(); ctx.ellipse(x + 6, -30, 38, 56, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + 20, -58, 14, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#7a1f2b'; ctx.beginPath(); ctx.moveTo(-60, 90); ctx.quadraticCurveTo(0, 170, 60, 90); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,120,120,0.6)'; for (const x of [-170, 170]) { ctx.beginPath(); ctx.ellipse(x, 40, 40, 16, 0, 0, 7); ctx.fill(); }
+  ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(0, -250); ctx.quadraticCurveTo(40, -360, 10, -420); ctx.stroke(); ctx.fillStyle = C.aksen; ctx.beginPath(); ctx.arc(10, -430, 26, 0, 7); ctx.fill(); ctx.stroke();
+  // keringat gaya anime
+  ctx.fillStyle = '#bde8ff'; ctx.beginPath(); ctx.moveTo(230, -170); ctx.quadraticCurveTo(275, -110, 240, -90); ctx.quadraticCurveTo(205, -110, 230, -170); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  SAMPLE.sub(ctx, t, { hi: '#ffe14d', stroke: '#1b1530' });
+}
+
+HF.setup({ width: W, height: H, fps: FPS, duration: 3, draw });
+</script></body></html>

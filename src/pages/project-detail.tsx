@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, BookOpen, Clapperboard, Copy, FileText, Film, Image, Loader2, Sparkles, Trash2, X, Zap } from 'lucide-react';
+import { AlertTriangle, BookOpen, Bot, Clapperboard, Copy, FileText, Film, Image, Loader2, Sparkles, Trash2, X, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageBody, PageHeader } from '@/components/layout';
 import { ProjectBadge } from '@/components/status';
@@ -8,6 +8,7 @@ import { ShotEditor } from '@/components/shot-editor';
 import { JobTable } from '@/components/job-table';
 import { VoicePanel, useVoiceStatus } from '@/components/voice-panel';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input, NativeSelect, Textarea } from '@/components/ui/input';
 import {
   Badge,
@@ -29,8 +30,10 @@ import { sb } from '@/lib/supabase';
 import type { Project, ProjectStatus, RenderJob, Shot } from '@/lib/types';
 import { WORDS_PER_SECOND, cn, countWords, formatSeconds, framesToSeconds } from '@/lib/utils';
 import { CONTENT_TYPES, buildPrompt, contentType } from '@/lib/content';
-import { VISUAL_STYLES, is2D, isSkill, visualStyle } from '@/lib/styles';
+import { is2D, isSkill, styleImage, visualStyle, type VisualStyleId } from '@/lib/styles';
+import { StylePicker } from '@/components/style-picker';
 import { SkillPanel, SkillRenders } from '@/components/skill-video';
+import { SkillChat } from '@/components/skill-chat';
 import { cleanErr, runTask, usePersisted, useRunningTasks, useTask, useTaskFinished } from '@/lib/tasks';
 
 export default function ProjectDetailPage() {
@@ -85,9 +88,15 @@ export default function ProjectDetailPage() {
           <TabsTrigger value="brief">
             <FileText /> Brief & Script
           </TabsTrigger>
-          <TabsTrigger value="shots">
-            <Film /> Shot ({shots.length})
-          </TabsTrigger>
+          {isSkill(project.visual_style) ? (
+            <TabsTrigger value="claude">
+              <Bot /> Claude
+            </TabsTrigger>
+          ) : (
+            <TabsTrigger value="shots">
+              <Film /> Shot ({shots.length})
+            </TabsTrigger>
+          )}
           <TabsTrigger value="render">
             <Clapperboard /> Render
           </TabsTrigger>
@@ -102,6 +111,11 @@ export default function ProjectDetailPage() {
             }}
           />
         </TabsContent>
+        {isSkill(project.visual_style) && (
+          <TabsContent value="claude">
+            <SkillChat project={project} beforeRun={async () => project} />
+          </TabsContent>
+        )}
         <TabsContent value="shots">
           <ShotEditor projectId={project.id} shots={shots} onChange={reloadShots} twoVoices={contentType(project.content_type).twoVoices} />
         </TabsContent>
@@ -345,16 +359,8 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
         <Card>
           <CardContent className="flex flex-col gap-4 p-5">
             <div className="grid gap-2">
-              <Label htmlFor="vs">Style video</Label>
-              <NativeSelect id="vs" value={visualStyle(draft.visual_style).id} onChange={(e) => setDraft({ ...draft, visual_style: e.target.value })}>
-                {VISUAL_STYLES.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.label}
-                    {v.kind === '3d' ? ' (render lama)' : v.kind === 'skill' ? ' (Claude Code)' : ''}
-                  </option>
-                ))}
-              </NativeSelect>
-              <span className="text-xs text-muted-foreground">{visualStyle(draft.visual_style).description}</span>
+              <Label>Style video</Label>
+              <StyleField value={draft.visual_style || 'kartun-3d'} onChange={(v) => setDraft({ ...draft, visual_style: v })} />
             </div>
             {(is2D(draft.visual_style) || isSkill(draft.visual_style)) && (
               <div className="grid gap-2">
@@ -389,6 +395,56 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
         {is2D(project.visual_style) && <AssetsCard project={project} />}
       </div>
     </div>
+  );
+}
+
+/** Style project: kartu bergambar + popup pemilih tersendiri (tidak menumpuk dengan isian lain). */
+function StyleField({ value, onChange }: { value: string; onChange: (v: VisualStyleId) => void }) {
+  const [open, setOpen] = useState(false);
+  const [pick, setPick] = useState(value);
+  const st = visualStyle(value);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setPick(value);
+          setOpen(true);
+        }}
+        className="flex items-center gap-3 rounded-lg border p-2 text-left transition-colors hover:border-primary/60"
+      >
+        {styleImage(st.id) && <img src={styleImage(st.id)} alt="" className="h-16 w-12 shrink-0 rounded object-cover" />}
+        <span className="min-w-0">
+          <span className="block text-sm font-medium">{st.label}</span>
+          <span className="line-clamp-2 text-xs text-muted-foreground">{st.description}</span>
+          <span className="text-xs text-primary">Ganti style</span>
+        </span>
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="flex max-h-[92vh] flex-col sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Ganti style video</DialogTitle>
+            <DialogDescription>Perubahan tersimpan setelah kamu klik Simpan di kartu Brief.</DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+            <StylePicker value={pick} onChange={setPick} />
+          </div>
+          <DialogFooter className="border-t pt-3">
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                onChange(pick as VisualStyleId);
+                setOpen(false);
+              }}
+            >
+              Pakai style ini
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

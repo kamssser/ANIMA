@@ -1,0 +1,33 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Wayang bayangan</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script><script src="_common.js"></script></head><body><canvas id="c"></canvas>
+<script>
+const { W, H } = SAMPLE; const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+const C = SAMPLE.warna;
+
+const FPS = 24;
+function draw(t) {
+  const fl = 1 + (HF.noise(t * 3, 4) - 0.5) * 0.12;
+  const g = ctx.createRadialGradient(W / 2, H * 0.3, 60, W / 2, H * 0.4, H * 0.75); g.addColorStop(0, `rgba(255,${Math.round(214 * fl)},140,1)`); g.addColorStop(0.55, '#d9822b'); g.addColorStop(1, '#2a1406'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#7d1d14'; ctx.fillRect(0, 0, W, 70); ctx.fillRect(0, H - 120, W, 120); ctx.fillStyle = '#3b2412'; ctx.fillRect(0, H - 60, W, 60);
+  // gunungan di kiri (bergetar)
+  ctx.save(); ctx.translate(200, 1300); ctx.rotate(Math.sin(t * 9) * 0.03 - 0.08); ctx.fillStyle = 'rgba(25,10,4,0.92)'; ctx.beginPath(); ctx.moveTo(0, -620); ctx.bezierCurveTo(170, -380, 190, -80, 120, 80); ctx.lineTo(-120, 80); ctx.bezierCurveTo(-190, -80, -170, -380, 0, -620); ctx.fill();
+  ctx.globalCompositeOperation = 'destination-out'; const r = HF.rng(31); for (let i = 0; i < 70; i++) { ctx.beginPath(); ctx.arc((r() - 0.5) * 220, -560 + r() * 600, 4 + r() * 9, 0, 7); ctx.fill(); } ctx.restore(); ctx.globalCompositeOperation = 'source-over';
+  // tokoh profil (Bulu versi wayang): siluet + ukiran tembus cahaya, lengan bersendi + tuding
+  const tt = HF.stepTime(t, 12); const x0 = 640, y0 = 1080;
+  ctx.save(); ctx.translate(x0, y0 + Math.sin(tt * 3) * 6);
+  ctx.fillStyle = 'rgba(20,8,2,0.95)'; ctx.beginPath(); ctx.ellipse(0, 0, 210, 230, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(150, -60); ctx.lineTo(260, -20); ctx.lineTo(150, 20); ctx.fill(); // hidung panjang profil
+  ctx.beginPath(); ctx.moveTo(-20, -220); ctx.quadraticCurveTo(-60, -340, 20, -400); ctx.lineWidth = 12; ctx.strokeStyle = 'rgba(20,8,2,0.95)'; ctx.stroke();
+  ctx.globalCompositeOperation = 'destination-out'; for (let i = 0; i < 9; i++) for (let j = 0; j < 6; j++) { ctx.beginPath(); ctx.arc(-150 + i * 34, -110 + j * 44 + (i % 2) * 20, 6, 0, 7); ctx.fill(); }
+  ctx.beginPath(); ctx.ellipse(90, -60, 36, 22, 0, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+  ctx.strokeStyle = 'rgba(20,8,2,0.95)'; ctx.lineWidth = 18; ctx.lineCap = 'round'; const a1 = -0.9 + Math.sin(tt * 4) * 0.25;
+  ctx.beginPath(); ctx.moveTo(60, 60); const ex = 60 + Math.cos(a1) * 200, ey = 60 + Math.sin(a1) * 200; ctx.lineTo(ex, ey); ctx.lineTo(ex + 160, ey - 40); ctx.stroke();
+  ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(ex + 160, ey - 40); ctx.lineTo(ex + 260, ey + 520); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, 220); ctx.lineTo(0, 700); ctx.stroke();
+  ctx.restore();
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.75); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.55)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  SAMPLE.sub(ctx, t, { font: 'Georgia, "Times New Roman", serif', color: '#ffe8c2', hi: '#ffcf6e', stroke: 'rgba(30,10,0,0.9)' });
+}
+
+HF.setup({ width: W, height: H, fps: FPS, duration: 3, draw });
+</script></body></html>

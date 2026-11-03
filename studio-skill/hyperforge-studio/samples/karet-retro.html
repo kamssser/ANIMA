@@ -1,0 +1,34 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Kartun karet retro</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script><script src="_common.js"></script></head><body><canvas id="c"></canvas>
+<script>
+const { W, H } = SAMPLE; const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+const C = SAMPLE.warna;
+
+const FPS = 24;
+function draw(t) {
+  const beat = 60 / 120; const ph = (t % beat) / beat; const sq = 1 - 0.08 * Math.exp(-ph * 8);
+  ctx.fillStyle = '#d9d9d9'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#bcbcbc'; ctx.fillRect(0, H * 0.7, W, H);
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 9; ctx.lineCap = 'round';
+  // radio tua + not balok melayang
+  ctx.fillStyle = '#5a5a5a'; ctx.fillRect(140, 1180, 220, 160); ctx.strokeRect(140, 1180, 220, 160); ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(205, 1260, 45, 0, 7); ctx.fill();
+  for (let i = 0; i < 3; i++) { const yy = 1100 - ((t * 120 + i * 120) % 360); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(300 + i * 60, yy, 18, 13, -0.4, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(316 + i * 60, yy); ctx.lineTo(316 + i * 60, yy - 70); ctx.stroke(); }
+  const tt = HF.stepTime(t, 12); ctx.save(); ctx.translate(W / 2 + 80, 1180); ctx.scale(1 / sq, sq);
+  // kaki & tangan selang karet
+  for (const s of [-1, 1]) { ctx.lineWidth = 16; ctx.beginPath(); ctx.moveTo(s * 70, -40); ctx.bezierCurveTo(s * 90, 60, s * 150, 80, s * 130, 150); ctx.stroke(); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(s * 150, 160, 55, 28, 0, 0, 7); ctx.fill(); }
+  for (const s of [-1, 1]) { const sw = Math.sin(tt * 8 + s) * 40; ctx.beginPath(); ctx.moveTo(s * 160, -230); ctx.bezierCurveTo(s * 260, -260, s * 300, -360 + sw, s * 270, -440 + sw); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s * 270, -460 + sw, 44, 0, 7); ctx.fill(); ctx.lineWidth = 8; ctx.stroke(); ctx.lineWidth = 4; for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(s * 270 + k * 12, -440 + sw); ctx.lineTo(s * 270 + k * 12, -470 + sw); ctx.stroke(); } ctx.lineWidth = 16; }
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(0, -250, 220, 0, 7); ctx.fill();
+  ctx.fillStyle = '#f2f2f2'; ctx.beginPath(); ctx.ellipse(0, -200, 170, 130, 0, 0, 7); ctx.fill();
+  for (const x of [-60, 60]) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, -300, 46, 70, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(x + 8, -290, 24, 42, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(x + 8, -290); ctx.lineTo(x + 30, -320); ctx.lineTo(x + 34, -296); ctx.closePath(); ctx.fill(); }
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(0, -170, 70, 0.1, Math.PI - 0.1); ctx.fill();
+  ctx.restore();
+  // efek film tua
+  const r = HF.rng(77 + HF.boil(t, 12, 5)); ctx.fillStyle = 'rgba(0,0,0,0.35)'; for (let i = 0; i < 1400; i++) ctx.fillRect(r() * W, r() * H, 2, 2);
+  ctx.strokeStyle = 'rgba(30,30,30,0.5)'; ctx.lineWidth = 2; for (let i = 0; i < 3; i++) { const x = r() * W; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + (r() - 0.5) * 20, H); ctx.stroke(); }
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.7); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.75)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 0.9 + (r() - 0.5) * 0.12; ctx.globalAlpha = 1;
+  SAMPLE.sub(ctx, t, { font: 'Georgia, "Times New Roman", serif', color: '#ffffff', hi: '#ffffff', stroke: '#000000' });
+}
+
+HF.setup({ width: W, height: H, fps: FPS, duration: 3, draw });
+</script></body></html>

@@ -1,0 +1,31 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Papan tulis kapur</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script><script src="_common.js"></script></head><body><canvas id="c"></canvas>
+<script>
+const { W, H } = SAMPLE; const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+const C = SAMPLE.warna;
+
+const FPS = 24;
+function chalk(pts, color, w, seed, prog = 1) {
+  const r = HF.rng(seed + HF.boil(T, 12, 3) * 5); const total = pts.length - 1; const upto = Math.floor(total * prog);
+  ctx.fillStyle = color; for (let i = 0; i < upto; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[i + 1]; const d = Math.hypot(x1 - x0, y1 - y0); for (let k = 0; k < d; k += 1.6) { const u = k / d; if (r() < 0.82) ctx.fillRect(x0 + (x1 - x0) * u + (r() - 0.5) * w, y0 + (y1 - y0) * u + (r() - 0.5) * w, 1.6 + r() * 2.2, 1.6 + r() * 2.2); } }
+}
+const circle = (cx, cy, rr, n = 80) => Array.from({ length: n + 1 }, (_, i) => [cx + Math.cos((i / n) * Math.PI * 2) * rr, cy + Math.sin((i / n) * Math.PI * 2) * rr]);
+let T = 0;
+function draw(t) {
+  T = t; ctx.fillStyle = '#26453a'; ctx.fillRect(0, 0, W, H); const r = HF.rng(5); for (let i = 0; i < 40; i++) { ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.beginPath(); ctx.ellipse(r() * W, r() * H, 80 + r() * 160, 30 + r() * 60, r() * 3, 0, 7); ctx.fill(); }
+  ctx.strokeStyle = '#7a4b25'; ctx.lineWidth = 46; ctx.strokeRect(23, 23, W - 46, H - 46);
+  const u = HF.ease.out(HF.prog(t, 0, 1.6));
+  chalk(circle(760, 420, 120), '#ffe9a8', 5, 1, u); for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; chalk([[760 + Math.cos(a) * 150, 420 + Math.sin(a) * 150], [760 + Math.cos(a) * 210, 420 + Math.sin(a) * 210]], '#ffe9a8', 4, 2 + i, u); }
+  chalk([[300, 800], [500, 640], [700, 820], [900, 660]], '#a8d8ff', 6, 20, u);
+  chalk(Array.from({ length: 30 }, (_, i) => [220 + i * 22, 700 + Math.sin(i * 0.9) * 40]), '#ffb3c6', 4, 21, u);
+  chalk(circle(W / 2, 1060, 230), '#ffffff', 6, 30); for (const x of [-80, 80]) { chalk(circle(W / 2 + x, 1010, 52), '#ffffff', 5, 31 + x); chalk(circle(W / 2 + x + 8, 1018, 18, 30), '#ffffff', 10, 33 + x); }
+  chalk([[W / 2 - 60, 1150], [W / 2, 1185], [W / 2 + 60, 1150]], '#ffffff', 5, 40);
+  chalk([[W / 2, 830], [W / 2 + 30, 730], [W / 2 + 10, 690]], '#ffffff', 5, 41); chalk(circle(W / 2 + 10, 675, 18, 30), '#a8d8ff', 6, 42);
+  const ch = HF.chunkWords(SAMPLE.text, 4).find((c) => t >= c.s && t < c.e); if (!ch) return;
+  ctx.font = 'italic 700 64px "Segoe Print", "Comic Sans MS", cursive'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff3b0'; const s = ch.words.map((w) => w.text).join(' '); ctx.fillText(s, W / 2, 1460);
+  const m = ctx.measureText(s).width; chalk([[W / 2 - m / 2, 1490], [W / 2 + m / 2, 1494]], '#ffb3c6', 4, 50, HF.prog(t, ch.s, ch.e));
+}
+
+HF.setup({ width: W, height: H, fps: FPS, duration: 3, draw });
+</script></body></html>

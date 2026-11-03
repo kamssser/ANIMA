@@ -154,7 +154,8 @@ three.js: `import * as THREE from 'three'` (importmap di templat 3D, dari `node_
 | `check.mjs <video> <out.png> [--at ...]` | cek akhir: 6 frame + kerasnya suara |
 
 ## Gaya (`styles/`)
-Tiap file berisi rasa, teknik (2D/3D), palet & material, garis, gerak (fps, on twos), kamera, efek, subtitle, berat
+Contoh adegan siap jalan untuk setiap gaya ada di `samples/<gaya>.html` (maskot yang sama diterjemahkan ke tiap gaya):
+baca contoh gaya yang dipilih sebagai titik awal teknik, lalu buat versi sendiri sesuai cerita. Tiap file gaya berisi rasa, teknik (2D/3D), palet & material, garis, gerak (fps, on twos), kamera, efek, subtitle, berat
 render, cocok untuk, dan checklist frame. Baca file gaya yang dipilih sebelum langkah 2 dan 5. Mulai dari adegan 5
 detik untuk gaya yang baru pertama dipakai.
 

@@ -6,6 +6,7 @@ import { initSupabase } from '@/lib/supabase';
 import { markOrphanJobs } from '@/lib/api';
 import { wireRenderEvents } from '@/lib/render';
 import { wireTaskEvents } from '@/lib/tasks';
+import { wireSkillChat } from '@/lib/skillchat';
 import type { Settings } from '@/lib/types';
 import { Layout } from '@/components/layout';
 import { SetupPage } from '@/pages/setup';
@@ -41,6 +42,7 @@ export function App() {
     if (!session) return;
     wireRenderEvents();
     wireTaskEvents();
+    wireSkillChat();
     window.anima
       .activeRenders()
       .then((a) => markOrphanJobs([...(a.current ? [a.current] : []), ...a.queued]))

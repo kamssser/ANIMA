@@ -1,0 +1,29 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Pixel retro</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script><script src="_common.js"></script></head><body><canvas id="c"></canvas>
+<script>
+const { W, H } = SAMPLE; const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+const C = SAMPLE.warna;
+
+const FPS = 30; const w = 108, h = 192; const sm = document.createElement('canvas'); sm.width = w; sm.height = h; const p = sm.getContext('2d');
+const SPR = ['......aa......', '.....abba.....', '....abbbba....', '...ooooooooo..', '..ooyyyyyyyoo.', '.ooyyyyyyyyyoo', '.oywwyyyywwyyo', '.oywkyyyywkyyo', '.oyyyyyyyyyyyo', '.oyrryyyyyrryo', '.oyyyyrrryyyyo', '..oyyyyyyyyyo.', '...ooyyyyyoo..', '....oooooo....', '....o.o.o.o...'];
+const PAL = { o: '#1d1d1f', y: '#ffb703', w: '#ffffff', k: '#1d1d1f', r: '#fb8500', a: '#1d1d1f', b: '#219ebc' };
+function draw(t) {
+  p.imageSmoothingEnabled = false; const bands = ['#1b2a6b', '#24408e', '#2f5fb3', '#4a86d6', '#7fb2ee']; bands.forEach((c, i) => { p.fillStyle = c; p.fillRect(0, i * 22, w, 22); });
+  p.fillStyle = '#ffffff'; for (const [x, y] of [[12, 20], [70, 34], [40, 12], [90, 60]]) p.fillRect((x + Math.floor(t * 4)) % w, y, 1, 1);
+  const cx = Math.floor(t * 3) % 40; p.fillStyle = '#e8f1ff'; p.fillRect(10 + cx, 70, 18, 4); p.fillRect(14 + cx, 67, 10, 3);
+  p.fillStyle = '#3b6e3b'; for (let x = 0; x < w; x += 8) p.fillRect(x, 140 - ((x * 7) % 9), 8, 60);
+  for (let x = 0; x < w; x += 8) { p.fillStyle = '#5bbf4a'; p.fillRect(x, 150, 8, 3); p.fillStyle = '#8a5a2b'; p.fillRect(x, 153, 8, 39); p.fillStyle = '#6f4520'; p.fillRect(x + 2, 160, 2, 2); p.fillRect(x + 5, 170, 2, 2); }
+  const f = Math.floor(t * 10) % 2; const sx = 40, sy = 120 - (f ? 2 : 0);
+  SPR.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') { p.fillStyle = PAL[ch]; p.fillRect(sx + i * 2, sy + j * 2, 2, 2); } }));
+  // HUD piksel buatan sendiri
+  p.fillStyle = '#000'; p.fillRect(2, 2, 40, 9); p.fillStyle = '#ffd166'; for (let i = 0; i < 3; i++) p.fillRect(4 + i * 6, 4, 4, 5); p.fillStyle = '#ffffff'; p.fillRect(26, 4, 14, 5);
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(sm, 0, 0, W, H);
+  // huruf piksel: digambar di kisi
+  const ch = HF.chunkWords(SAMPLE.text, 4).find((c) => t >= c.s && t < c.e); if (!ch) return;
+  ctx.font = 'bold 60px "Courier New", monospace'; ctx.textAlign = 'center'; const s = ch.words.map((x) => x.text.toUpperCase()).join(' ');
+  ctx.fillStyle = '#000'; ctx.fillText(s, W / 2 + 6, 1006); ctx.fillStyle = '#ffffff'; ctx.fillText(s, W / 2, 1000);
+}
+
+HF.setup({ width: W, height: H, fps: FPS, duration: 3, draw });
+</script></body></html>

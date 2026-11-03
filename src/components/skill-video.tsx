@@ -216,7 +216,7 @@ export function SkillPanel({ project, beforeRun }: { project: Project; beforeRun
           <Sparkles className="size-4 text-primary" /> {st.label}
         </CardTitle>
         <CardDescription>
-          Dibuat dengan skill {info.title} ({info.by}) di jendela Claude Code. {info.flow}
+          Dibuat dengan skill {info.title} ({info.by}) di tab Claude, langsung di aplikasi. {info.flow}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -236,9 +236,18 @@ export function SkillPanel({ project, beforeRun }: { project: Project; beforeRun
             lalu klik Siapkan otomatis.
           </div>
         )}
-        <Button onClick={open} disabled={opening || !c?.ready}>
-          {opening ? <Loader2 className="animate-spin" /> : <Terminal />} Buka di Claude Code
+        <Button
+          onClick={async () => {
+            await beforeRun();
+            setValue(`project-tab:${project.id}`, 'claude');
+          }}
+          disabled={!c?.ready}
+        >
+          <Sparkles /> Kerjakan bersama Claude
         </Button>
+        <button className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50" onClick={open} disabled={opening || !c?.ready}>
+          {opening ? <Loader2 className="size-3 animate-spin" /> : <Terminal className="size-3" />} atau buka di jendela terminal Claude Code
+        </button>
         <p className="text-xs text-muted-foreground">
           Brief (topik, jenis konten, durasi, format, style, suara vibi.pro) dikirim otomatis. Suara memakai Suara A{two ? ' dan B' : ''} dari Pengaturan; Claude menyebutkan jumlah kreditnya dulu
           sebelum membuat suara.

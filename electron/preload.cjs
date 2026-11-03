@@ -71,6 +71,17 @@ contextBridge.exposeInMainWorld('anima', {
   skillOpen: (payload) => ipcRenderer.invoke('skill:open', payload),
   skillStatus: (payload) => ipcRenderer.invoke('skill:status', payload),
   skillOpenFolder: (payload) => ipcRenderer.invoke('skill:openFolder', payload),
+  skillChatHistory: (payload) => ipcRenderer.invoke('skillchat:history', payload),
+  skillChatSend: (payload) => ipcRenderer.invoke('skillchat:send', payload),
+  skillChatStop: (payload) => ipcRenderer.invoke('skillchat:stop', payload),
+  skillChatReset: (payload) => ipcRenderer.invoke('skillchat:reset', payload),
+  skillChatImage: (payload) => ipcRenderer.invoke('skillchat:image', payload),
+  skillChatResolve: (payload) => ipcRenderer.invoke('skillchat:resolve', payload),
+  onSkillChatEvent: (cb) => {
+    const listener = (_e, event) => cb(event);
+    ipcRenderer.on('skillchat:event', listener);
+    return () => ipcRenderer.removeListener('skillchat:event', listener);
+  },
   onSkillEvent: (cb) => {
     const listener = (_e, event) => cb(event);
     ipcRenderer.on('skill:event', listener);

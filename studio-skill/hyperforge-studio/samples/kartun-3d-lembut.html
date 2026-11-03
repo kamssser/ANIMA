@@ -1,0 +1,33 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Kartun 3D lembut</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block;position:absolute;left:0;top:0}</style>
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
+<script src="/kit/studio-kit.js"></script><script src="_common.js"></script></head><body><canvas id="gl"></canvas><canvas id="ui"></canvas>
+<script type="module">
+import * as THREE from 'three';
+const { W, H } = SAMPLE; const C = SAMPLE.warna;
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H, false); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const ui = document.getElementById('ui'); ui.width = W; ui.height = H; const ctx = ui.getContext('2d');
+const scene = new THREE.Scene(); const cam = new THREE.PerspectiveCamera(32, W / H, 0.1, 100);
+
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+scene.background = new THREE.Color('#3b2a3f'); scene.fog = new THREE.Fog('#3b2a3f', 7, 16);
+scene.add(new THREE.HemisphereLight('#ffd9b3', '#2a2035', 0.5));
+const key = new THREE.SpotLight('#ffd7a0', 90, 20, 0.5, 0.6); key.position.set(-4, 6, 4); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); scene.add(key); key.target.position.set(0, 1, 0); scene.add(key.target);
+const rim = new THREE.DirectionalLight('#8ecae6', 2.2); rim.position.set(3, 3, -5); scene.add(rim);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshStandardMaterial({ color: '#7a5547', roughness: 0.6 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 3.2), new THREE.MeshBasicMaterial({ color: '#ffe8c2' })); win.position.set(-3.2, 3, -5); scene.add(win);
+const skin = new THREE.MeshPhysicalMaterial({ color: C.badan, roughness: 0.5, sheen: 0.6, sheenColor: new THREE.Color('#fff1c1'), clearcoat: 0.2 });
+const bulu = new THREE.Group();
+const body = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), skin); body.scale.set(1, 0.95, 1); body.position.y = 1.05; body.castShadow = true; bulu.add(body);
+const glass = new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.15, clearcoat: 1 }), iris = new THREE.MeshPhysicalMaterial({ color: '#2b1d14', roughness: 0.1, clearcoat: 1 });
+for (const x of [-0.34, 0.34]) { const w = new THREE.Mesh(new THREE.SphereGeometry(0.27, 32, 24), glass); w.position.set(x, 1.27, 0.8); bulu.add(w); const e = new THREE.Mesh(new THREE.SphereGeometry(0.15, 32, 24), iris); e.position.set(x, 1.26, 1.02); bulu.add(e); }
+for (const x of [-0.6, 0.6]) { const c = new THREE.Mesh(new THREE.SphereGeometry(0.14, 24, 16), new THREE.MeshPhysicalMaterial({ color: C.pipi, roughness: 0.7, transparent: true, opacity: 0.55 })); c.position.set(x, 0.98, 0.74); c.scale.z = 0.3; bulu.add(c); }
+const ant = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.03, 12, 48, Math.PI), new THREE.MeshPhysicalMaterial({ color: '#333', roughness: 0.4 })); ant.position.set(0.1, 2.05, 0); ant.rotation.z = -0.4; bulu.add(ant);
+scene.add(bulu);
+const dust = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 360 }, (_, i) => { const r = HF.rng(9 + i); return [-4 + r() * 5, r() * 5, -3 + r() * 5]; }).flat(), 3)), new THREE.PointsMaterial({ color: '#ffe9c7', size: 0.03, transparent: true, opacity: 0.8 }));
+scene.add(dust);
+function update(t) { const sq = 1 + Math.sin(t * 4) * 0.03; body.scale.set(1 / Math.sqrt(sq), 0.95 * sq, 1 / Math.sqrt(sq)); bulu.rotation.y = 0.35 + Math.sin(t) * 0.15; dust.rotation.y = t * 0.05; cam.position.set(1.8, 2.4, 9.6 - t * 0.2); cam.lookAt(0, 1.1, 0); }
+
+HF.setup({ width: W, height: H, fps: 30, duration: 3, draw(t) { update(t); renderer.render(scene, cam); ctx.clearRect(0, 0, W, H); SAMPLE.sub(ctx, t); } });
+</script></body></html>

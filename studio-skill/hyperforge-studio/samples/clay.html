@@ -1,0 +1,25 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Clay stop motion</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block;position:absolute;left:0;top:0}</style>
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
+<script src="/kit/studio-kit.js"></script><script src="_common.js"></script></head><body><canvas id="gl"></canvas><canvas id="ui"></canvas>
+<script type="module">
+import * as THREE from 'three';
+const { W, H } = SAMPLE; const C = SAMPLE.warna;
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H, false); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const ui = document.getElementById('ui'); ui.width = W; ui.height = H; const ctx = ui.getContext('2d');
+const scene = new THREE.Scene(); const cam = new THREE.PerspectiveCamera(32, W / H, 0.1, 100);
+
+scene.background = new THREE.Color('#cfe8f0');
+scene.add(new THREE.HemisphereLight('#fff8ee', '#8a6', 0.9));
+const lamp = new THREE.DirectionalLight('#ffe2b8', 2.6); lamp.position.set(-3, 7, 5); lamp.castShadow = true; lamp.shadow.mapSize.set(2048, 2048); lamp.shadow.radius = 6; scene.add(lamp);
+const wood = new THREE.Mesh(new THREE.BoxGeometry(12, 0.5, 8), new THREE.MeshStandardMaterial({ color: '#b07a4e', roughness: 0.8 })); wood.position.y = -0.25; wood.receiveShadow = true; scene.add(wood);
+const cloth = new THREE.Mesh(new THREE.PlaneGeometry(5, 3.5), new THREE.MeshStandardMaterial({ color: '#d1495b', roughness: 1 })); cloth.rotation.x = -Math.PI / 2; cloth.position.set(0, 0.01, 0.4); cloth.receiveShadow = true; scene.add(cloth);
+function clay(geo, color, seed) { const g = geo.clone(); const p = g.attributes.position; const base = p.array.slice(); return { mesh: new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color, roughness: 0.42 })), lump(b) { for (let i = 0; i < p.count; i++) { const x = base[i * 3], y = base[i * 3 + 1], z = base[i * 3 + 2]; const n = 1 + 0.035 * (HF.noise(x * 4 + b * 7.3, seed) - 0.5) * 2 + 0.02 * (HF.noise(y * 6 + z * 3 + b * 3.1, seed + 1) - 0.5); p.setXYZ(i, x * n, y * n, z * n); } p.needsUpdate = true; g.computeVertexNormals(); } }; }
+const body = clay(new THREE.SphereGeometry(1, 48, 36), C.badan, 3); body.mesh.position.y = 1; body.mesh.castShadow = true; scene.add(body.mesh);
+const eyes = []; for (const x of [-0.34, 0.34]) { const w = clay(new THREE.SphereGeometry(0.26, 24, 18), '#ffffff', 5); w.mesh.position.set(x, 1.25, 0.8); scene.add(w.mesh); eyes.push(w); const e = new THREE.Mesh(new THREE.SphereGeometry(0.13, 24, 18), new THREE.MeshStandardMaterial({ color: C.mata, roughness: 0.15 })); e.position.set(x, 1.24, 1.02); scene.add(e); }
+const bowl = clay(new THREE.TorusGeometry(0.55, 0.22, 18, 36), '#e9d8a6', 8); bowl.mesh.rotation.x = Math.PI / 2; bowl.mesh.position.set(1.8, 0.22, 0.9); bowl.mesh.castShadow = true; scene.add(bowl.mesh);
+function update(t) { const b = HF.boil(t, 12, 3); [body, bowl, ...eyes].forEach((c) => c.lump(b)); const tt = HF.stepTime(t, 12); body.mesh.rotation.z = Math.sin(tt * 3) * 0.06; renderer.toneMappingExposure = 1 + (b - 1) * 0.02; cam.position.set(0.6, 3.0, 9.4); cam.lookAt(0.4, 0.9, 0); }
+
+HF.setup({ width: W, height: H, fps: 30, duration: 3, draw(t) { update(t); renderer.render(scene, cam); ctx.clearRect(0, 0, W, H); SAMPLE.sub(ctx, t); } });
+</script></body></html>
