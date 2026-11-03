@@ -16,3 +16,5 @@ sejarah-kereta/
 
 # Dokumen pribadi/berbayar milik pemilik (jangan pernah di-commit)
 *.pdf
+/Refrence-frames/
+/Reference-frames/

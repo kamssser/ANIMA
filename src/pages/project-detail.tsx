@@ -373,7 +373,7 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
             )}
             <div className="grid gap-2">
               <Label htmlFor="sec">Durasi target (detik)</Label>
-              <Input id="sec" type="number" min={15} max={180} value={draft.target_seconds} onChange={(e) => setDraft({ ...draft, target_seconds: Number(e.target.value) })} />
+              <Input id="sec" type="number" min={15} max={300} value={draft.target_seconds} onChange={(e) => setDraft({ ...draft, target_seconds: Number(e.target.value) })} />
             </div>
             {!is2D(draft.visual_style) && !isSkill(draft.visual_style) && (
               <div className="grid gap-2">

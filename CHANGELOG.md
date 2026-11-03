@@ -6,6 +6,14 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.13.0 - 2026-11-03
+
+**Baru**
+- Gaya **Studio: explainer datar**: 2D datar ala video explainer edukasi (tokoh berkepala bulat dengan mata titik, bayangan lembut, garis tepi terang tipis, palet hangat, label pil dan peta infografis). Cocok untuk video YouTube 3 sampai 5 menit.
+- **Frame referensi gaya** di tab Claude: sebelum klik Mulai, pilih folder berisi frame/screenshot video yang gayanya mau ditiru. HyperForge mengambil 24 frame yang tersebar merata, membuat lembar kontak, dan Claude memakainya sebagai acuan (sekitar 90% mirip) dengan tokoh dan adegan tetap orisinal. Frame hanya disimpan di laptopmu; folder terakhir diingat per style.
+- **Durasi video sampai 5 menit** untuk semua style (sebelumnya maks 3 menit untuk 2D dan 1,5 menit untuk 3D). Batas jumlah shot, waktu Generate, tunggu suara, dan panjang naskah suara ikut dinaikkan. Untuk Kartun 3D, form menampilkan perkiraan lama render.
+- HyperForge Studio membagi video panjang per bab (storyboard dan render uji per bab).
+
 ## 0.12.0 - 2026-11-03
 
 **Baru**

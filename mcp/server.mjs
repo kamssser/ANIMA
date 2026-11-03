@@ -182,7 +182,7 @@ server.tool(
       .array(z.object({ title: z.string(), url: z.string() }))
       .default([])
       .describe('Sumber yang dibaca (wajib untuk sejarah & fakta)'),
-    shots: z.array(shotSchema).min(1).max(60),
+    shots: z.array(shotSchema).min(1).max(120),
   },
   async ({ id, hook, script, sources, shots }) => {
     try {
@@ -406,7 +406,7 @@ async function vibiLine(s, v, text, outFile) {
       voice_settings: provider === 'elevenlabs' ? { stability: 0.5, similarity_boost: 0.75, speed: Number(v.speed) || 1 } : { speed: Number(v.speed) || 1, pitch: 0 },
     }),
   });
-  for (let i = 0; i < 180; i++) {
+  for (let i = 0; i < 450; i++) {
     await new Promise((r) => setTimeout(r, 2000));
     const t = await vibiCall(s, `/v1/history/${task.id}`);
     if (t.status === 'failed') throw new Error(t.error || t.detail_error || 'tugas vibi.pro gagal');
@@ -493,7 +493,7 @@ server.tool(
       const stt = await vibiCall(s, '/v1/speech-to-text', { method: 'POST', body: form });
       const tid = stt.task_id || stt.id;
       let tr = null;
-      for (let i = 0; i < 180; i++) {
+      for (let i = 0; i < 450; i++) {
         await new Promise((r) => setTimeout(r, 2000));
         const t = await vibiCall(s, `/v1/speech-to-text/${tid}`);
         if (t.status === 'failed') return fail(t.error || 'speech-to-text gagal');
@@ -519,7 +519,7 @@ server.tool(
   'Skill bang-motion / HyperForge Studio: buat file VO dari naskah dengan suara yang dipilih pengguna di HyperForge (vibi.pro), sebagai "VO dari layanan TTS pilihan pengguna". Panggil dulu dengan estimate=true untuk menyebutkan suara dan jumlah karakter (kredit) ke pengguna, lalu jalankan setelah disetujui. Satu panggilan = satu file mp3.',
   {
     file: z.string().describe('path file mp3 relatif ke folder kerja, mis. "sejarah-kereta/vo.mp3"'),
-    text: z.string().min(1).max(5000).describe('naskah VO, angka ditulis dengan kata'),
+    text: z.string().min(1).max(10000).describe('naskah VO, angka ditulis dengan kata (video 5 menit sekitar 4.500 karakter)'),
     speaker: z.enum(['A', 'B']).default('A').describe('Suara A (bawaan) atau B (pembicara kedua)'),
     estimate: z.boolean().default(false),
   },

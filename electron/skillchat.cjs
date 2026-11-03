@@ -17,6 +17,37 @@ const SYSTEM = [
 
 const IMG = /\.(png|jpe?g|webp|gif)$/i;
 
+/**
+ * Frame referensi gaya dari folder pengguna -> <proyek>/referensi/gaya/ (maks 24, tersebar merata) + 2 lembar kontak.
+ * Hanya di laptop pengguna; tidak pernah diunggah. Mengembalikan teks tambahan untuk brief.
+ */
+function copyStyleRefs(srcDir, projDir, ffDir) {
+  if (!srcDir || !fs.existsSync(srcDir)) return '';
+  const all = fs.readdirSync(srcDir).filter((f) => IMG.test(f)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  if (!all.length) return '';
+  const n = Math.min(24, all.length);
+  const pick = Array.from({ length: n }, (_, i) => all[Math.floor((i * all.length) / n)]);
+  const out = path.join(projDir, 'referensi', 'gaya');
+  fs.rmSync(out, { recursive: true, force: true });
+  fs.mkdirSync(out, { recursive: true });
+  pick.forEach((f, i) => fs.copyFileSync(path.join(srcDir, f), path.join(out, `ref_${String(i).padStart(3, '0')}${path.extname(f).toLowerCase()}`)));
+  const ext = path.extname(pick[0]).toLowerCase();
+  const same = pick.every((f) => path.extname(f).toLowerCase() === ext);
+  if (same) {
+    const ff = path.join(ffDir, process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+    require('node:child_process').spawnSync(ff, ['-v', 'error', '-y', '-start_number', '0', '-i', path.join(out, `ref_%03d${ext}`), '-vf', 'scale=480:-2,tile=4x3:padding=6:color=black', path.join(out, 'lembar_%02d.jpg')], { windowsHide: true });
+  }
+  const sheets = fs.readdirSync(out).filter((f) => f.startsWith('lembar_'));
+  return [
+    '',
+    '## Frame referensi gaya dari pengguna',
+    `- ${n} frame dari video referensi ada di \`${path.relative(path.dirname(projDir), out).replace(/\\/g, '/')}/\` (${sheets.length ? `lembar kontak: ${sheets.join(', ')}` : 'ref_000 ...'}).`,
+    '- LIHAT lembar kontaknya (Read) sebelum menentukan gaya dan menggambar karakter. Tiru ~90% cara gambarnya: bentuk tokoh, proporsi, palet, bayangan, latar, tipografi label/infografis, gerak kamera, dan ritme potongan.',
+    '- JANGAN menyalin tokoh, wajah, logo, nama channel, teks, atau adegan dari referensi; buat semuanya orisinal. Jangan menyebut nama channel referensi di video.',
+    '- Tunjukkan satu lembar kontak referensi berdampingan dengan frame contohmu saat meminta persetujuan gaya.',
+  ].join('\n');
+}
+
 /** Pecah teks asisten jadi teks biasa + pertanyaan + gambar + video. */
 function parseAssistant(text) {
   const out = { text: '', question: null, images: [], videos: [] };
@@ -83,13 +114,17 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
    * Kirim satu giliran. Giliran pertama (belum ada sesi): siapkan brief lalu kirim perintah skill.
    * payload: { engine, slug, title, brief?, files?, text? }
    */
-  ipcMain.handle('skillchat:send', async (_ev, { engine, slug, title, brief, files: extra, text }) => {
+  ipcMain.handle('skillchat:send', async (_ev, { engine, slug, title, brief, files: extra, text, refDir }) => {
     const e = engineOf(engine);
     const key = `${engine}:${slug}`;
     if (running.has(key)) throw new Error('Claude masih bekerja di giliran ini. Tunggu atau klik Hentikan.');
     const f = files(e, slug);
     const sid = fs.existsSync(f.sess) ? fs.readFileSync(f.sess, 'utf8').trim() : null;
     const prep = await prepareSession(e, { slug, title, brief: sid ? null : brief, files: sid ? null : extra });
+    if (!sid && refDir) {
+      const add = copyStyleRefs(refDir, e.videoDir(slug), prep.ffDir);
+      if (add) fs.appendFileSync(prep.briefFile, add + '\n');
+    }
     const prompt = sid ? String(text || '').trim() : `${prep.prompt.replace(/^\/([\w-]+)\s*/, 'Pakai skill $1. ')}${text ? `\n\n${text}` : ''}`;
     if (!prompt) throw new Error('Pesan kosong.');
 
@@ -204,4 +239,4 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
   });
 }
 
-module.exports = { register, parseAssistant };
+module.exports = { register, parseAssistant, copyStyleRefs };

@@ -110,7 +110,8 @@ function NewProjectDialog() {
   const [format, setFormat] = useState<'9:16' | '16:9'>('9:16');
   const [busy, setBusy] = useState(false);
   const two = is2D(style) || isSkill(style);
-  const max = two ? 180 : 90;
+  // Semua style sampai 5 menit; Kartun 3D tetap paling lama dirender.
+  const max = 300;
   const st = visualStyle(style);
 
   function reset(o: boolean) {
@@ -238,7 +239,7 @@ function NewProjectDialog() {
                 <div className="grid gap-2">
                   <Label htmlFor="sec">Durasi target: {Math.min(seconds, max)} detik</Label>
                   <input id="sec" type="range" min={20} max={max} step={5} value={Math.min(seconds, max)} onChange={(e) => setSeconds(Number(e.target.value))} className="accent-primary" />
-                  <span className="text-xs text-muted-foreground">{two ? 'Bisa sampai 3 menit. Untuk Shorts, 30 sampai 60 detik paling aman.' : 'Kartun 3D ideal di 55 sampai 70 detik.'}</span>
+                  <span className="text-xs text-muted-foreground">{Math.min(seconds, max) > 60 ? `${Math.floor(Math.min(seconds, max) / 60)} menit ${Math.min(seconds, max) % 60 ? `${Math.min(seconds, max) % 60} detik ` : ''}cocok untuk YouTube; Shorts/Reels maksimal 60 detik (TikTok sampai 3 menit). ` : 'Untuk Shorts/Reels/TikTok, 30 sampai 60 detik paling aman. '}{two ? 'Video panjang butuh lebih banyak kredit suara dan waktu Claude.' : `Kartun 3D paling lama dirender (perkiraan ${Math.max(1, Math.round((Math.min(seconds, max) * 30 * 1.6) / 60))} menit di laptop ini).`}</span>
                 </div>
               </div>
             )}

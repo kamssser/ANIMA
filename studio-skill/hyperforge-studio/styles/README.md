@@ -5,6 +5,7 @@ Karakter tetap sama (bentuk, warna HEX, ekspresi), hanya diterjemahkan ke cara g
 
 | gaya | teknik | berat | cocok untuk |
 |---|---|---|---|
+| [Explainer datar](explainer-datar.md) | 2D (canvas) | ringan | explainer edukasi & isu sosial/ekonomi, video YouTube 3–5 menit |
 | [Low-poly cerah](low-poly.md) | 3D (three.js) | ringan | explainer teknologi, cara kerja benda, edukasi cepat |
 | [Kartun 3D lembut](kartun-3d-lembut.md) | 3D (three.js) | berat | cerita premium, drama keluarga, iklan brand |
 | [Anime cel](anime-cel.md) | 2D (canvas) | sedang | drama lebay, reaksi, cerita perjuangan, komedi |

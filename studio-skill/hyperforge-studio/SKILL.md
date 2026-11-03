@@ -60,6 +60,9 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
 - **Ada video referensi:** `node <skill>/tools/refsheet.mjs <video> <proyek>` → angka (durasi, rasio, fps, jumlah
   shot, rata-rata detik per shot) + `referensi/ref_sheet.png` + `ref_audio.mp3`. Transkrip `ref_audio.mp3` dengan
   `anima_vibi_words` untuk kata per menit dan pola naskahnya (pembuka, jembatan, isi, penutup). Tunjukkan lembarnya.
+- **Frame referensi gaya dari pengguna** (di `<proyek>/referensi/gaya/`, disebut di brief): lihat lembar kontaknya dulu,
+  tiru cara gambarnya sekitar 90% (bentuk tokoh, palet, bayangan, latar, label, kamera, ritme) tanpa menyalin tokoh,
+  logo, teks, atau adegan. Tunjukkan lembar referensi berdampingan dengan frame contohmu saat minta persetujuan.
 - **Tanpa referensi:** baca `styles/<gaya>.md` (gaya dari brief). Kalau brief tidak menentukan, usulkan 3 gaya dari
   `styles/` yang cocok dengan topik, masing-masing dengan **satu frame contoh** (buat halaman uji kecil, potret dengan
   `tools/snap.mjs`), lalu minta pengguna memilih.
@@ -109,6 +112,13 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
 - Periksa sendiri dulu, perbaiki, potret ulang: objek menutupi subtitle? kamera terlalu dekat/jauh? label terbaca di
   HP? karakter muncul di momen yang tepat? ada shot yang diam (gerak latar wajib ada)? Baru tunjukkan.
 - Revisi pengguna per nomor shot ("shot 5 mundur sedikit"). Jangan render penuh sebelum storyboard disetujui.
+
+### Video panjang (lebih dari 90 detik, sampai 5 menit)
+- Bagi jadi **bab** (pembuka → konteks → inti bertahap → dampak → penutup), satu file adegan per bab
+  (`<proyek>/bab-01.js`, ...) yang dimuat `index.html`; `index.html` hanya mengatur waktu bab dan transisi.
+- Storyboard per bab (satu lembar kontak per bab) supaya mudah disetujui; render uji per bab dengan `--from/--to`.
+- Suara: satu file VO per bab (`audio/vo-01.mp3`, ...) lalu gabung dengan ffmpeg, atau satu file utuh; timing kata
+  dari `anima_vibi_words` untuk file gabungan.
 
 ### 6. Render → `hasil/`
 1. Musik & efek dari kode: tulis `audio/score.json` (mood, bpm, bagian energi, `hening` sebelum punchline, `sfx` di

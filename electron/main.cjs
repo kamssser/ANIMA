@@ -676,7 +676,8 @@ async function vibi(s, p, init = {}) {
 
 /** Polling tugas vibi sampai selesai (maks ~6 menit). */
 async function vibiPoll(s, p, onProgress) {
-  for (let i = 0; i < 180; i++) {
+  // sampai 15 menit: suara video 5 menit bisa lama diproses
+  for (let i = 0; i < 450; i++) {
     await sleep(2000);
     const t = await vibi(s, p);
     if (t.status === 'completed') return t;
@@ -1223,7 +1224,7 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session, style
     let saved = false;
     const errTail = [];
     // Style 2D ikut menggambar latar, jadi bisa lebih lama.
-    const timer = setTimeout(() => child.kill(), 40 * 60 * 1000);
+    const timer = setTimeout(() => child.kill(), 75 * 60 * 1000);
 
     child.stdout.on('data', (b) => {
       buf += b.toString();

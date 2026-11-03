@@ -1,6 +1,6 @@
 // Panel obrolan Claude untuk project bergaya skill (Animate, Bang Motion, HyperForge Studio), di dalam aplikasi.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, ChevronDown, ChevronRight, Loader2, Play, RotateCcw, Send, Sparkles, Square, Terminal, User, Wrench } from 'lucide-react';
+import { Bot, ChevronDown, ChevronRight, FolderOpen, Loader2, Play, RotateCcw, Send, Sparkles, Square, Terminal, User, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -128,6 +128,9 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
   const [text, setText] = useState('');
   const [big, setBig] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  // Folder frame referensi gaya (opsional), diingat per style di laptop ini.
+  const refKey = `hf-ref:${st.id}`;
+  const [refDir, setRefDir] = useState<string>(() => localStorage.getItem(refKey) || '');
   const end = useRef<HTMLDivElement | null>(null);
   const busy = chat.running || sending;
 
@@ -183,7 +186,7 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
         brief = buildStudioBrief(fresh, slug, chars.map((c) => ({ key: c.key, name: c.name, nickname: c.nickname, is_main: c.is_main, personality: c.personality, appearance: c.appearance, hasSvg: Boolean(c.svg) })));
       } else brief = engine === 'bang-motion' ? buildBangBrief(fresh, slug) : buildAnimateBrief(fresh, slug);
       await runTask(`${key}:turn`, { label: `Claude: ${fresh.title}`, href: `/projects/${project.id}`, step: 'Memulai skill...' }, () =>
-        window.anima.skillChatSend({ engine, slug, title: fresh.title, brief, files }),
+        window.anima.skillChatSend({ engine, slug, title: fresh.title, brief, files, refDir: refDir || undefined }),
       );
     } catch (e) {
       toast.error('Gagal memulai', { description: cleanErr(e), duration: 12000 });
@@ -244,6 +247,44 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
             <Bot className="size-10 text-primary" />
             <div className="font-medium">Kerjakan video ini bersama Claude</div>
             <p className="text-sm text-muted-foreground">{info.flow} Semua pertanyaan dan gambar contoh muncul di sini; kamu tinggal klik pilihan atau mengetik revisi.</p>
+            <div className="grid w-full gap-1.5 rounded-lg border bg-muted/30 p-3 text-left text-xs">
+              <span className="font-medium text-foreground">Frame referensi gaya (opsional)</span>
+              <span className="text-muted-foreground">
+                Folder berisi frame/screenshot video yang gayanya mau ditiru. Claude melihatnya sebagai acuan (sekitar 90% mirip), tokoh dan adegan tetap orisinal. Hanya disimpan di laptop ini.
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={async () => {
+                    const d = await window.anima.pickFolder('Pilih folder frame referensi gaya');
+                    if (!d) return;
+                    setRefDir(d);
+                    localStorage.setItem(refKey, d);
+                  }}
+                >
+                  <FolderOpen /> {refDir ? 'Ganti folder' : 'Pilih folder'}
+                </Button>
+                {refDir && (
+                  <>
+                    <span className="min-w-0 truncate font-mono" title={refDir}>
+                      {refDir}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        setRefDir('');
+                        localStorage.removeItem(refKey);
+                      }}
+                    >
+                      hapus
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
             <Button onClick={start} disabled={busy}>
               {busy ? <Loader2 className="animate-spin" /> : <Play />} Mulai
             </Button>

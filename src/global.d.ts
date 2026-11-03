@@ -78,7 +78,7 @@ declare global {
       skillStatus(payload: { engine: SkillEngine; slug: string }): Promise<{ exists: boolean; dir?: string; hasBrief?: boolean; videos: { file: string; name: string; size: number; mtime: string }[] }>;
       skillOpenFolder(payload: { engine: SkillEngine; slug: string }): Promise<string>;
       skillChatHistory(payload: { engine: SkillEngine; slug: string }): Promise<{ messages: ChatMessage[]; running: boolean; hasSession: boolean }>;
-      skillChatSend(payload: { engine: SkillEngine; slug: string; title: string; brief?: string; files?: Record<string, string>; text?: string }): Promise<{ ok: boolean }>;
+      skillChatSend(payload: { engine: SkillEngine; slug: string; title: string; brief?: string; files?: Record<string, string>; text?: string; refDir?: string }): Promise<{ ok: boolean }>;
       skillChatStop(payload: { engine: SkillEngine; slug: string }): Promise<boolean>;
       skillChatReset(payload: { engine: SkillEngine; slug: string }): Promise<boolean>;
       skillChatImage(payload: { engine: SkillEngine; file: string }): Promise<{ url: string; mtime: number } | null>;

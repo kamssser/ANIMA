@@ -21,6 +21,7 @@ export type VisualStyleId =
   | 'bang-aksi-kontinu'
   | 'bang-kartun-panggung'
   | 'bang-opener'
+  | 'studio-explainer-datar'
   | 'studio-low-poly'
   | 'studio-kartun-3d-lembut'
   | 'studio-anime-cel'
