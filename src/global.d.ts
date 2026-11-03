@@ -73,7 +73,7 @@ declare global {
       skillCheck(engine: SkillEngine): Promise<SkillCheck>;
       skillSetup(payload: { engine: SkillEngine; optional?: boolean }): Promise<SkillCheck>;
       skillSamples(engine: SkillEngine): Promise<Record<string, string>>;
-      skillOpen(payload: { engine: SkillEngine; slug: string; title: string; brief: string }): Promise<{ workDir: string; briefFile: string }>;
+      skillOpen(payload: { engine: SkillEngine; slug: string; title: string; brief: string; files?: Record<string, string> }): Promise<{ workDir: string; briefFile: string }>;
       skillStatus(payload: { engine: SkillEngine; slug: string }): Promise<{ exists: boolean; dir?: string; hasBrief?: boolean; videos: { file: string; name: string; size: number; mtime: string }[] }>;
       skillOpenFolder(payload: { engine: SkillEngine; slug: string }): Promise<string>;
       onSkillEvent(cb: (e: { engine: SkillEngine; step: string; line?: string }) => void): () => void;

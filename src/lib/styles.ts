@@ -20,7 +20,17 @@ export type VisualStyleId =
   | 'bang-sketsa-vintage'
   | 'bang-aksi-kontinu'
   | 'bang-kartun-panggung'
-  | 'bang-opener';
+  | 'bang-opener'
+  | 'studio-low-poly'
+  | 'studio-kartun-3d-lembut'
+  | 'studio-anime-cel'
+  | 'studio-clay'
+  | 'studio-kertas-guntingan'
+  | 'studio-wayang'
+  | 'studio-pixel'
+  | 'studio-papan-kapur'
+  | 'studio-cat-air'
+  | 'studio-karet-retro';
 
 export interface VisualStyle {
   id: VisualStyleId;
@@ -28,7 +38,7 @@ export interface VisualStyle {
   /** skill = dibuat skill Claude pihak ketiga (animate / bang-motion) di Claude Code, render sendiri */
   kind: '3d' | '2d' | 'skill';
   /** mesin skill untuk kind skill */
-  engine?: 'animate' | 'bang-motion';
+  engine?: 'animate' | 'bang-motion' | 'studio';
   /** nama style di skill (animate: cut-paper ... custom; bang-motion: kartun-kolase ... opener) */
   skillStyle?: string;
   description: string;

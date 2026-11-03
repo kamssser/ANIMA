@@ -208,6 +208,96 @@
       "skillStyle": "opener",
       "description": "Opener, promo produk, bumper, intro kanal, dan kinetic typography yang bergerak seperti video, bukan slide. Skill bang-motion (Bang Tutorial) di Claude Code: kamu menyetujui style brief dan rundown sebelum dibangun.",
       "draw": []
+    },
+    {
+      "id": "studio-low-poly",
+      "label": "Studio: low-poly cerah",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "low-poly",
+      "description": "3D low-poly bidang datar, cerah dan rapi, bagian yang dibahas menyala. Ringan dirender. Cocok untuk explainer teknologi dan cara kerja benda. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-kartun-3d-lembut",
+      "label": "Studio: kartun 3D lembut",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "kartun-3d-lembut",
+      "description": "3D halus seperti film animasi: cahaya jendela hangat, rim light, squash & stretch. Berat dirender. Cocok untuk cerita premium dan iklan. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-anime-cel",
+      "label": "Studio: anime cel",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "anime-cel",
+      "description": "2D warna datar dua tingkat, garis tinta, speed lines dan focus lines, karakter on twos. Cocok untuk drama, reaksi, dan komedi. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-clay",
+      "label": "Studio: clay stop motion",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "clay",
+      "description": "3D plastisin dengan jejak jari yang \"bergetar\", set miniatur bahan nyata, 12 gambar per detik. Berat. Cocok untuk kuliner dan slapstick. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-kertas-guntingan",
+      "label": "Studio: kertas guntingan",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "kertas-guntingan",
+      "description": "2D potongan kertas bertekstur dengan sendi paku dan bayangan antar lapisan, 12 gambar per detik. Cocok untuk dongeng dan edukasi anak. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-wayang",
+      "label": "Studio: wayang bayangan",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "wayang",
+      "description": "2D siluet berukir di layar kain dengan lampu berkedip, tokoh profil bersendi, gunungan pembuka/penutup. Cocok untuk cerita rakyat dan sejarah. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-pixel",
+      "label": "Studio: pixel retro",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "pixel",
+      "description": "Canvas kecil diperbesar tanpa blur, palet terbatas, sprite 10 gambar per detik, HUD piksel. Paling ringan. Cocok untuk teknologi dan nostalgia. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-papan-kapur",
+      "label": "Studio: papan tulis kapur",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "papan-kapur",
+      "description": "2D kapur bertekstur di papan hijau, diagram dan tulisan \"ditulis\" mengikuti narasi. Cocok untuk pelajaran dan rumus. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-cat-air",
+      "label": "Studio: cat air lembut",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "cat-air",
+      "description": "2D cat air berlapis dengan tepi merembes dan tekstur kertas, gerak tenang. Cocok untuk cerita hangat dan dongeng. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-karet-retro",
+      "label": "Studio: kartun karet retro",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "karet-retro",
+      "description": "2D hitam-putih tangan-kaki seperti selang karet, semua bergoyang mengikuti musik, efek film tua. Cocok untuk musik, nostalgia, dan komedi. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
     }
   ],
   "rig": [

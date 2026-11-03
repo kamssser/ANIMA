@@ -13,3 +13,6 @@ sejarah-kereta/
 /*/words.json
 /*/meta.json
 /*/parts/
+
+# Dokumen pribadi/berbayar milik pemilik (jangan pernah di-commit)
+*.pdf

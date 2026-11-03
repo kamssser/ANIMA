@@ -12,7 +12,27 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawn, execFile } = require('node:child_process');
 
+const crypto = require('node:crypto');
+
 const isWin = process.platform === 'win32';
+
+/** Hash isi folder (untuk skill buatan sendiri: berubah setiap kali skill diperbarui). */
+function dirHash(dir) {
+  const h = crypto.createHash('sha1');
+  const walk = (d) => {
+    for (const n of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const p = path.join(d, n.name);
+      if (n.isDirectory()) walk(p);
+      else h.update(path.relative(dir, p)).update(fs.readFileSync(p));
+    }
+  };
+  try {
+    walk(dir);
+  } catch {
+    /* folder tidak ada */
+  }
+  return h.digest('hex');
+}
 const HOME = os.homedir();
 const SKILLS_DIR = path.join(HOME, '.claude', 'skills');
 
@@ -122,7 +142,7 @@ const ENGINES = {
     marker: path.join(SKILLS_DIR, '.hyperforge-animate.json'),
     work: path.join(HOME, 'anima-animate'),
     url: 'https://github.com/cth9191/animate',
-    voiceTool: 'mcp__anima__anima_vibi_voice',
+    voiceTools: ['mcp__anima__anima_vibi_voice'],
     /** galeri: style -> file gambar di dalam skill */
     samples: Object.fromEntries(['cut-paper', 'crosshatch', 'riso', 'sketchbook', 'math', 'pixel', 'isometric'].map((s) => [s, `styles/${s}/sample.png`])),
     async deps({ which }) {
@@ -173,7 +193,7 @@ const ENGINES = {
     marker: path.join(SKILLS_DIR, '.hyperforge-bang-motion.json'),
     work: path.join(HOME, 'anima-bangmotion'),
     url: 'https://github.com/bangtutorial/bang-motion',
-    voiceTool: 'mcp__anima__anima_vibi_tts',
+    voiceTools: ['mcp__anima__anima_vibi_tts'],
     samples: {
       'kartun-kolase': 'docs/gallery/11-cartoon-collage.jpg',
       jurnalisme: 'docs/gallery/09-visual-journalism.jpg',
@@ -220,6 +240,45 @@ const ENGINES = {
     env: (work) => ({ ANIMA_BANG_DIR: work }),
   },
 };
+
+ENGINES.studio = {
+  id: 'studio',
+  name: 'hyperforge-studio',
+  src: path.join(__dirname, '..', 'studio-skill', 'hyperforge-studio'),
+  dst: path.join(SKILLS_DIR, 'hyperforge-studio'),
+  marker: path.join(SKILLS_DIR, '.hyperforge-studio.json'),
+  work: path.join(HOME, 'anima-studio'),
+  url: 'https://github.com/kamssser/ANIMA/tree/main/studio-skill/hyperforge-studio',
+  voiceTools: ['mcp__anima__anima_vibi_tts', 'mcp__anima__anima_vibi_words'],
+  samples: {},
+  async deps() {
+    const nm = (m) => fs.existsSync(path.join(this.work, 'node_modules', m, 'package.json'));
+    const cache = path.join(HOME, '.cache', 'puppeteer');
+    return [
+      { id: 'puppeteer', label: 'Puppeteer + Chrome', ok: nm('puppeteer') && hasDir(cache, /^chrome/), detail: `npm i puppeteer di ${this.work} (sekitar 170 MB)` },
+      { id: 'three', label: 'three.js (3D tanpa internet)', ok: nm('three'), detail: `npm i three di ${this.work}` },
+    ];
+  },
+  async setup({ which, say }) {
+    const npm = await which(isWin ? 'npm.cmd' : 'npm');
+    fs.mkdirSync(this.work, { recursive: true });
+    const pkg = path.join(this.work, 'package.json');
+    if (!fs.existsSync(pkg)) fs.writeFileSync(pkg, JSON.stringify({ name: 'anima-studio', private: true, description: 'Folder kerja HyperForge untuk skill hyperforge-studio' }, null, 2));
+    say('Memasang Puppeteer + Chrome dan three.js');
+    const r = await run(npm, ['i', 'puppeteer', 'three', '--no-audit', '--no-fund'], { cwd: this.work, onLine: (l) => say('Memasang Puppeteer + Chrome dan three.js', l.trim().slice(-160)) });
+    if (!r.ok) throw new Error(`Gagal memasang Puppeteer/three.js:
+${tail(r.out)}`);
+  },
+  optionalLabel: '',
+  prompt: (slug, title) => `/hyperforge-studio Kerjakan brief HyperForge di briefs/${slug}.md untuk project: ${title}. Folder proyek: ${slug}/.`,
+  videoDir: (slug) => path.join(ENGINES.studio.work, slug),
+  findVideos(slug) {
+    return listMp4(path.join(this.videoDir(slug), 'hasil'), 0);
+  },
+  env: (work) => ({ ANIMA_STUDIO_DIR: work }),
+};
+// Skill buatan sendiri: "commit" = hash isi skill, jadi pembaruan skill di rilis berikutnya terpasang ulang otomatis.
+ENGINES.studio.commit = dirHash(ENGINES.studio.src);
 
 /** File .mp4 di folder (sampai kedalaman depth), tanpa audio/stem/frame. */
 function listMp4(dir, depth) {
@@ -299,7 +358,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
   });
 
   /** Tulis brief lalu buka jendela Claude Code dengan /<skill>. payload: { engine, slug, title, brief } */
-  ipcMain.handle('skill:open', async (_e, { engine, slug, title, brief }) => {
+  ipcMain.handle('skill:open', async (_e, { engine, slug, title, brief, files }) => {
     const e = engineOf(engine);
     if (!slugOk(slug)) throw new Error('Judul project tidak bisa dijadikan nama folder. Ganti judulnya.');
     const st = await check(engine);
@@ -309,6 +368,13 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
     fs.mkdirSync(path.join(e.work, 'briefs'), { recursive: true });
     const briefFile = path.join(e.work, 'briefs', `${slug}.md`);
     fs.writeFileSync(briefFile, brief);
+    // File pendukung dari aplikasi (mis. SVG karakter HyperForge) ke folder proyek; nama file dibatasi.
+    for (const [rel, content] of Object.entries(files || {})) {
+      if (!/^[\w-]+(\/[\w.-]+)?$/.test(rel) || rel.includes('..')) continue;
+      const f = path.join(e.videoDir(slug), rel);
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, String(content));
+    }
 
     // MCP HyperForge hanya untuk suara vibi.pro: membaca kunci vibi dari pengaturan aplikasi.
     const node = await which('node');
@@ -321,7 +387,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
     // Tanpa tanda kutip / karakter khusus cmd di dalam prompt (prompt diapit "..." di file .cmd).
     const cleanTitle = String(title).replace(/["%^&|<>()!]/g, '').slice(0, 80);
     const prompt = e.prompt(slug, cleanTitle);
-    const allowed = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'Bash(node:*)', 'Bash(ffmpeg:*)', 'Bash(ffprobe:*)', 'Bash(python:*)', e.voiceTool];
+    const allowed = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'Bash(node:*)', 'Bash(ffmpeg:*)', 'Bash(ffprobe:*)', 'Bash(python:*)', ...e.voiceTools];
     if (!isWin) throw new Error(`Jendela Claude otomatis baru tersedia di Windows. Jalankan manual: cd ${e.work} && claude "${prompt}"`);
 
     // Peluncur .cmd: PATH berisi ffmpeg lengkap; NODE_PATH = modul global npm.

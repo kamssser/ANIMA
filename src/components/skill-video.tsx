@@ -8,7 +8,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Progress } from '@/components/ui/misc';
 import { createJob, updateJob } from '@/lib/api';
-import { buildAnimateBrief, buildBangBrief } from '@/lib/content';
+import { buildAnimateBrief, buildBangBrief, buildStudioBrief } from '@/lib/content';
+import { listCharacters } from '@/lib/api';
 import { visualStyle } from '@/lib/styles';
 import { cleanErr, runTask, setValue, usePersisted, useTask, useTaskFinished } from '@/lib/tasks';
 import type { Project, SkillCheck, SkillEngine } from '@/lib/types';
@@ -26,6 +27,12 @@ export const ENGINE_INFO: Record<SkillEngine, { title: string; by: string; flow:
     by: 'Bang Tutorial',
     flow: 'Claude menanyakan yang belum jelas, lalu menunjukkan style brief dan rundown adegan untuk kamu setujui sebelum membangun, memeriksa frame, dan mengekspor MP4.',
     samplesTitle: '6 gaya explainer + opener/promo',
+  },
+  studio: {
+    title: 'HyperForge Studio',
+    by: 'HyperForge',
+    flow: 'Claude meminta persetujuanmu untuk gaya, karakter, naskah, suara, dan storyboard (satu frame per shot) sebelum merender video dengan subtitle, musik, dan efek suara dari kode.',
+    samplesTitle: '10 gaya',
   },
 };
 
@@ -68,6 +75,7 @@ export function SkillSettings() {
     <>
       <EngineSettings engine="animate" />
       <EngineSettings engine="bang-motion" />
+      <EngineSettings engine="studio" />
     </>
   );
 }
@@ -123,7 +131,7 @@ function EngineSettings({ engine }: { engine: SkillEngine }) {
           <Button onClick={setup} disabled={busy || !c}>
             {busy ? <Loader2 className="animate-spin" /> : <Wand2 />} {c?.ready ? 'Pasang ulang / perbarui' : 'Siapkan otomatis'}
           </Button>
-          {c && (
+          {c && c.optionalLabel && (
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" className="size-4 accent-primary" checked={optional} onChange={(e) => setOptional(e.target.checked)} disabled={busy} />
               {c.optionalLabel}
@@ -180,8 +188,19 @@ export function SkillPanel({ project, beforeRun }: { project: Project; beforeRun
     setOpening(true);
     try {
       const fresh = await beforeRun();
-      const brief = engine === 'bang-motion' ? buildBangBrief(fresh, slug) : buildAnimateBrief(fresh, slug);
-      await window.anima.skillOpen({ engine, slug, title: fresh.title, brief });
+      let brief: string;
+      const files: Record<string, string> = {};
+      if (engine === 'studio') {
+        // Karakter HyperForge ikut sebagai desain sumber (SVG rig dari Pengaturan > Karakter).
+        const chars = await listCharacters().catch(() => []);
+        for (const c of chars) if (c.svg) files[`karakter-hyperforge/${c.key}.svg`] = c.svg;
+        brief = buildStudioBrief(
+          fresh,
+          slug,
+          chars.map((c) => ({ key: c.key, name: c.name, nickname: c.nickname, is_main: c.is_main, personality: c.personality, appearance: c.appearance, hasSvg: Boolean(c.svg) })),
+        );
+      } else brief = engine === 'bang-motion' ? buildBangBrief(fresh, slug) : buildAnimateBrief(fresh, slug);
+      await window.anima.skillOpen({ engine, slug, title: fresh.title, brief, files });
       toast.success('Jendela Claude Code dibuka', { description: 'Jawab pertanyaan dan persetujuan skill di jendela itu. Video jadi muncul di tab Render.', duration: 10000 });
     } catch (e) {
       toast.error('Gagal membuka Claude Code', { description: cleanErr(e), duration: 12000 });

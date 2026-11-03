@@ -18,7 +18,7 @@ const { sanitizeSvg, checkBackgroundSvg, checkPropSvg, extractSvg } = createRequ
 
 const SESSION_FILE = process.env.ANIMA_SESSION_FILE;
 // Sesi skill animate / bang-motion (dibuka dari HyperForge) tidak butuh login Supabase: hanya alat suara vibi.
-if ((!SESSION_FILE || !fs.existsSync(SESSION_FILE)) && !process.env.ANIMA_ANIMATE_DIR && !process.env.ANIMA_BANG_DIR) {
+if ((!SESSION_FILE || !fs.existsSync(SESSION_FILE)) && !process.env.ANIMA_ANIMATE_DIR && !process.env.ANIMA_BANG_DIR && !process.env.ANIMA_STUDIO_DIR) {
   console.error('ANIMA MCP: sesi tidak ditemukan. Buka ANIMA Studio > Pengaturan > Integrasi Claude > Sambungkan.');
   process.exit(1);
 }
@@ -464,9 +464,59 @@ server.tool(
   },
 );
 
+/** Folder kerja sesi skill yang boleh ditulisi alat suara. */
+const voBase = () => process.env.ANIMA_STUDIO_DIR || process.env.ANIMA_BANG_DIR || null;
+
+server.tool(
+  'anima_vibi_words',
+  'Timing per kata dari file suara (speech-to-text vibi.pro, Bahasa Indonesia). Hasil JSON [{ s, e, text }] (detik) untuk subtitle dan mengunci shot ke kalimat; juga untuk menghitung kata per menit video referensi. Memakai sedikit kredit vibi.pro.',
+  {
+    audio: z.string().describe('file audio (mp3/wav/m4a) relatif ke folder kerja, mis. "kereta/audio/vo.mp3"'),
+    out: z.string().describe('file JSON hasil relatif ke folder kerja, mis. "kereta/audio/words.json"'),
+    language: z.string().default('id'),
+  },
+  async ({ audio, out, language }) => {
+    try {
+      const base = voBase();
+      if (!base) return fail('Alat ini hanya untuk sesi skill yang dibuka dari HyperForge.');
+      const root = path.resolve(base) + path.sep;
+      const a = path.resolve(base, audio);
+      const o = path.resolve(base, out);
+      if (!a.startsWith(root) || !o.startsWith(root) || !/\.json$/i.test(o)) return fail('File harus di dalam folder kerja, hasil berakhiran .json.');
+      if (!fs.existsSync(a)) return fail(`Tidak ada: ${audio}`);
+      const s = hyperforgeSettings();
+      const form = new FormData();
+      form.append('file', new Blob([fs.readFileSync(a)]), path.basename(a));
+      form.append('language_code', language);
+      form.append('timestamps_granularity', 'word');
+      form.append('tag_audio_events', 'false');
+      const stt = await vibiCall(s, '/v1/speech-to-text', { method: 'POST', body: form });
+      const tid = stt.task_id || stt.id;
+      let tr = null;
+      for (let i = 0; i < 180; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const t = await vibiCall(s, `/v1/speech-to-text/${tid}`);
+        if (t.status === 'failed') return fail(t.error || 'speech-to-text gagal');
+        if (t.status === 'completed') {
+          tr = t;
+          break;
+        }
+      }
+      if (!tr) return fail('speech-to-text terlalu lama');
+      const words = (tr.result?.words || []).filter((w) => w.type === 'word').map((w) => ({ s: w.start, e: w.end, text: w.text }));
+      fs.mkdirSync(path.dirname(o), { recursive: true });
+      fs.writeFileSync(o, JSON.stringify(words, null, 1));
+      const dur = words.length ? words[words.length - 1].e - words[0].s : 0;
+      return ok({ file: path.relative(base, o).replace(/\\/g, '/'), words: words.length, detik: +dur.toFixed(2), kataPerMenit: dur ? Math.round((words.length / dur) * 60) : null, teks: words.map((w) => w.text).join(' ').slice(0, 1500) });
+    } catch (e) {
+      return fail(e.message);
+    }
+  },
+);
+
 server.tool(
   'anima_vibi_tts',
-  'Skill bang-motion: buat file VO dari naskah dengan suara yang dipilih pengguna di HyperForge (vibi.pro), sebagai "VO dari layanan TTS pilihan pengguna". Panggil dulu dengan estimate=true untuk menyebutkan suara dan jumlah karakter (kredit) ke pengguna, lalu jalankan setelah disetujui. Satu panggilan = satu file mp3.',
+  'Skill bang-motion / HyperForge Studio: buat file VO dari naskah dengan suara yang dipilih pengguna di HyperForge (vibi.pro), sebagai "VO dari layanan TTS pilihan pengguna". Panggil dulu dengan estimate=true untuk menyebutkan suara dan jumlah karakter (kredit) ke pengguna, lalu jalankan setelah disetujui. Satu panggilan = satu file mp3.',
   {
     file: z.string().describe('path file mp3 relatif ke folder kerja, mis. "sejarah-kereta/vo.mp3"'),
     text: z.string().min(1).max(5000).describe('naskah VO, angka ditulis dengan kata'),
@@ -475,10 +525,10 @@ server.tool(
   },
   async ({ file, text, speaker, estimate }) => {
     try {
-      const base = process.env.ANIMA_BANG_DIR;
-      if (!base) return fail('Alat ini hanya untuk sesi bang-motion yang dibuka dari HyperForge.');
+      const base = voBase();
+      if (!base) return fail('Alat ini hanya untuk sesi bang-motion / HyperForge Studio yang dibuka dari HyperForge.');
       const out = path.resolve(base, file);
-      if (!out.startsWith(path.resolve(base) + path.sep) || !/\.mp3$/i.test(out)) return fail('File harus .mp3 di dalam folder kerja bang-motion.');
+      if (!out.startsWith(path.resolve(base) + path.sep) || !/\.mp3$/i.test(out)) return fail('File harus .mp3 di dalam folder kerja.');
       const s = hyperforgeSettings();
       const v = voiceOf(s, speaker);
       if (!v.voiceId) return fail(`Suara ${speaker} belum dipilih di HyperForge > Pengaturan > Suara & audio.`);
@@ -486,7 +536,7 @@ server.tool(
       if (estimate) return ok({ voice, characters: text.length, note: 'Kredit vibi.pro kira-kira sebanding jumlah karakter.' });
       fs.mkdirSync(path.dirname(out), { recursive: true });
       const credits = await vibiLine(s, v, text, out);
-      return ok({ voice, file: path.relative(base, out).replace(/\\/g, '/'), credits, next: 'Retime ke VO ini (silencedetect / tools/vo-pauses.html), lalu verifikasi frame.' });
+      return ok({ voice, file: path.relative(base, out).replace(/\\/g, '/'), credits, next: 'HyperForge Studio: ambil timing kata dengan anima_vibi_words. bang-motion: retime ke VO ini (silencedetect / tools/vo-pauses.html).' });
     } catch (e) {
       return fail(e.message);
     }

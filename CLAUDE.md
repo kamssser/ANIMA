@@ -43,5 +43,8 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
   `remotion-template/` lewat Pengaturan > Proyek Remotion > Siapkan otomatis.
 - Laptop pemilik: i7-4710MQ, 16 GB RAM, tanpa GPU kuat. Render lengkap 540x960 sekitar 28 detik/frame;
   paralel justru lebih lambat. Uji kecepatan ada di Pengaturan > Render.
+- `studio-skill/hyperforge-studio/` = skill buatan HyperForge sendiri (MIT, boleh diedit). Dibuat ORIGINAL: jangan
+  memasukkan isi "Guide Studio Animasi AI" (PDF berbayar milik pemilik, "jangan disebarluaskan"; `*.pdf` di-ignore).
+  Penanda pemasangan = hash isi skill, jadi perubahan apa pun otomatis terpasang ulang lewat Siapkan otomatis.
 - Struktur: `electron/` (proses utama, render, update, MCP install; `skills.cjs` = style dari skill animate & bang-motion), `src/` (UI), `mcp/` (server MCP),
   `supabase/schema.sql`, `scripts/release.mjs`, `remotion-template/`, `server/bench.sh`.

@@ -149,3 +149,42 @@ export function buildBangBrief(project: Project, slug: string) {
   ];
   return lines.filter((l) => l !== '').join('\n') + '\n';
 }
+
+/** Brief untuk skill HyperForge Studio (skill buatan HyperForge). */
+export function buildStudioBrief(project: Project, slug: string, characters: { key: string; name: string; nickname: string; is_main: boolean; personality: string; appearance: string; hasSvg: boolean }[]) {
+  const t = contentType(project.content_type);
+  const st = visualStyle(project.visual_style);
+  const lines = [
+    `# Brief HyperForge: ${project.title}`,
+    '',
+    'Brief dari aplikasi HyperForge. Jalankan skill hyperforge-studio: gaya -> karakter -> naskah -> suara -> storyboard -> render, dengan persetujuan pengguna di setiap tahap. Tanyakan hanya yang belum dijawab di sini.',
+    '',
+    '## Isi',
+    `- Topik / ide: ${project.topic || project.title}`,
+    project.hook ? `- Hook yang sudah ada: ${project.hook}` : '',
+    project.script.trim() ? `- Naskah yang sudah ada (boleh dipakai sebagai dasar):\n\n${project.script.trim()}\n` : '',
+    `- Jenis konten: ${t.label}. Aturan:`,
+    ...t.rules.map((r) => `  - ${r}`),
+    ...HOOK_RULES.map((r) => `  - ${r}`),
+    t.needsSources ? '- Wajib riset: setiap fakta dicek dengan web search, minimal 2 sumber, dicatat di naskah.md.' : '',
+    '',
+    '## Bentuk',
+    `- Format: ${project.format === '16:9' ? '16:9 (1920x1080)' : '9:16 (1080x1920)'}. Durasi: sekitar ${project.target_seconds} detik.`,
+    `- Gaya: **${st.skillStyle}** (styles/${st.skillStyle}.md), sudah dipilih di HyperForge. Tetap tunjukkan 1 frame contoh untuk disetujui.`,
+    '- Teks di layar wajib (subtitle per kata + kata kunci tebal).',
+    '',
+    '## Karakter',
+    characters.length
+      ? 'Karakter dari HyperForge (Pengaturan > Karakter). Pakai sebagai desain sumber di langkah 2; SVG-nya ada di `' + slug + '/karakter-hyperforge/`:'
+      : '- Belum ada karakter di HyperForge: buat karakter baru di langkah 2 (tanya peran dan sifatnya).',
+    ...characters.map((c) => `- **${c.name}**${c.nickname ? ` ("${c.nickname}")` : ''}${c.is_main ? ' — karakter utama' : ''}: sifat ${c.personality || '-'}; penampilan ${c.appearance || '-'}${c.hasSvg ? ` (karakter-hyperforge/${c.key}.svg)` : ''}`),
+    '',
+    '## Suara',
+    `- VO dengan \`anima_vibi_tts\` (suara pilihan pengguna di HyperForge): estimate dulu, sebutkan kreditnya, lalu buat ke \`${slug}/audio/vo.mp3\`. Timing kata: \`anima_vibi_words\` -> \`${slug}/audio/words.json\`.`,
+    t.twoVoices ? '- Dua pembicara: satu file per giliran dengan `speaker: "A"`/`"B"`, lalu gabungkan.' : '',
+    '',
+    '## Hasil',
+    `- Folder proyek: \`${slug}/\`. Video akhir di \`${slug}/hasil/\` (video_final.mp4 + video_final_tanpa_musik.mp4); HyperForge mengambilnya dari sana.`,
+  ];
+  return lines.filter((l) => l !== '').join('\n') + '\n';
+}

@@ -1,0 +1,65 @@
+<!doctype html>
+<!-- Templat adegan 3D (three.js dari node_modules folder kerja, tanpa internet). Salin ke <proyek>/index.html.
+     Subtitle digambar di canvas 2D terpisah di atas WebGL. Semua gerak fungsi murni dari t. -->
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<title>Adegan 3D</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block;position:absolute;left:0;top:0}</style>
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
+<script src="/kit/studio-kit.js"></script>
+</head>
+<body>
+<canvas id="gl"></canvas><canvas id="ui"></canvas>
+<script type="module">
+import * as THREE from 'three';
+
+const W = 1080, H = 1920, FPS = 30, DUR = 6;
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const ui = document.getElementById('ui'); ui.width = W; ui.height = H;
+const ctx = ui.getContext('2d');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#bfe3ff');
+const cam = new THREE.PerspectiveCamera(35, W / H, 0.1, 100);
+scene.add(new THREE.HemisphereLight('#ffffff', '#88a', 1.2));
+const sun = new THREE.DirectionalLight('#fff3dd', 2.2);
+sun.position.set(4, 8, 5); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+scene.add(sun);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(8, 48), new THREE.MeshStandardMaterial({ color: '#f6e7c8', roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+// contoh karakter low-poly; ganti dengan karakter dari karakter/ (satu file karakter dipakai semua adegan)
+const tokoh = new THREE.Group();
+const badan = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8, 1), new THREE.MeshStandardMaterial({ color: '#ffb703', flatShading: true, roughness: 0.8 }));
+badan.position.y = 0.8; badan.castShadow = true; tokoh.add(badan);
+const mataGeo = new THREE.SphereGeometry(0.09, 12, 8), mataMat = new THREE.MeshStandardMaterial({ color: '#1d1d1f' });
+const mataL = new THREE.Mesh(mataGeo, mataMat), mataR = new THREE.Mesh(mataGeo, mataMat);
+mataL.position.set(-0.25, 1.0, 0.72); mataR.position.set(0.25, 1.0, 0.72); tokoh.add(mataL, mataR);
+scene.add(tokoh);
+
+let chunks = [];
+HF.setup({
+  width: W, height: H, fps: FPS, duration: DUR,
+  async init() { chunks = HF.chunkWords(await HF.loadJSON('audio/words.json', []), 4); },
+  draw(t) {
+    const tt = HF.stepTime(t, 15);                       // tokoh on twos, kamera tiap frame
+    tokoh.rotation.y = Math.sin(tt * 1.2) * 0.4;
+    tokoh.position.y = Math.abs(Math.sin(tt * 3)) * 0.12;
+    const blink = (tt % 2.7) < 0.12 ? 0.1 : 1;
+    mataL.scale.y = mataR.scale.y = blink;
+    const push = HF.ease.inOut(HF.prog(t, 0, DUR));
+    cam.position.set(Math.sin(t * 0.3) * 0.6, 1.6, 7 - push * 2.2);
+    cam.lookAt(0, 0.9, 0);
+    renderer.render(scene, cam);
+    ctx.clearRect(0, 0, W, H);
+    HF.drawSubtitle(ctx, t, chunks);
+  },
+});
+</script>
+</body>
+</html>

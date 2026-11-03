@@ -6,6 +6,17 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.11.0 - 2026-11-03
+
+**Baru**
+- **HyperForge Studio**: skill animasi buatan HyperForge sendiri untuk Claude Code, dengan **10 gaya**: low-poly cerah, kartun 3D lembut, anime cel, clay stop motion, kertas guntingan, wayang bayangan, pixel retro, papan tulis kapur, cat air lembut, dan kartun karet retro.
+- Alurnya 7 tahap dengan persetujuanmu di setiap tahap: **gaya** (bisa membongkar video referensi: durasi, jumlah shot, detik per shot, kecepatan narasi), **karakter** (dibangun di kode dari karakter HyperForge, gambar, atau deskripsi, lengkap dengan ekspresi dan pose), **naskah** (hook + cek fakta), **suara**, **storyboard** satu frame per shot, **render**, dan revisi.
+- Video jadi dengan **subtitle per kata** mengikuti suara, **musik dan efek suara dari kode** (aman lisensi, musik mengecil otomatis saat narasi), versi **dengan dan tanpa musik**, dan pemeriksaan akhir (frame + kerasnya suara).
+- Karakter dari Pengaturan > Karakter ikut dikirim ke Claude sebagai desain sumber.
+- Timing per kata Bahasa Indonesia lewat vibi.pro (juga dipakai untuk menghitung kecepatan narasi video referensi).
+- Render memakai kartu grafis secara otomatis: sekitar 0,06 detik per frame di 1080x1920 (video 40 detik sekitar 1,5 menit), otomatis pindah ke CPU kalau kartu grafis tidak mendukung.
+- Kartu **HyperForge Studio** di Pengaturan > Skill video dengan tombol Siapkan otomatis.
+
 ## 0.10.0 - 2026-11-03
 
 **Baru**
