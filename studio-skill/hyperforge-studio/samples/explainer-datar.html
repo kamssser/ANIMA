@@ -21,12 +21,12 @@ HF.setup({ width: W, height: H, fps: FPS, duration: 4, draw(t) {
   XD.tanah(ctx, W, H, 880, '#3b2f25');
   XD.batu(ctx, 1500, 900, 1.5, { bijih: true, rim, seed: 4 });
   XD.batu(ctx, 1730, 900, 0.9, { rim, seed: 9 });
-  // tokoh utama + rekan di belakang (lebih kecil, lebih tinggi di layar = lebih jauh)
-  XD.tokoh(ctx, 1180, 900, 1.25, { t, id: 7, kulit: P.kulit[4], gayaRambut: 'cepak', topi: 'helm', baju: '#e88f7a', ekspresi: 'netral', pose: 'diam', rim, hadap: -1 });
+  // tokoh tetap gaya ini (Raka, XD.PEMBAWA) menjelaskan; tokoh cerita (penambang) di kiri
+  XD.pembawa(ctx, 1240, 930, 1.55, { t, pose: t < 1.6 ? 'diam' : 'tunjuk', ekspresi: t < 1.6 ? 'senyum' : 'mantap', bicara: t > 0.2 && t < 2.4, rim, hadap: -1 });
   const pose = t < 1.6 ? 'diam' : 'kepala';
   XD.tokoh(ctx, 700, 960, 2.0, { t, id: 1, kulit: P.kulit[3], gayaRambut: 'keriting', topi: 'helm', lampuNyala: true, baju: '#9cc0d6', overall: '#e2b45a', ekspresi: t < 1.6 ? 'netral' : 'sedih', pose, rim });
   const u = HF.spring(t, 1.5, 0, 1, 16, 0.5);
-  XD.label(ctx, 1180, 330, 'Upah sehari: sangat kecil', { muncul: Math.max(0, u) });
+  XD.label(ctx, 1000, 250, 'Upah sehari: sangat kecil', { muncul: Math.max(0, u) });
   ctx.restore();
   HF.drawSubtitle(ctx, t, HF.chunkWords(words, 4), { hi: '#ffd166', size: 54, y: H * 0.92 });
 } });

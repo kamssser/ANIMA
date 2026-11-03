@@ -109,9 +109,14 @@ export function buildAnimateBrief(project: Project, slug: string) {
     '',
     '## Hasil',
     `- Piece: \`pieces/${slug}/\`. Video akhir \`renders/share.mp4\` (HyperForge mengambilnya dari sana).`,
+    THUMB_RULE(`pieces/${slug}/renders`),
   ];
   return lines.filter((l) => l !== '').join('\n') + '\n';
 }
+
+/** Permintaan pengguna HyperForge untuk semua skill: thumbnail + judul hook setelah video disetujui. */
+const THUMB_RULE = (dir: string) =>
+  `- Setelah video disetujui, buat juga **thumbnail + judul hook**: tawarkan 5 pasangan judul video (≤ 60 karakter) + teks thumbnail (2-6 kata, satu kata disorot) yang jujur dan dijawab isi video, lalu buat gambar 1280x720 (9:16: juga 1080x1920) dengan gaya video ini: tokoh/benda utama besar berekspresi kuat + judul besar kontras tinggi. Simpan \`${dir}/thumbnail.jpg\` dan \`${dir}/judul.txt\` (judul terpilih, 4 cadangan, judul Shorts/TikTok, deskripsi, 5 hashtag).`;
 
 const BANG_GAYA: Record<string, string> = {
   'kartun-kolase': '1 (Kartun kolase)',
@@ -162,6 +167,7 @@ export function buildBangBrief(project: Project, slug: string) {
     '',
     '## Hasil',
     `- Folder proyek: \`${slug}/\` (index.html satu berkas).`,
+    THUMB_RULE(`${slug}/render`),
     `- Pengguna HyperForge **meminta MP4**: setelah pengguna menyetujui hasilnya, export frame-by-frame (tools/export-frames.mjs) lalu gabungkan dengan ffmpeg (beserta VO bila ada) menjadi \`${slug}/render/${slug}.mp4\`. HyperForge mengambil video dari folder proyek itu.`,
   ];
   return lines.filter((l) => l !== '').join('\n') + '\n';
@@ -205,9 +211,20 @@ export function buildAnimantraBrief(project: Project, slug: string, workDir: str
     '## Folder & nama',
     `- Folder sesi = folder kerja ini (\`${workDir}\`). Nama proyek: \`${slug}\` (\`new_project.mjs ${slug} --di "${workDir}" ...\`). Video akhir: \`${slug}/${slug}.mp4\` dan \`${slug}/${slug}_kecil.mp4\`; HyperForge mengambilnya dari folder itu.`,
     '',
+    '## Permintaan tambahan pengguna',
+    '- **Cerita selesai tuntas**; baris terakhir naskah = kesimpulan singkat + ucapan terima kasih sudah menonton dan sampai jumpa (bukan teaser video berikutnya).',
+    '- **Judul cover = hook** yang kuat (angka/kontras/"kenapa"), jujur dan dijawab isi video. `cover.png` dipakai sebagai thumbnail; tulis judul YouTube/Shorts terbaik di `caption.txt` seperti biasa.',
+    '',
+    '## Suara narasi: vibi.pro (pilihan pengguna)',
+    `- Pengguna memakai **vibi.pro** dari HyperForge (suara yang sudah dipilih di HyperForge). Ini menggantikan Alur langkah 4 (gen_vo.mjs / ElevenLabs / VokaStudio / VoiceStudio): jangan menunggu atau menawarkan VoiceStudio/VokaStudio.`,
+    `- Caranya: setelah \`ucapan.txt\` jadi, panggil \`anima_vibi_tts\` dengan \`estimate: true\` (sebutkan suara + jumlah karakter), lalu buat ke \`${slug}/vo/take.mp3\` dari teks \`ucapan.txt\` (baris digabung dengan spasi, \`...\` dipertahankan). Ubah ke WAV: \`ffmpeg -y -i ${slug}/vo/take.mp3 -ar 48000 -ac 1 ${slug}/vo/take.wav\`. Lanjutkan Alur langkah 5 (asr.py → prep.py) persis seperti skill.`,
+    usesTwoVoices(project)
+      ? `- Project ini **2 suara**: tiap baris ucapan.txt diberi pembicara A/B; buat satu file per baris dengan \`speaker\` "A"/"B" (\`${slug}/vo/baris_XX.mp3\`), gabungkan berurutan dengan jeda 0,3 dtk menjadi \`vo/take.wav\`.`
+      : '',
+    '- Kalau vibi.pro gagal (kredit habis/internet), beri tahu pengguna dan tanyakan; jangan diam-diam pindah ke sumber suara lain.',
+    '',
     '## Obrolan',
     '- Pengguna mengobrol lewat panel Claude di aplikasi HyperForge (bukan terminal). Ikuti bagian "Pengguna awam" skill. Gambar/video yang kamu sebut path lengkapnya tampil di panel.',
-    '- API key suara tetap lewat file kunci (kunci.mjs, dibuka di Notepad), tidak pernah lewat chat.',
   ];
   return lines.filter((l) => l !== '').join('\n') + '\n';
 }
@@ -235,8 +252,9 @@ export function buildStudioBrief(project: Project, slug: string, characters: { k
     `- Gaya: **${st.skillStyle}** (styles/${st.skillStyle}.md), sudah dipilih di HyperForge. Tetap tunjukkan 1 frame contoh untuk disetujui.`,
     '- Teks di layar wajib (subtitle per kata + kata kunci tebal).',
     st.skillStyle === 'explainer-datar'
-      ? '- Gaya ini: tokoh & benda WAJIB dari pustaka `kit/explainer-datar.js` (XD), buat lembar tokoh & benda sebelum storyboard, dan **penutup wajib**: pamit + hook ke video berikutnya dengan kartu `XD.penutup` (styles/explainer-datar.md > Penutup). Tanyakan topik video berikutnya saat persetujuan naskah.'
+      ? '- Gaya ini: pembawa **tokoh tetap Raka** (`XD.pembawa`, jangan dirancang ulang atau diubah; karakter HyperForge di bawah tidak dipakai sebagai pembawa). Tokoh & benda lain WAJIB dari pustaka `kit/explainer-datar.js` (XD), buat lembar tokoh & benda sebelum storyboard. Cerita selesai tuntas, ditutup ucapan terima kasih + sampai jumpa dengan kartu `XD.penutup` (tanpa teaser video berikutnya). Lihat styles/explainer-datar.md.'
       : '',
+    '- **Thumbnail + judul hook wajib** setelah video disetujui (SKILL.md langkah 6.6): 5 pasangan judul + teks thumbnail untuk dipilih, `hasil/thumbnail.jpg` (+ `hasil/cover.jpg` untuk 9:16) dan `hasil/judul.txt`.',
     '',
     '## Karakter',
     characters.length

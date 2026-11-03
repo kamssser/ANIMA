@@ -1,0 +1,19 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Thumbnail explainer datar</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script><script src="/kit/explainer-datar.js"></script></head><body><canvas id="c"></canvas>
+<script>
+// Contoh thumbnail YouTube 1280x720: tokoh tetap kaget + benda kunci + judul hook 2 baris, satu kata disorot.
+const W = 1280, H = 720;
+const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+const P = XD.palet;
+HF.setup({ width: W, height: H, fps: 24, duration: 1, draw(t) {
+  XD.langit(ctx, W, H, '#2a221d', '#4a3b2e');
+  XD.cahaya(ctx, 980, 260, 560, '255,214,140', 0.5);
+  const rim = XD.rimUntuk('#352b24');
+  XD.tanah(ctx, W, H, 640, '#3b2f25');
+  XD.emas(ctx, 720, 650, 0.75, { tumpuk: 2, rim });
+  XD.pembawa(ctx, 1020, 700, 1.15, { t: 0, pose: 'garuk', ekspresi: 'kaget', rim, napas: false, hadap: -1 });
+  XD.judulBesar(ctx, 56, 70, ['Emas Rp1 juta,', 'upahnya *Rp32 ribu*?'], { ukuran: 92 });
+  XD.label(ctx, 260, 470, 'Kok bisa?', { ukuran: 52 });
+} });
+</script></body></html>

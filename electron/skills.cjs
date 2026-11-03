@@ -323,8 +323,8 @@ ENGINES.animantra = {
   marker: null,
   work: path.join(HOME, 'anima-animantra'),
   url: '',
-  // Suara memakai sumber suara skill sendiri (ElevenLabs/VokaStudio/VoiceStudio/suara sistem), persis seperti skill.
-  voiceTools: [],
+  // Suara: vibi.pro milik pengguna lewat MCP HyperForge (pengganti gen_vo.mjs; hasilnya vo/take.wav untuk skill).
+  voiceTools: ['mcp__anima__anima_vibi_tts'],
   extraTools: ['Bash(cd:*)', 'Bash(curl:*)'],
   /** Gambar patokan mutu dari skill yang terpasang (dibaca saat aplikasi berjalan, tidak ikut repo). */
   samplesRoot: AV_DST,
@@ -393,7 +393,7 @@ ENGINES.animantra = {
   findVideos(slug) {
     return listMp4(this.videoDir(slug), 0);
   },
-  env: (work) => ({ KB_DIR: work }),
+  env: (work) => ({ KB_DIR: work, ANIMA_ANIMANTRA_DIR: work }),
 };
 
 /** File .mp4 di folder (sampai kedalaman depth), tanpa audio/stem/frame. */

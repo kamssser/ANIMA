@@ -6,6 +6,17 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.16.0 - 2026-11-03
+
+**Baru**
+- **Thumbnail + judul hook** untuk setiap video skill (Studio, Animate, Bang Motion): setelah video disetujui, Claude menawarkan 5 pilihan judul dan teks thumbnail yang memancing klik tapi jujur, lalu membuat foto thumbnail 1280x720 (dan cover 9:16 untuk Shorts/TikTok) beserta `judul.txt` (judul, cadangan, judul Shorts, deskripsi, hashtag). Animantra memakai cover-nya sebagai thumbnail dengan judul hook.
+- **Tokoh tetap "Raka"** untuk gaya **Studio: explainer datar**: pembawa berkacamata dengan kemeja biru muda yang sama persis di semua video, tidak berganti-ganti. Tokoh cerita lain tetap bisa berbeda per video.
+- **Pustaka Video** memakai thumbnail buatan Claude sebagai gambar mini, dan menandai video yang sudah punya thumbnail.
+- **Animantra memakai suara vibi.pro** milikmu (suara yang dipilih di Pengaturan > Suara), tidak perlu VoiceStudio atau VokaStudio.
+
+**Perubahan**
+- **Akhir video sekarang ucapan terima kasih dan sampai jumpa**, bukan ajakan menonton video berikutnya. Cerita selalu selesai tuntas di video itu juga (berlaku untuk semua jenis konten, termasuk Film yang tidak lagi diakhiri cliffhanger). Kartu penutup explainer datar menampilkan Raka melambai dengan "Terima kasih sudah menonton!" dan "Sampai jumpa!".
+
 ## 0.15.0 - 2026-11-03
 
 **Baru**

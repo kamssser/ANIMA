@@ -478,7 +478,7 @@ server.tool(
 );
 
 /** Folder kerja sesi skill yang boleh ditulisi alat suara. */
-const voBase = () => process.env.ANIMA_STUDIO_DIR || process.env.ANIMA_BANG_DIR || null;
+const voBase = () => process.env.ANIMA_STUDIO_DIR || process.env.ANIMA_BANG_DIR || process.env.ANIMA_ANIMANTRA_DIR || null;
 
 server.tool(
   'anima_vibi_words',

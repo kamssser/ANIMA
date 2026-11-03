@@ -24,7 +24,7 @@ const SOURCES: Record<string, string> = {
 /** Gambar mini dibuat sekali lalu diingat selama aplikasi terbuka. */
 const thumbCache = new Map<string, Promise<string | null>>();
 const thumbOf = (v: Video) => {
-  const key = `${v.file}|${v.mtime}`;
+  const key = `${v.file}|${v.mtime}|${v.thumbnail ?? ''}`;
   if (!thumbCache.has(key)) thumbCache.set(key, window.anima.libraryThumb(v.file).catch(() => null));
   return thumbCache.get(key)!;
 };
@@ -156,6 +156,11 @@ function VideoCard({ v, project }: { v: Video; project?: Project }) {
           {v.name === 'share.mp4' && <Badge variant="success">untuk diunggah</Badge>}
           {/tanpa_musik/i.test(v.name) && <Badge variant="outline">tanpa musik</Badge>}
           {/^uji/i.test(v.name) && <Badge variant="warning">render uji</Badge>}
+          {v.thumbnail && (
+            <button type="button" title={`Buka thumbnail: ${v.thumbnail}`} onClick={() => window.anima.openPath(v.thumbnail!)}>
+              <Badge variant="success">ada thumbnail</Badge>
+            </button>
+          )}
         </div>
         <div className="min-w-0">
           {project ? (

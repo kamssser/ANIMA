@@ -23,7 +23,9 @@ fungsi `XD.*` atau benda baru yang dibangun dari `XD.bentuk`. Contoh lengkap: `s
 | `XD.bentuk(ctx, path, warna, {sd})` + `XD.poly` `XD.squircle` `XD.ellipse` `XD.rect` | membangun benda baru dengan aturan bayangan yang sama |
 | `XD.denganTepi(ctx, rim, off, gambar)` | memberi garis tepi terang pada benda buatan sendiri |
 | `XD.rimUntuk(warnaLatar)` | warna garis tepi yang cocok untuk latar adegan |
-| `XD.penutup(ctx, t, o)` | kartu penutup "Video berikutnya" (lihat Penutup) |
+| `XD.pembawa(ctx, x, y, s, o)` | **tokoh tetap Raka** (`XD.PEMBAWA`); hanya pose/ekspresi/gerak yang berubah |
+| `XD.penutup(ctx, t, o)` | kartu penutup "Terima kasih sudah menonton! / Sampai jumpa!" (lihat Penutup) |
+| `XD.judulBesar(ctx, x, y, baris, o)` | teks judul thumbnail tebal bergaris tepi, `*kata*` disorot (lihat Thumbnail) |
 
 Opsi tokoh (`o`): `t`, `id` (angka unik per tokoh), `kulit`, `rambut`, `gayaRambut` (`pendek` `cepak` `keriting` `bob`
 `kuncir` `panjang` `botak`), `topi` (`helm` `peci` `topi` `kerudung`), `warnaTopi`, `lampuNyala`, `baju`, `kerah`
@@ -32,10 +34,18 @@ Opsi tokoh (`o`): `t`, `id` (angka unik per tokoh), `kulit`, `rambut`, `gayaRamb
 (mulut bergerak saat tokoh itu yang berbicara), `lihat` (-1..1), `hadap` (1 / -1), `rim`. Warna kulit/rambut/baju dari
 `XD.palet`.
 
-Karakter proyek ditulis sekali di `karakter/karakter.js` sebagai **preset opsi** `XD.tokoh` (mis.
-`const RAKA = { id: 1, kulit: ..., gayaRambut: 'keriting', topi: 'helm', baju: ..., overall: ... }`), lalu setiap
-adegan memanggil `XD.tokoh(ctx, x, y, s, { ...RAKA, t, pose, ekspresi })`. Ciri khas tokoh dibedakan lewat rambut/topi,
-warna baju, dan aksesori, bukan dengan mengubah bentuk kepala/badan.
+## Tokoh tetap: Raka (WAJIB, sama di semua video gaya ini)
+
+Semua video explainer datar dibawakan tokoh yang **sama**: **Raka** = `XD.PEMBAWA` (kulit sawo matang, rambut pendek
+hitam, **kacamata bulat**, kemeja biru muda berkerah, celana biru gelap). Panggil `XD.pembawa(ctx, x, y, s, { t, pose,
+ekspresi, bicara, lihat, hadap, rim })`: hanya pose, ekspresi, arah, dan gerak yang boleh berubah. **Jangan** mengganti
+warna, rambut, pakaian, atau kacamatanya, jangan membuat "versi lain" Raka, dan jangan menawarkan desain pembawa baru di
+langkah karakter. Langkah 2 (karakter) untuk gaya ini cukup: tunjukkan lembar ekspresi/pose Raka + tokoh cerita.
+- Raka muncul di pembuka, di momen penting, dan di penutup. Kalau project 2 suara, Raka = suara A (narator).
+- **Tokoh cerita** (penambang, pedagang, tokoh sejarah, suara B) boleh berbeda per video, dibuat sebagai preset
+  `XD.tokoh` di `karakter/karakter.js` (`const PENAMBANG = { id: 2, ... }`), lalu dipanggil `{ ...PENAMBANG, t, pose,
+  ekspresi }`. Tokoh cerita yang muncul lagi di video lain (seri) disimpan sekali dan dipakai ulang tanpa diubah.
+- Kalau brief membawa karakter HyperForge (SVG), itu hanya untuk gaya lain: di gaya ini pembawanya tetap Raka.
 
 ## Aturan gambar (dipegang pustaka; ikuti juga untuk benda baru)
 
@@ -81,40 +91,44 @@ Tunjukkan `benda.png` bersama frame contoh saat persetujuan karakter. Benda yang
 - Subtitle: sans tebal putih dengan bayangan gelap; kata kunci diberi warna aksen.
 - Format: paling cocok 16:9 (YouTube). Untuk 9:16, tokoh lebih besar di tengah dan label di sepertiga atas.
 
-## Penutup: pamit + hook ke video berikutnya (WAJIB)
+## Penutup: cerita selesai, lalu terima kasih & sampai jumpa (WAJIB)
 
-Video gaya ini **selalu** ditutup dengan salam pamit yang memancing penonton menonton video lain. Ini menggantikan
-"ajakan follow" biasa di langkah naskah.
+Video gaya ini **selalu selesai tuntas**. Penonton harus mendapat jawaban lengkap di video ini juga.
+- **Jangan** menutup dengan teaser atau pertanyaan menggantung ("di video berikutnya...", "nantikan...", "tapi
+  ternyata ada yang lebih aneh..."). Tidak ada cliffhanger.
+- Urutan akhir: **payoff** (jawab hook pembuka sampai tuntas) → **satu kalimat kesimpulan** (pesan/makna cerita) →
+  **ucapan terima kasih + salam** yang hangat dan pendek. Contoh: "Jadi, di balik sebatang emas ada kerja keras yang
+  jarang terlihat. Terima kasih sudah menonton, sampai jumpa!" Ajakan follow/subscribe paling banyak satu frasa
+  pendek di kalimat yang sama, boleh juga tidak ada.
+- **Visual:** 4–8 detik terakhir memakai `XD.penutup(ctx, t, { t0, ringkasan })`: Raka melambai, label "Terima kasih
+  sudah menonton!", "Sampai jumpa!", dan (opsional) `ringkasan` = kalimat kesimpulan. Teks boleh diganti selama isinya
+  tetap terima kasih + salam.
+- **Dua suara:** A (Raka) menyimpulkan, B menanggapi singkat (mis. "Ternyata begitu, ya!"), lalu keduanya pamit.
+- Tulis di `naskah.md` sebagai bagian **Penutup**; cek di persetujuan naskah bahwa ceritanya sudah selesai.
 
-1. **Payoff dulu:** jawab hook pembuka dengan tuntas (penonton harus puas dengan video ini).
-2. **Jembatan + teaser (1–2 kalimat):** buka rasa penasaran baru yang **masih nyambung** dengan topik, berupa pertanyaan
-   atau fakta setengah yang jawabannya ada di video berikutnya. Spesifik, bukan "nantikan video selanjutnya".
-3. **Pamit hangat (1 kalimat pendek)** lalu ajakan menonton: "...kita bongkar di video berikutnya. Sampai jumpa!"
-4. **Visual:** 6–10 detik terakhir memakai `XD.penutup` (tokoh pembawa melambai + kotak cuplikan + teaser di layar).
-   Isi kotak cuplikan dengan adegan kecil dari topik berikutnya (pustaka yang sama), bukan teks saja. Pada 16:9 kotak
-   ini sekaligus tempat elemen layar akhir YouTube (layar akhir butuh 5–20 detik di ujung video).
+## Thumbnail + judul hook (WAJIB, setelah video disetujui)
 
-Pola kalimat (buat versi sendiri sesuai topik, jangan dipakai mentah):
-- *Pertanyaan lanjutan:* "Emasnya sudah keluar dari tambang. Tapi kenapa harganya bisa naik sepuluh kali lipat begitu
-  sampai di toko? Itu cerita di video berikutnya. Sampai jumpa!"
-- *Fakta setengah:* "Ternyata ada satu kota yang hampir seluruh warganya hidup dari sampah elektronik. Kota apa, dan
-  bagaimana bisa begitu? Tonton video berikutnya, ya. Dadah!"
-- *Balik sudut pandang:* "Kita sudah lihat dari sisi pekerja. Bagaimana kalau dari sisi pembeli? Jawabannya bikin
-  kaget. Sampai ketemu di video berikutnya!"
+Setiap video punya **foto thumbnail** dan **judul** yang membuat orang ingin mengklik, dan isinya dijawab video
+(jujur, bukan menipu). Contoh: `samples/explainer-datar-thumbnail.html`.
 
-Aturan:
-- Topik video berikutnya **ditanyakan ke pengguna saat persetujuan naskah** (tawarkan 3 usulan yang nyambung). Jangan
-  menjanjikan judul yang tidak akan dibuat; kalau pengguna belum tahu, pakai teaser yang mengarah ke "video lain di
-  kanal ini" dengan pertanyaan yang tetap spesifik.
-- Teaser tidak boleh membocorkan jawabannya dan tidak boleh memakai klaim yang belum dicek.
-- **Dua suara:** B (tokoh kedua) melontarkan pertanyaan lanjutan dengan penasaran, A menjawab "itu kita bahas di video
-  berikutnya" lalu keduanya pamit. Satu suara: narator melakukan semuanya.
-- Panjang penutup ±8–12 detik dari durasi total; tulis di `naskah.md` sebagai bagian **Penutup** tersendiri.
+1. **Judul:** tawarkan 5 pasangan **judul video + teks thumbnail** ke pengguna (pakai pilihan, rekomendasi di urutan
+   pertama). Teknik: angka spesifik yang mengejutkan ("Rp32 ribu"), kontras/ironi ("Emas Rp1 juta, upahnya Rp32
+   ribu?"), "kenapa/kok bisa", rahasia yang dibongkar, akibat yang dekat dengan penonton. Judul video ≤ 60 karakter,
+   kata kunci topik di depan, tanpa huruf kapital semua. **Teks thumbnail ≠ judul**: 2–6 kata yang melengkapi judul,
+   maksimal 2 baris, satu kata/angka disorot.
+2. **Gambar** `<proyek>/thumbnail.html` (`HF.setup` 1280x720, durasi 1): latar adegan paling kuat, **Raka** besar
+   dengan ekspresi kuat (kaget/senang/sedih) di satu sisi, satu benda kunci, `XD.judulBesar` di sisi lain, boleh satu
+   `XD.label` kecil. Kontras tinggi, tanpa subtitle, tanpa teks kecil. Untuk 9:16 buat juga `cover.html` 1080x1920
+   (judul di sepertiga atas, Raka di tengah).
+3. `node <skill>/tools/thumb.mjs <proyek>/thumbnail.html <proyek>/hasil/thumbnail.jpg` (YouTube ≤ 2 MB). Lihat
+   `thumbnail_kecil.jpg`: judul dan wajah harus terbaca di ukuran 320 px. Perbaiki dulu kalau tidak.
+4. Tulis `<proyek>/hasil/judul.txt`: judul YouTube terpilih, 4 cadangan, judul Shorts/TikTok, deskripsi 2–3 kalimat,
+   5 hashtag. Tunjukkan thumbnail + judul ke pengguna.
 
 ## Checklist frame
-- [ ] tokoh dari `XD.tokoh` (kepala squircle besar, mata titik, tanpa outline hitam)
+- [ ] pembawa = Raka (`XD.pembawa`), tokoh cerita dari `XD.tokoh`; tanpa outline hitam
 - [ ] bayangan sabit di kanan-bawah, garis tepi terang di kiri-atas, latar lebih pudar dari tokoh
 - [ ] satu warna aksen dipakai untuk informasi penting saja
 - [ ] angka/label terbaca di layar HP, maksimal dua tingkat teks
-- [ ] 6–10 detik terakhir: kartu penutup dengan teaser video berikutnya
+- [ ] cerita selesai tuntas; 4–8 detik terakhir kartu terima kasih & sampai jumpa (tanpa teaser)
 - [ ] gaya terinspirasi referensi, tetapi tokoh, adegan, logo, dan teks buatan sendiri

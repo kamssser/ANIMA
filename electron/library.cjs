@@ -18,10 +18,24 @@ function projectDirs(root) {
   }
 }
 
+/** Thumbnail buatan skill di dekat video (thumbnail.jpg/png, cover.png), atau null. */
+function thumbnailOf(file) {
+  const dir = path.dirname(file);
+  // folder induk hanya untuk folder hasil skill (hasil/, render/, renders/)
+  const dirs = /^(hasil|render|renders)$/i.test(path.basename(dir)) ? [dir, path.dirname(dir)] : [dir];
+  for (const d of dirs) {
+    for (const n of ['thumbnail.jpg', 'thumbnail.png', 'cover.jpg', 'cover.png']) {
+      const p = path.join(d, n);
+      if (fs.existsSync(p)) return p;
+    }
+  }
+  return null;
+}
+
 function scan(s) {
   const out = new Map();
   const add = (v, source, slug) => {
-    if (!out.has(v.file)) out.set(v.file, { ...v, name: path.basename(v.file), folder: path.dirname(v.file), source, slug });
+    if (!out.has(v.file)) out.set(v.file, { ...v, name: path.basename(v.file), folder: path.dirname(v.file), source, slug, thumbnail: thumbnailOf(v.file) });
   };
   // Render HyperForge (Kartun 3D & style 2D): <outputDir>/<slug>-<id job>.mp4
   if (s.outputDir) {
@@ -43,6 +57,9 @@ function register({ ipcMain, readSettings, ffmpeg, cacheDir }) {
   let chain = Promise.resolve();
   ipcMain.handle('library:thumb', (_e, file) => {
     if (!/\.mp4$/i.test(String(file)) || !fs.existsSync(file)) return null;
+    // Thumbnail buatan skill lebih diutamakan daripada frame video.
+    const own = thumbnailOf(file);
+    if (own) return `data:image/${/\.png$/i.test(own) ? 'png' : 'jpeg'};base64,${fs.readFileSync(own).toString('base64')}`;
     const st = fs.statSync(file);
     const key = crypto.createHash('sha1').update(`${file}|${st.size}|${st.mtimeMs}`).digest('hex').slice(0, 20);
     const jpg = path.join(thumbDir, `${key}.jpg`);

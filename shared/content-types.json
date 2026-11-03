@@ -4,7 +4,7 @@
     "Buka satu rasa penasaran (open loop) di awal dan baru jawab di akhir video, supaya penonton bertahan sampai habis.",
     "Setiap 5-8 detik harus ada beat baru: kejutan kecil, pergantian kamera, atau informasi baru. Tidak ada bagian datar.",
     "Kalimat pendek dan lisan (maksimal 12 kata), mudah diucapkan narator.",
-    "Akhiri dengan payoff yang memuaskan (jawaban/twist/hasil), boleh ditutup ajakan singkat 1 kalimat.",
+    "Cerita harus SELESAI tuntas di video ini: akhiri dengan payoff yang memuaskan (jawaban/twist/hasil) + satu kalimat kesimpulan, lalu ucapan terima kasih sudah menonton dan sampai jumpa yang hangat dan pendek. Jangan menutup dengan teaser atau pertanyaan menggantung ('di video berikutnya...', 'nantikan...').",
     "Tulis isi hook (kalimat pembuka) juga di field 'hook' saat menyimpan."
   ],
   "twoVoiceRules": [
@@ -100,7 +100,7 @@
         "Gaya sinematik: narator (pembicara A) dan karakter utama (pembicara B) bergantian.",
         "Isi field 'speaker' setiap shot dengan 'A' (narator) atau 'B' (karakter).",
         "Gunakan kamera yang dramatis (dolly, crane, close-up) dan bangun ketegangan menuju klimaks.",
-        "Akhiri dengan klimaks atau cliffhanger yang menjawab hook."
+        "Bangun menuju klimaks, lalu selesaikan ceritanya dengan tuntas (tanpa cliffhanger) dan menjawab hook."
       ]
     }
   ]

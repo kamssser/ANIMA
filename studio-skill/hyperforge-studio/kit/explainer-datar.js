@@ -193,6 +193,27 @@
   };
   XD.EKSPRESI = ['netral', 'senang', 'senyum', 'sedih', 'kaget', 'marah', 'ragu', 'mantap'];
 
+  /**
+   * TOKOH TETAP gaya explainer datar: "Raka", pembawa acara di SEMUA video gaya ini. Penampilannya dikunci:
+   * kulit sawo matang, rambut pendek hitam, kacamata bulat, kemeja biru muda berkerah, celana biru gelap.
+   * Pakai: XD.tokoh(ctx, x, y, s, { ...XD.PEMBAWA, t, pose, ekspresi, bicara }) dan JANGAN menimpa kunci lain.
+   */
+  XD.PEMBAWA = Object.freeze({
+    nama: 'Raka',
+    id: 1,
+    kulit: '#d39a6a',
+    rambut: '#2b2320',
+    gayaRambut: 'pendek',
+    kacamata: true,
+    baju: '#7fa7c4',
+    kerah: 'kemeja',
+    celana: '#3e4a5c',
+    sepatu: '#2f2a28',
+  });
+  /** Hanya pose/ekspresi/gerak yang boleh berubah untuk tokoh tetap. */
+  XD.pembawa = (ctx, x, y, s, o = {}) =>
+    XD.tokoh(ctx, x, y, s, { ...XD.PEMBAWA, t: o.t, pose: o.pose, ekspresi: o.ekspresi, bicara: o.bicara, lihat: o.lihat, hadap: o.hadap, rim: o.rim, napas: o.napas });
+
   function lengan(ctx, sisi, pose, t, warnaLengan, kulit) {
     const def = pose[sisi > 0 ? 'k' : 'i'];
     const val = (v) => (typeof v === 'function' ? v(t) : v);
@@ -400,6 +421,21 @@
         ctx.ellipse(sx * (ex + 22) + lx, ey + 18, 13, 8, 0, 0, Math.PI * 2);
         ctx.fill();
       }
+    }
+    // kacamata bulat tipis (opsional, ciri khas tokoh pembawa)
+    if (o.kacamata) {
+      ctx.strokeStyle = o.warnaKacamata ?? ink;
+      ctx.lineWidth = 4.5;
+      for (const sx of [-1, 1]) {
+        ctx.beginPath();
+        ctx.arc(sx * ex + lx, ey, 21, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(-ex + 21 + lx, ey - 2);
+      ctx.quadraticCurveTo(lx, ey - 10, ex - 21 + lx, ey - 2);
+      ctx.stroke();
+      ctx.fillStyle = ink;
     }
     // kumis (opsional)
     if (o.kumis) {
@@ -839,87 +875,116 @@
 
   // ---------- penutup ----------
   /**
-   * Kartu penutup "video berikutnya" (dipakai di 6-12 detik terakhir). Tokoh pembawa melambai di kiri,
-   * kotak cuplikan video berikutnya di kanan (digambar oleh o.cuplikan(ctx, w, h, t) dengan gaya yang sama),
-   * judul teaser di atas kotak. Kotak cuplikan juga menjadi area elemen layar akhir YouTube (16:9).
-   * o = { t0 (mulai), judul ("Video berikutnya"), teaser (pertanyaan pemancing), tokoh: {...opsi XD.tokoh},
-   *       latarAtas, latarBawah, aksen, cuplikan }
+   * Kartu penutup TERIMA KASIH (4-8 detik terakhir, setelah cerita selesai tuntas). Tokoh pembawa melambai,
+   * ucapan terima kasih besar, salam sampai jumpa, dan (opsional) satu baris ringkasan pesan video.
+   * Bukan teaser video berikutnya: tidak ada pertanyaan menggantung.
+   * o = { t0 (mulai), judul ("Terima kasih sudah menonton!"), pesan ("Sampai jumpa!"), ringkasan (opsional, 1 kalimat),
+   *       tokoh (bawaan XD.PEMBAWA), latarAtas, latarBawah, aksen, bicara }
    */
   XD.penutup = (ctx, t, o = {}) => {
     const W = ctx.canvas.width;
     const H = ctx.canvas.height;
     const lk = W > H;
-    const u = HF.prog(t, o.t0 ?? 0, (o.t0 ?? 0) + 0.6);
+    const t0 = o.t0 ?? 0;
+    const u = HF.prog(t, t0, t0 + 0.6);
     const atas = o.latarAtas ?? '#f3e4cc';
     const bawah = o.latarBawah ?? '#e6cfae';
     XD.langit(ctx, W, H, atas, bawah);
-    XD.cahaya(ctx, W * 0.3, H * 0.3, H * 0.7, '255,240,210', 0.5);
+    XD.cahaya(ctx, lk ? W * 0.3 : W * 0.5, H * 0.35, H * 0.7, '255,240,210', 0.5);
+    // bulatan lembut melayang (deterministik)
+    const r = HF.rng(11);
+    for (let i = 0; i < 14; i++) {
+      const bx = r() * W;
+      const by = ((r() * H - (t - t0) * (20 + r() * 30)) % H + H) % H;
+      const rr = (lk ? H : W) * (0.01 + r() * 0.025);
+      ctx.fillStyle = `rgba(255,255,255,${0.18 + r() * 0.2})`;
+      ctx.beginPath();
+      ctx.arc(bx, by, rr, 0, Math.PI * 2);
+      ctx.fill();
+    }
     const rim = XD.rimUntuk(atas);
-    // tokoh pembawa melambai
-    // 9:16: tokoh berdiri di atas area subtitle (subtitle di ~70% tinggi layar)
-    const ts = lk ? H / 620 : W / 880;
-    const tx = lk ? W * 0.24 : W * 0.5;
-    const ty = lk ? H * 0.86 : H * 0.685;
-    XD.tokoh(ctx, tx, ty + (1 - HF.ease.out(u)) * H * 0.3, ts, { pose: 'lambai', ekspresi: 'senyum', bicara: Boolean(o.bicara), rim, t, ...o.tokoh });
-    // kotak cuplikan
-    const bw = lk ? W * 0.44 : W * 0.78;
-    const bh = bw * 9 / 16;
-    const bx = lk ? W * 0.5 : (W - bw) / 2;
-    const by = lk ? H * 0.3 : H * 0.14;
-    const pop = HF.spring(t, (o.t0 ?? 0) + 0.25, 0, 1, 14, 0.5);
+    // tokoh pembawa melambai (9:16: di atas area subtitle ~70% tinggi layar)
+    const ts = lk ? H / 560 : W / 650;
+    const tx = lk ? W * 0.27 : W * 0.5;
+    const ty = lk ? H * 0.9 : H * 0.685;
+    // bawaan: tokoh tetap (Raka); o.tokoh hanya untuk proyek yang memang punya pembawa lain yang disetujui
+    XD.tokoh(ctx, tx, ty + (1 - HF.ease.out(u)) * H * 0.3, ts, { ...XD.PEMBAWA, ...o.tokoh, pose: 'lambai', ekspresi: 'senang', bicara: Boolean(o.bicara), rim, t });
+    // ucapan
+    const cx = lk ? W * 0.66 : W * 0.5;
+    const cy = lk ? H * 0.4 : H * 0.2;
+    const lu = HF.spring(t, t0 + 0.15, 0, 1, 15, 0.5);
+    XD.label(ctx, cx, cy, o.judul ?? 'Terima kasih sudah menonton!', { muncul: Math.max(0, lu), ukuran: lk ? H * 0.055 : W * 0.048, warna: o.aksen });
+    const a = HF.prog(t, t0 + 0.6, t0 + 1.0);
     ctx.save();
-    ctx.translate(bx + bw / 2, by + bh / 2);
-    ctx.scale(Math.max(0, pop), Math.max(0, pop));
-    ctx.translate(-bw / 2, -bh / 2);
-    ctx.fillStyle = 'rgba(40,20,10,0.25)';
-    ctx.beginPath();
-    ctx.roundRect(10, 16, bw, bh, 26);
-    ctx.fill();
-    ctx.fillStyle = '#fffaf0';
-    ctx.beginPath();
-    ctx.roundRect(-10, -10, bw + 20, bh + 20, 32);
-    ctx.fill();
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(0, 0, bw, bh, 24);
-    ctx.clip();
-    if (o.cuplikan) o.cuplikan(ctx, bw, bh, t);
-    else {
-      XD.langit(ctx, bw, bh, '#7fa7c4', '#3e4a5c');
-      ctx.fillStyle = '#fff';
-      ctx.font = `900 ${bh * 0.45}px ${FONT}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('?', bw / 2, bh / 2);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#3a2a22';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `900 ${lk ? H * 0.075 : W * 0.085}px ${FONT}`;
+    ctx.fillText(o.pesan ?? 'Sampai jumpa!', cx, cy + (lk ? H * 0.14 : H * 0.075));
+    if (o.ringkasan) {
+      ctx.globalAlpha = HF.prog(t, t0 + 1.0, t0 + 1.4);
+      ctx.fillStyle = '#5a463a';
+      ctx.font = `700 ${lk ? H * 0.032 : W * 0.04}px ${FONT}`;
+      ctx.fillText(o.ringkasan, cx, cy + (lk ? H * 0.24 : H * 0.125));
     }
     ctx.restore();
-    // tombol putar
-    ctx.fillStyle = o.aksen ?? XD.palet.aksen;
-    ctx.beginPath();
-    ctx.arc(bw / 2, bh / 2, bh * 0.13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.moveTo(bw / 2 - bh * 0.04, bh / 2 - bh * 0.065);
-    ctx.lineTo(bw / 2 + bh * 0.07, bh / 2);
-    ctx.lineTo(bw / 2 - bh * 0.04, bh / 2 + bh * 0.065);
-    ctx.closePath();
-    ctx.fill();
+  };
+
+  // ---------- thumbnail ----------
+  /**
+   * Teks judul thumbnail: huruf sangat tebal putih bergaris tepi gelap tebal + bayangan, maksimal 2-3 baris.
+   * Kata di antara *bintang* disorot dengan kotak aksen miring (satu sorotan saja per thumbnail).
+   * (x, y) = titik kiri-atas baris pertama (o.rata 'kiri') atau tengah (o.rata 'tengah'); o.ukuran = tinggi huruf px.
+   * Contoh: XD.judulBesar(ctx, 80, 120, ['Upahnya cuma', '*Rp32 ribu*?'], { ukuran: 120 })
+   */
+  XD.judulBesar = (ctx, x, y, baris, o = {}) => {
+    const size = o.ukuran ?? 110;
+    const aksen = o.aksen ?? '#ffd23f';
+    const tinta = o.tinta ?? '#1b1512';
+    const rata = o.rata ?? 'kiri';
+    const font = `900 ${size}px "Segoe UI Black", "Arial Black", ${FONT}`;
+    ctx.save();
+    ctx.font = font;
+    ctx.textBaseline = 'alphabetic';
+    ctx.lineJoin = 'round';
+    baris.forEach((line, i) => {
+      const parts = String(line).split(/(\*[^*]+\*)/).filter(Boolean).map((p) => ({ teks: p.replace(/\*/g, ''), sorot: /^\*.*\*$/.test(p) }));
+      const lebar = parts.reduce((n, p) => n + ctx.measureText(p.teks).width, 0);
+      let px = rata === 'tengah' ? x - lebar / 2 : x;
+      const py = y + size * (0.9 + i * 1.08);
+      for (const p of parts) {
+        const w = ctx.measureText(p.teks).width;
+        if (p.sorot) {
+          ctx.save();
+          ctx.translate(px + w / 2, py - size * 0.36);
+          ctx.rotate(-0.025);
+          ctx.fillStyle = 'rgba(0,0,0,0.35)';
+          ctx.beginPath();
+          ctx.roundRect(-w / 2 - size * 0.16 + 8, -size * 0.62 + 10, w + size * 0.32, size * 1.12, size * 0.14);
+          ctx.fill();
+          ctx.fillStyle = aksen;
+          ctx.beginPath();
+          ctx.roundRect(-w / 2 - size * 0.16, -size * 0.62, w + size * 0.32, size * 1.12, size * 0.14);
+          ctx.fill();
+          ctx.restore();
+          ctx.fillStyle = tinta;
+          ctx.fillText(p.teks, px, py);
+        } else {
+          ctx.shadowColor = 'rgba(0,0,0,0.45)';
+          ctx.shadowBlur = size * 0.12;
+          ctx.shadowOffsetY = size * 0.05;
+          ctx.strokeStyle = tinta;
+          ctx.lineWidth = size * 0.2;
+          ctx.strokeText(p.teks, px, py);
+          ctx.shadowColor = 'transparent';
+          ctx.fillStyle = o.warna ?? '#ffffff';
+          ctx.fillText(p.teks, px, py);
+        }
+        px += w;
+      }
+    });
     ctx.restore();
-    // judul + teaser
-    const lu = HF.spring(t, (o.t0 ?? 0) + 0.1, 0, 1, 16, 0.55);
-    XD.label(ctx, bx + bw / 2, by - (lk ? H * 0.1 : H * 0.04), o.judul ?? 'Video berikutnya', { muncul: Math.max(0, lu), ukuran: lk ? H * 0.04 : W * 0.05, warna: o.aksen });
-    if (o.teaser) {
-      const a = HF.prog(t, (o.t0 ?? 0) + 0.7, (o.t0 ?? 0) + 1.1);
-      ctx.save();
-      ctx.globalAlpha = a;
-      ctx.fillStyle = '#3a2a22';
-      ctx.font = `800 ${lk ? H * 0.036 : W * 0.045}px ${FONT}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillText(o.teaser, bx + bw / 2, by + bh + (lk ? H * 0.05 : H * 0.03));
-      ctx.restore();
-    }
   };
 
   window.XD = XD;

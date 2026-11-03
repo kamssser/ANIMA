@@ -47,7 +47,7 @@ Satu project = satu folder `<proyek>/` di folder kerja (nama dari brief HyperFor
 | `storyboard.json` | `[{ t, judul, kalimat }]` satu entri per shot |
 | `storyboard.png`, `look.png` | lembar kontak untuk persetujuan |
 | `index.html` | halaman adegan (dari `templates/scene-2d.html` atau `scene-3d.html`) |
-| `hasil/` | `video_final.mp4`, `video_final_tanpa_musik.mp4`, `cek.png` |
+| `hasil/` | `video_final.mp4`, `video_final_tanpa_musik.mp4`, `cek.png`, `thumbnail.jpg`, `judul.txt` |
 | `referensi/` | video referensi pengguna + hasil `tools/refsheet.mjs` (jangan dibagikan) |
 
 ## Alur kerja
@@ -69,6 +69,8 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
 - Tulis `gaya.md` singkat dengan poin. File ini dibaca ulang di setiap video.
 
 ### 2. Karakter → `karakter/`, `karakter.md`
+- **Gaya dengan tokoh tetap** (explainer datar: **Raka**, `XD.pembawa`): pembawa TIDAK dirancang ulang dan tidak
+  diubah. Langkah ini hanya untuk tokoh cerita tambahan; pembawa tetap sama di semua video gaya itu.
 - Sumber desain, salah satu: (a) karakter HyperForge di brief (SVG rig di `karakter-hyperforge/`, pakai bentuk dan
   warnanya), (b) gambar/turnaround sheet dari pengguna (Read gambarnya), (c) deskripsi teks.
 - Prinsip: peran + sifat menentukan ekspresi utama; **siluet** tiap karakter beda jauh; satu **ciri khas** yang
@@ -89,9 +91,10 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
 - Pilih format cerita yang cocok (sebutkan alasannya): *istilah → bahasa sehari-hari*, *bongkar benda*,
   *mitos vs fakta*, *asal-usul tiga babak*, *masalah kecil yang membesar*, *awas modus*, *perjalanan satu benda*.
 - Satu perumpamaan sehari-hari per langkah penjelasan. Penutup membalik anggapan awal atau menjawab hook.
-- Satu ajakan follow yang nyambung ke topik (beda tiap video). **Kalau file gaya punya bagian "Penutup"** (mis.
-  explainer datar: pamit + hook ke video berikutnya), ikuti itu sebagai pengganti ajakan follow. Angka ditulis seperti
-  diucapkan.
+- **Cerita selesai tuntas di video ini.** Akhir video: payoff → satu kalimat kesimpulan → **ucapan terima kasih
+  sudah menonton + sampai jumpa** (hangat, pendek; ajakan follow paling banyak satu frasa). **Jangan** menutup dengan
+  teaser/pertanyaan menggantung ("di video berikutnya...", "nantikan..."), tidak ada cliffhanger. Kalau file gaya punya
+  bagian "Penutup", ikuti juga detailnya. Angka ditulis seperti diucapkan.
 - Cek fakta tiap klaim (web search, sumber di bawah naskah); tandai yang ragu dengan versi kalimat yang lebih aman.
 - Tampilkan naskah; jangan lanjut sebelum pengguna oke.
 
@@ -136,8 +139,16 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
 5. `node <skill>/tools/check.mjs <proyek>/hasil/video_final.mp4 <proyek>/hasil/cek.png --at <3 momen penting>` →
    lihat lembarnya: subtitle terbaca dan tidak terpotong, warna karakter sesuai `karakter.md`, suara tidak tertutup
    musik (LUFS sekitar -14, puncak ≤ -1 dB). Perbaiki sebelum mengirim.
-6. Serahkan: path video, angka cek, yang sudah diperbaiki sendiri, shot terlemah, dan yang belum bisa kamu nilai
-   (kamu tidak bisa mendengar audio). HyperForge mengambil video dari `<proyek>/hasil/`.
+6. **Thumbnail + judul hook (wajib):** tawarkan 5 pasangan *judul video + teks thumbnail* (angka mengejutkan,
+   kontras/ironi, "kenapa/kok bisa", rahasia dibongkar; judul ≤ 60 karakter; teks thumbnail 2–6 kata, maks 2 baris,
+   satu kata disorot; jujur, dijawab isi video). Gambar `<proyek>/thumbnail.html` (`HF.setup` 1280x720, durasi 1) dengan
+   karakter utama berekspresi kuat + satu benda kunci + judul besar (gaya explainer datar: `XD.judulBesar`, contoh
+   `samples/explainer-datar-thumbnail.html`); untuk 9:16 juga `cover.html` 1080x1920. Potret:
+   `node <skill>/tools/thumb.mjs <proyek>/thumbnail.html <proyek>/hasil/thumbnail.jpg` lalu cek `thumbnail_kecil.jpg`
+   (harus terbaca di 320 px). Tulis `<proyek>/hasil/judul.txt` (judul terpilih + 4 cadangan, judul Shorts/TikTok,
+   deskripsi 2–3 kalimat, 5 hashtag).
+7. Serahkan: path video, thumbnail, judul, angka cek, yang sudah diperbaiki sendiri, shot terlemah, dan yang belum bisa
+   kamu nilai (kamu tidak bisa mendengar audio). HyperForge mengambil video dan thumbnail dari `<proyek>/hasil/`.
 
 ### 7. Revisi
 Minta revisi dikumpulkan dalam satu pesan, dikelompokkan *naskah & suara / visual / teks*, tiap poin: detik, masalah,
@@ -154,8 +165,8 @@ prompt/aturan yang terbukti jalan), lalu kerjakan langkah 3–6. Simpan pelajara
 `HF.safe(W,H)`, `HF.chunkWords(words, n)`, `HF.drawSubtitle(ctx, t, chunks, {keywords, hi, y, size})`.
 three.js: `import * as THREE from 'three'` (importmap di templat 3D, dari `node_modules`, tanpa internet).
 
-Pustaka gaya (dimuat setelah kit): `kit/explainer-datar.js` (`XD`: tokoh berparameter, benda, label, latar, kartu
-penutup) untuk gaya explainer datar. Gaya yang punya pustaka **wajib** memakainya; tokoh dan benda tidak digambar
+Pustaka gaya (dimuat setelah kit): `kit/explainer-datar.js` (`XD`: tokoh berparameter, **tokoh tetap Raka**
+`XD.pembawa`, benda, label, latar, kartu penutup terima kasih, judul thumbnail) untuk gaya explainer datar. Gaya yang punya pustaka **wajib** memakainya; tokoh dan benda tidak digambar
 dari nol supaya tidak melenceng dari gaya.
 
 ## Alat (`tools/`)
@@ -165,6 +176,7 @@ dari nol supaya tidak melenceng dari gaya.
 | `snap.mjs <html> <out.png> t1,t2,.. [--board storyboard.json] [--labels a\|b]` | lembar kontak detik kunci |
 | `render.mjs <html> --out x.mp4 [--audio mix.wav] [--workers 3] [--scale 0.5] [--from --to]` | render frame demi frame → MP4 (kartu grafis otomatis; `HF_GL=cpu` untuk CPU) |
 | `mux.mjs <video> <audio> <out>` | ganti audio tanpa render ulang |
+| `thumb.mjs <html> <out.jpg\|png> [--t 0]` | satu frame resolusi penuh (thumbnail/cover) + versi kecil 320 px untuk cek keterbacaan |
 | `refsheet.mjs <video> <proyek> [--threshold 0.2]` | bongkar video referensi |
 | `score.mjs <score.json>` | musik + efek suara dari kode |
 | `mix.mjs <audio-dir> [--musik -10] [--sfx -4]` | mix + ducking + -14 LUFS, versi dengan/tanpa musik |

@@ -95,7 +95,7 @@ declare global {
       removeClaude(): Promise<{ ok: boolean; message: string }>;
       openPath(p: string): Promise<string>;
       /** Semua MP4 jadi: folder render HyperForge + folder kerja skill. source: 'render' | 'animate' | 'bang-motion' | 'studio'. */
-      libraryScan(): Promise<{ file: string; name: string; folder: string; size: number; mtime: string; source: string; slug: string }[]>;
+      libraryScan(): Promise<{ file: string; name: string; folder: string; size: number; mtime: string; source: string; slug: string; thumbnail: string | null }[]>;
       /** Gambar mini JPEG (data URL) dari detik ke-1 video, atau null. */
       libraryThumb(file: string): Promise<string | null>;
       /** Buka Explorer di folder video dengan file-nya terpilih. */
