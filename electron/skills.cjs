@@ -1,6 +1,9 @@
 // Style video dari skill Claude Code pihak ketiga, dipakai UTUH (tidak diubah):
 //   animate      https://github.com/cth9191/animate       (MIT) di animate-skill/animate
 //   bang-motion  https://github.com/bangtutorial/bang-motion (MIT) di bang-motion-skill/bang-motion
+//   animantra-vector  paket berbayar milik pengguna. Lisensinya MELARANG dibagikan ulang, jadi TIDAK ikut repo/installer:
+//                     HyperForge hanya memakai skill yang sudah dipasang pengguna dari paketnya sendiri
+//                     (~/.claude/skills/animantra-vector) dan menjalankan installer paket itu bila ada di laptop.
 // Yang dilakukan aplikasi untuk tiap mesin:
 //   1. memasang skill ke ~/.claude/skills/<nama> + kebutuhannya (browser headless, ffmpeg lengkap, alat opsional);
 //   2. menyiapkan folder kerja dan brief dari project;
@@ -120,6 +123,11 @@ function installSkill(e, say) {
 }
 
 function skillState(e) {
+  // Skill eksternal (paket pengguna): cukup terpasang, tidak ada penanda HyperForge.
+  if (e.external) {
+    const exists = fs.existsSync(path.join(e.dst, 'SKILL.md'));
+    return { installed: exists, exists, foreign: false };
+  }
   let marker = null;
   try {
     marker = JSON.parse(fs.readFileSync(e.marker, 'utf8'));
@@ -280,6 +288,114 @@ ${tail(r.out)}`);
 // Skill buatan sendiri: "commit" = hash isi skill, jadi pembaruan skill di rilis berikutnya terpasang ulang otomatis.
 ENGINES.studio.commit = dirHash(ENGINES.studio.src);
 
+// ---------- Animantra: Vector (paket milik pengguna, dipakai utuh, tidak disalin HyperForge) ----------
+const AV_DST = path.join(SKILLS_DIR, 'animantra-vector');
+/** Folder Node + Python yang dipasang installer paket (micromamba, tanpa admin). */
+function avEnvDirs() {
+  const env = path.join(process.env.LOCALAPPDATA || path.join(HOME, 'AppData', 'Local'), 'animantra-vector', 'env');
+  return [env, path.join(env, 'Scripts'), path.join(env, 'Library', 'bin')].filter((d) => fs.existsSync(d));
+}
+/** Folder paket hasil ekstrak animantra-vector.zip (berisi installer) di tempat yang umum. */
+function avPackageDir() {
+  for (const base of ['Downloads', 'Desktop', 'Documents']) {
+    for (const name of ['animantra-vector', path.join('animantra-vector', 'animantra-vector')]) {
+      const d = path.join(HOME, base, name);
+      if (fs.existsSync(path.join(d, isWin ? 'install.ps1' : 'install.sh')) && fs.existsSync(path.join(d, 'skills', 'animantra-vector', 'SKILL.md'))) return d;
+    }
+  }
+  return null;
+}
+const avAlat = () => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(AV_DST, 'engine', 'alat.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+};
+
+ENGINES.animantra = {
+  id: 'animantra',
+  name: 'animantra-vector',
+  external: true,
+  commit: 'paket milikmu',
+  src: null,
+  dst: AV_DST,
+  marker: null,
+  work: path.join(HOME, 'anima-animantra'),
+  url: '',
+  // Suara memakai sumber suara skill sendiri (ElevenLabs/VokaStudio/VoiceStudio/suara sistem), persis seperti skill.
+  voiceTools: [],
+  extraTools: ['Bash(cd:*)', 'Bash(curl:*)'],
+  /** Gambar patokan mutu dari skill yang terpasang (dibaca saat aplikasi berjalan, tidak ikut repo). */
+  samplesRoot: AV_DST,
+  samples: {
+    bongkar: 'reference/patokan/kunci_1.jpg',
+    'bongkar-25d': 'reference/patokan/pulpen_2.jpg',
+    tur: 'reference/patokan/generator_1.jpg',
+    story: 'reference/patokan/korek_2.jpg',
+    pov: 'reference/patokan/korek_1.jpg',
+    tutorial: 'reference/patokan/kunci_2.jpg',
+    mitos: 'reference/patokan/generator_2.jpg',
+    versus: 'reference/patokan/pulpen_1.jpg',
+    toplist: 'reference/patokan/toplist_1.jpg',
+    kalau: 'reference/patokan/generator_2.jpg',
+    evolusi: 'reference/patokan/pulpen_2.jpg',
+    kuis: 'reference/patokan/toplist_2.jpg',
+  },
+  ffmpegPath: () => avAlat()?.ffmpeg || null,
+  pathDirs: avEnvDirs,
+  async deps() {
+    const K = AV_DST;
+    const venv = path.join(K, 'engine', '.venv');
+    const whisper = [path.join(venv, 'Lib', 'site-packages', 'faster_whisper'), ...(() => {
+      try {
+        return fs.readdirSync(path.join(venv, 'lib')).map((p) => path.join(venv, 'lib', p, 'site-packages', 'faster_whisper'));
+      } catch {
+        return [];
+      }
+    })()].some((p) => fs.existsSync(p));
+    const chrome = isWin
+      ? [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).some((d) => fs.existsSync(path.join(d, 'Google', 'Chrome', 'Application', 'chrome.exe')))
+      : fs.existsSync('/Applications/Google Chrome.app');
+    const pwBase = isWin ? path.join(process.env.LOCALAPPDATA || '', 'ms-playwright') : path.join(HOME, process.platform === 'darwin' ? 'Library/Caches/ms-playwright' : '.cache/ms-playwright');
+    const pkg = avPackageDir();
+    return [
+      { id: 'engine', label: 'Mesin three.js + perekam', ok: fs.existsSync(path.join(K, 'engine', 'node_modules', 'three')), detail: 'dipasang oleh installer paket Animantra' },
+      { id: 'python', label: 'Python + faster-whisper (waktu tiap kata)', ok: whisper, detail: 'engine/.venv milik skill' },
+      { id: 'alat', label: 'ffmpeg milik skill', ok: Boolean(avAlat()?.ffmpeg), detail: 'engine/alat.json' },
+      { id: 'chrome', label: 'Google Chrome / Chromium (perekam)', ok: chrome || hasDir(pwBase, /^chromium/), detail: 'Chrome terpasang, atau Chromium diunduh installer' },
+      { id: 'paket', label: 'Folder paket (untuk memasang/memperbarui)', ok: Boolean(pkg), optional: true, detail: pkg || 'ekstrak animantra-vector.zip milikmu di Downloads' },
+    ];
+  },
+  async setup({ say }) {
+    const pkg = avPackageDir();
+    if (pkg) {
+      // Installer resmi paket (aman diulang): Node + Python, skill, mesin, model pengenal suara.
+      const label = 'Menjalankan installer Animantra: Vector (5-10 menit)';
+      say(label);
+      const r = isWin
+        ? await run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(pkg, 'install.ps1')], { cwd: pkg, onLine: (l) => say(label, l.trim().slice(-160)) })
+        : await run('bash', [path.join(pkg, 'install.sh')], { cwd: pkg, onLine: (l) => say(label, l.trim().slice(-160)) });
+      if (!r.ok || !/Selesai\./.test(r.out)) throw new Error(`Installer Animantra gagal:\n${tail(r.out, 6)}`);
+    } else if (fs.existsSync(path.join(AV_DST, 'setup.mjs'))) {
+      say('Menyiapkan mesin Animantra (setup.mjs)');
+      const env = { ...process.env, PATH: [...avEnvDirs(), process.env.PATH].join(path.delimiter) };
+      const r = await run('node', [path.join(AV_DST, 'setup.mjs')], { cwd: AV_DST, env, onLine: (l) => say('Menyiapkan mesin Animantra (setup.mjs)', l.trim().slice(-160)) });
+      if (!r.ok) throw new Error(`setup.mjs gagal:\n${tail(r.out, 6)}`);
+    } else {
+      throw new Error('Skill Animantra: Vector belum terpasang dan paketnya tidak ditemukan. Ekstrak animantra-vector.zip milikmu ke folder Downloads, lalu klik Siapkan otomatis lagi. (HyperForge tidak menyertakan skill ini karena lisensinya melarang dibagikan ulang.)');
+    }
+    fs.mkdirSync(this.work, { recursive: true });
+  },
+  optionalLabel: '',
+  prompt: (slug, title) => `/animantra-vector Kerjakan brief HyperForge di briefs/${slug}.md untuk project: ${title}. Nama proyek: ${slug}. Folder sesi = folder kerja ini.`,
+  videoDir: (slug) => path.join(ENGINES.animantra.work, slug),
+  findVideos(slug) {
+    return listMp4(this.videoDir(slug), 0);
+  },
+  env: (work) => ({ KB_DIR: work }),
+};
+
 /** File .mp4 di folder (sampai kedalaman depth), tanpa audio/stem/frame. */
 function listMp4(dir, depth) {
   const out = [];
@@ -335,13 +451,16 @@ async function prepareSession(e, { slug, title, brief, files }, { which, claudeC
   const mcpFile = path.join(e.work, 'briefs', '.hyperforge-mcp.json');
   fs.writeFileSync(mcpFile, JSON.stringify({ mcpServers: { anima: { type: 'stdio', command: node, args: [mcpServerPath()], env: { ANIMA_SETTINGS_FILE: settingsFile(), ...e.env(e.work) } } } }, null, 1));
   const claude = await claudeCodePath();
-  const ffDir = path.dirname(await findFullFfmpeg(which));
+  const ff = (e.ffmpegPath && e.ffmpegPath()) || (await findFullFfmpeg(which));
+  const ffDir = ff ? path.dirname(ff) : '';
+  // PATH tambahan untuk sesi: folder ffmpeg + folder Node/Python milik skill (kalau ada).
+  const pathPrefix = [ffDir, ...(e.pathDirs ? e.pathDirs() : [])].filter(Boolean).join(path.delimiter);
   const npmRoot = await npmGlobalRoot(which);
   // Tanpa tanda kutip / karakter khusus cmd di dalam prompt (prompt diapit "..." di file .cmd).
   const cleanTitle = String(title || slug).replace(/["%^&|<>()!]/g, '').slice(0, 80);
   const prompt = e.prompt(slug, cleanTitle);
-  const allowed = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'Skill', 'Bash(node:*)', 'Bash(ffmpeg:*)', 'Bash(ffprobe:*)', 'Bash(python:*)', 'Bash(ls:*)', 'Bash(mkdir:*)', 'Bash(cp:*)', ...e.voiceTools];
-  return { mcpFile, ffDir, npmRoot, claude, prompt, allowed, briefFile };
+  const allowed = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'Skill', 'Bash(node:*)', 'Bash(ffmpeg:*)', 'Bash(ffprobe:*)', 'Bash(python:*)', 'Bash(ls:*)', 'Bash(mkdir:*)', 'Bash(cp:*)', ...e.voiceTools, ...(e.extraTools || [])];
+  return { mcpFile, ffDir, pathPrefix, npmRoot, claude, prompt, allowed, briefFile };
 }
 
 function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, settingsFile }) {
@@ -352,14 +471,28 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
 
   async function check(id) {
     const e = engineOf(id);
-    const [node, claude, ffmpeg] = await Promise.all([which('node'), claudeCodePath(), findFullFfmpeg(which)]);
+    const [node, claude, ffmpeg] = await Promise.all([which('node'), claudeCodePath(), e.ffmpegPath ? null : findFullFfmpeg(which)]);
     const extra = await e.deps({ which });
     const skill = skillState(e);
     const items = [
-      { id: 'skill', label: `Skill ${e.name}`, ok: skill.installed, detail: skill.installed ? `~/.claude/skills/${e.name} (commit ${e.commit.slice(0, 7)})` : skill.foreign ? `Ada skill ${e.name} lain: akan disimpan sebagai cadangan` : 'Belum dipasang' },
+      {
+        id: 'skill',
+        label: `Skill ${e.name}`,
+        ok: skill.installed,
+        detail: e.external
+          ? skill.installed
+            ? `~/.claude/skills/${e.name} (dari paket milikmu)`
+            : 'Belum dipasang: butuh paket milikmu (tidak disertakan HyperForge)'
+          : skill.installed
+            ? `~/.claude/skills/${e.name} (commit ${e.commit.slice(0, 7)})`
+            : skill.foreign
+              ? `Ada skill ${e.name} lain: akan disimpan sebagai cadangan`
+              : 'Belum dipasang',
+      },
       { id: 'claude', label: 'Claude Code', ok: Boolean(claude), detail: claude ? undefined : 'Install Claude Code lalu login' },
       { id: 'node', label: 'Node.js', ok: Boolean(node) },
-      { id: 'ffmpeg', label: 'ffmpeg lengkap', ok: Boolean(ffmpeg), detail: ffmpeg ?? 'dipasang lewat winget (Gyan.FFmpeg)' },
+      // Skill dengan ffmpeg sendiri (Animantra) tidak butuh ffmpeg lengkap sistem.
+      ...(e.ffmpegPath ? [] : [{ id: 'ffmpeg', label: 'ffmpeg lengkap', ok: Boolean(ffmpeg), detail: ffmpeg ?? 'dipasang lewat winget (Gyan.FFmpeg)' }]),
       ...extra,
     ];
     return { engine: e.id, ready: items.every((i) => i.ok || i.optional), items, workDir: e.work, commit: e.commit, url: e.url, optionalLabel: e.optionalLabel };
@@ -374,9 +507,10 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
     const e = engineOf(engine);
     const say = sayFor(engine);
     if (!(await which('node'))) throw new Error('Node.js belum terpasang. Install Node.js LTS dari nodejs.org, lalu buka ulang HyperForge.');
-    installSkill(e, say);
+    // Skill eksternal dipasang oleh installer paketnya sendiri (di e.setup), bukan disalin dari aplikasi.
+    if (e.src) installSkill(e, say);
     await e.setup({ which, say, optional });
-    await installFfmpeg(which, say);
+    if (!e.ffmpegPath) await installFfmpeg(which, say);
     fs.mkdirSync(path.join(e.work, 'briefs'), { recursive: true });
     say('Selesai');
     return check(engine);
@@ -387,7 +521,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
     const e = engineOf(id);
     const out = {};
     for (const [k, rel] of Object.entries(e.samples)) {
-      const f = path.join(e.src, rel);
+      const f = path.join(e.samplesRoot ?? e.src, rel);
       if (fs.existsSync(f)) out[k] = `data:image/${/\.png$/i.test(f) ? 'png' : 'jpeg'};base64,${fs.readFileSync(f).toString('base64')}`;
     }
     return out;
@@ -396,7 +530,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
   /** Tulis brief lalu buka jendela Claude Code dengan /<skill>. payload: { engine, slug, title, brief } */
   ipcMain.handle('skill:open', async (_e, { engine, slug, title, brief, files }) => {
     const e = engineOf(engine);
-    const { mcpFile, ffDir, npmRoot, claude, prompt, allowed, briefFile } = await prepareSession(e, { slug, title, brief, files }, deps);
+    const { mcpFile, pathPrefix, npmRoot, claude, prompt, allowed, briefFile } = await prepareSession(e, { slug, title, brief, files }, deps);
     if (!isWin) throw new Error(`Jendela Claude otomatis baru tersedia di Windows. Jalankan manual: cd ${e.work} && claude "${prompt}"`);
 
     // Peluncur .cmd: PATH berisi ffmpeg lengkap; NODE_PATH = modul global npm.
@@ -408,7 +542,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
         'chcp 65001 >nul',
         `title HyperForge ${e.name} - ${slug}`,
         `cd /d "${e.work}"`,
-        `set "PATH=${ffDir};%PATH%"`,
+        pathPrefix ? `set "PATH=${pathPrefix};%PATH%"` : '',
         npmRoot ? `set "NODE_PATH=${npmRoot}"` : '',
         `echo HyperForge: Claude Code + skill ${e.name}. Jawab pertanyaan dan persetujuan skill di jendela ini.`,
         'echo Setelah video MP4 jadi: di HyperForge buka tab Render, klik Masukkan ke daftar render.',

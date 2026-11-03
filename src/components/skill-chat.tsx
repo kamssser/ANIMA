@@ -6,14 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/input';
 import { Badge, Card, CardContent } from '@/components/ui/misc';
-import { listCharacters } from '@/lib/api';
-import { buildAnimateBrief, buildBangBrief, buildStudioBrief } from '@/lib/content';
 import { chatKey, loadChat, type ChatState } from '@/lib/skillchat';
 import { visualStyle } from '@/lib/styles';
 import { cleanErr, runTask, usePersisted } from '@/lib/tasks';
 import type { ChatMessage, Project, SkillEngine } from '@/lib/types';
 import { cn, slugify } from '@/lib/utils';
-import { ENGINE_INFO } from '@/components/skill-video';
+import { ENGINE_INFO, buildSkillBrief } from '@/components/skill-video';
 import { LogView } from '@/components/skill-logs';
 
 const imgCache = new Map<string, string>();
@@ -191,13 +189,7 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
     setSending(true);
     try {
       const fresh = await beforeRun();
-      let brief: string;
-      const files: Record<string, string> = {};
-      if (engine === 'studio') {
-        const chars = await listCharacters().catch(() => []);
-        for (const c of chars) if (c.svg) files[`karakter-hyperforge/${c.key}.svg`] = c.svg;
-        brief = buildStudioBrief(fresh, slug, chars.map((c) => ({ key: c.key, name: c.name, nickname: c.nickname, is_main: c.is_main, personality: c.personality, appearance: c.appearance, hasSvg: Boolean(c.svg) })));
-      } else brief = engine === 'bang-motion' ? buildBangBrief(fresh, slug) : buildAnimateBrief(fresh, slug);
+      const { brief, files } = await buildSkillBrief(engine, fresh, slug);
       await runTask(`${key}:turn`, { label: `Claude: ${fresh.title}`, href: `/projects/${project.id}`, step: 'Memulai skill...' }, () =>
         window.anima.skillChatSend({ engine, slug, title: fresh.title, brief, files, refDir: refDir || undefined }),
       );

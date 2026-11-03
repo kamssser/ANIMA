@@ -1426,6 +1426,8 @@ async function renderSvgPng(svg, width, height, outFile) {
 require('./characters.cjs').register({ ipcMain, getWin: () => win, claudeCodePath, cwd: app.getPath('userData'), refDir: refDir(), renderSvgPng });
 // Style dari skill Claude pihak ketiga (animate, bang-motion; utuh): pasang, buka Claude Code interaktif, baca hasil.
 require('./skills.cjs').register({ ipcMain, getWin: () => win, which, claudeCodePath, mcpServerPath, settingsFile });
+// Pustaka Video: semua MP4 jadi (render + skill), gambar mini, buka folder.
+require('./library.cjs').register({ ipcMain, readSettings, ffmpeg, cacheDir: app.getPath('userData') });
 
 ipcMain.handle('update:state', () => ({ ...updateState, current: APP_VERSION }));
 if (!app.isPackaged) {

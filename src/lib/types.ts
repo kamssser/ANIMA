@@ -285,7 +285,7 @@ export interface RenderProps {
 }
 
 /** Mesin style dari skill Claude pihak ketiga. */
-export type SkillEngine = 'animate' | 'bang-motion' | 'studio';
+export type SkillEngine = 'animate' | 'bang-motion' | 'studio' | 'animantra';
 
 /** Kebutuhan satu mesin skill (Pengaturan > Skill video). */
 export interface SkillCheck {

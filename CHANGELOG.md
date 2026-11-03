@@ -6,6 +6,13 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.15.0 - 2026-11-03
+
+**Baru**
+- **Pustaka Video** di menu samping: semua video yang sudah jadi dalam satu halaman, dari render HyperForge dan dari skill (Studio, Animate, Bang Motion, Animantra). Tiap video tampil dengan gambar mini, judul project, ukuran, tanggal, dan **lokasi foldernya**. Klik foldernya (atau tombol **Buka folder**) untuk langsung membuka Explorer dengan video itu terpilih. Klik gambar untuk memutar. Ada pencarian, filter per sumber, dan tombol salin lokasi file.
+- **Style Animantra (12 pilihan)** untuk pemilik paket **Animantra: Vector**: Kita Bongkar (3D dan 2.5D), Tur Lingkungan, Story, POV "Jadi Si...", Tutorial, Mitos vs Fakta, A vs B, Top List, Apa Jadinya Kalau, Evolusi, dan Kuis. Video 9:16 bergaya bedah 3D flat-toon dikerjakan Claude di tab Claude persis seperti skillnya (riset, naskah, suara, model 3D, cek mutu, render, cover, versi kecil, caption). Siapkan di **Pengaturan > Skill video > Animantra: Vector**.
+  - Skill ini **tidak disertakan** di HyperForge karena lisensinya melarang dibagikan ulang. HyperForge memakai paket yang sudah kamu miliki: ekstrak `animantra-vector.zip` ke folder Downloads, lalu klik **Siapkan otomatis**.
+
 ## 0.14.0 - 2026-11-03
 
 **Baru**

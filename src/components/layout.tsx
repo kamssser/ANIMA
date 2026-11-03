@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Clapperboard, FolderKanban, LayoutDashboard, Loader2, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { Clapperboard, FolderKanban, LayoutDashboard, Library, Loader2, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SidebarUpdate, UpdateBanner, UpdateDialog } from '@/components/update';
 import { sb } from '@/lib/supabase';
@@ -14,6 +14,7 @@ const groups = [
       { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
       { to: '/projects', label: 'Project', icon: FolderKanban, end: false },
       { to: '/renders', label: 'Antrean Render', icon: Clapperboard, end: false },
+      { to: '/library', label: 'Pustaka Video', icon: Library, end: false },
     ],
   },
   {

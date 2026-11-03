@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Progress } from '@/components/ui/misc';
 import { createJob, updateJob } from '@/lib/api';
-import { buildAnimateBrief, buildBangBrief, buildStudioBrief } from '@/lib/content';
+import { buildAnimantraBrief, buildAnimateBrief, buildBangBrief, buildStudioBrief } from '@/lib/content';
 import { listCharacters } from '@/lib/api';
 import { visualStyle } from '@/lib/styles';
 import { cleanErr, runTask, setValue, usePersisted, useTask, useTaskFinished } from '@/lib/tasks';
@@ -34,7 +34,31 @@ export const ENGINE_INFO: Record<SkillEngine, { title: string; by: string; flow:
     flow: 'Claude meminta persetujuanmu untuk gaya, karakter, naskah, suara, dan storyboard (satu frame per shot) sebelum merender video dengan subtitle, musik, dan efek suara dari kode.',
     samplesTitle: '10 gaya',
   },
+  animantra: {
+    title: 'Animantra: Vector',
+    by: 'paket Animantra milikmu',
+    flow: 'Claude mengerjakan persis seperti skill Animantra: riset fakta, naskah (ditunjukkan lalu lanjut kecuali kamu minta ubah), suara narasi, model 3D, lembar cuplikan dan gerbang mutu, lalu render, cover, versi kecil, dan caption.',
+    samplesTitle: 'Patokan mutu gaya bedah',
+  },
 };
+
+/** Brief + file pendukung untuk sesi skill sebuah project (dipakai panel obrolan dan jendela terminal). */
+export async function buildSkillBrief(engine: SkillEngine, fresh: Project, slug: string) {
+  const files: Record<string, string> = {};
+  if (engine === 'studio') {
+    // Karakter HyperForge ikut sebagai desain sumber (SVG rig dari Pengaturan > Karakter).
+    const chars = await listCharacters().catch(() => []);
+    for (const c of chars) if (c.svg) files[`karakter-hyperforge/${c.key}.svg`] = c.svg;
+    const brief = buildStudioBrief(
+      fresh,
+      slug,
+      chars.map((c) => ({ key: c.key, name: c.name, nickname: c.nickname, is_main: c.is_main, personality: c.personality, appearance: c.appearance, hasSvg: Boolean(c.svg) })),
+    );
+    return { brief, files };
+  }
+  if (engine === 'animantra') return { brief: buildAnimantraBrief(fresh, slug, (await window.anima.skillCheck('animantra')).workDir), files };
+  return { brief: engine === 'bang-motion' ? buildBangBrief(fresh, slug) : buildAnimateBrief(fresh, slug), files };
+}
 
 const samplesCache: Partial<Record<SkillEngine, Record<string, string>>> = {};
 /** Gambar contoh tiap style dari skill. */
@@ -76,6 +100,7 @@ export function SkillSettings() {
       <EngineSettings engine="animate" />
       <EngineSettings engine="bang-motion" />
       <EngineSettings engine="studio" />
+      <EngineSettings engine="animantra" />
     </>
   );
 }
@@ -149,16 +174,25 @@ function EngineSettings({ engine }: { engine: SkillEngine }) {
           <div className="grid gap-1">
             <span className="text-xs text-muted-foreground">{info.samplesTitle} (pilih di Style video project)</span>
             <div className="grid grid-cols-4 gap-2 lg:grid-cols-7">
-              {Object.entries(samples).map(([k, src]) => (
+              {Object.entries(samples)
+                // gambar yang sama dipakai beberapa style (Animantra): tampilkan sekali
+                .filter(([, src], i, all) => all.findIndex(([, s]) => s === src) === i)
+                .map(([k, src]) => (
                 <figure key={k} className="grid gap-1">
-                  <img src={src} alt={k} className={cn('w-full rounded-md border object-cover', engine === 'animate' ? 'aspect-[9/16]' : 'aspect-video')} />
+                  <img src={src} alt={k} className={cn('w-full rounded-md border object-cover', engine === 'animate' || engine === 'animantra' ? 'aspect-[9/16]' : 'aspect-video')} />
                   <figcaption className="truncate text-center text-[11px] text-muted-foreground">{k}</figcaption>
                 </figure>
               ))}
             </div>
           </div>
         )}
-        {c && (
+        {c && !c.url && (
+          <p className="text-xs text-muted-foreground">
+            Folder kerja: <span className="font-mono">{c.workDir}</span>. Skill ini dari <b>paket milikmu</b> dan dipakai apa adanya. Lisensinya melarang dibagikan ulang, jadi HyperForge tidak
+            menyertakannya: <b>Siapkan otomatis</b> menjalankan installer dari folder paket hasil ekstrak (Downloads/animantra-vector). Teman yang ingin memakainya perlu paket sendiri.
+          </p>
+        )}
+        {c && c.url && (
           <p className="text-xs text-muted-foreground">
             Folder kerja: <span className="font-mono">{c.workDir}</span>. Sumber{' '}
             <button className="text-primary hover:underline" onClick={() => window.anima.openExternal(c.url)}>
@@ -188,18 +222,7 @@ export function SkillPanel({ project, beforeRun }: { project: Project; beforeRun
     setOpening(true);
     try {
       const fresh = await beforeRun();
-      let brief: string;
-      const files: Record<string, string> = {};
-      if (engine === 'studio') {
-        // Karakter HyperForge ikut sebagai desain sumber (SVG rig dari Pengaturan > Karakter).
-        const chars = await listCharacters().catch(() => []);
-        for (const c of chars) if (c.svg) files[`karakter-hyperforge/${c.key}.svg`] = c.svg;
-        brief = buildStudioBrief(
-          fresh,
-          slug,
-          chars.map((c) => ({ key: c.key, name: c.name, nickname: c.nickname, is_main: c.is_main, personality: c.personality, appearance: c.appearance, hasSvg: Boolean(c.svg) })),
-        );
-      } else brief = engine === 'bang-motion' ? buildBangBrief(fresh, slug) : buildAnimateBrief(fresh, slug);
+      const { brief, files } = await buildSkillBrief(engine, fresh, slug);
       await window.anima.skillOpen({ engine, slug, title: fresh.title, brief, files });
       toast.success('Jendela Claude Code dibuka', { description: 'Jawab pertanyaan dan persetujuan skill di jendela itu. Video jadi muncul di tab Render.', duration: 10000 });
     } catch (e) {

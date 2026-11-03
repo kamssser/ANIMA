@@ -93,6 +93,9 @@ contextBridge.exposeInMainWorld('anima', {
   installClaude: (payload) => ipcRenderer.invoke('claude:install', payload),
   removeClaude: () => ipcRenderer.invoke('claude:remove'),
   openPath: (p) => ipcRenderer.invoke('shell:openPath', p),
+  libraryScan: () => ipcRenderer.invoke('library:scan'),
+  libraryThumb: (file) => ipcRenderer.invoke('library:thumb', file),
+  libraryShowFile: (file) => ipcRenderer.invoke('library:showFile', file),
   showItem: (p) => ipcRenderer.invoke('shell:showItem', p),
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
 });

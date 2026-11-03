@@ -32,6 +32,10 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
 - Mengganti `app.setPath('userData', ...ANIMA Studio)` di `electron/main.cjs`: data pengguna lama ada di sana.
 - Mengedit isi `bang-motion-skill/bang-motion/` (salinan utuh https://github.com/bangtutorial/bang-motion, MIT, sama:
   dipakai "persis"; perbarui dengan menyalin ulang + ganti commit di `SOURCE.md` dan `electron/skills.cjs`).
+- Menyalin isi paket **Animantra: Vector** (skill `animantra-vector`, file contoh, patokan, huruf, installer) ke repo atau
+  installer: paket berbayar, `LISENSI.md`-nya melarang dibagikan ulang. HyperForge hanya memakai skill yang dipasang
+  pengguna di `~/.claude/skills/animantra-vector` (mesin `animantra` di `electron/skills.cjs`); skill dipakai persis, jangan
+  diedit.
 - Mengedit isi `animate-skill/animate/`: salinan utuh skill https://github.com/cth9191/animate (MIT). Pemilik minta
   dipakai "persis 100%". Untuk memperbarui: salin ulang dari repo aslinya, ganti commit di `animate-skill/SOURCE.md` dan
   `commit` mesin animate di `electron/skills.cjs`.

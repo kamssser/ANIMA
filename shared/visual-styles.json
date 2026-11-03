@@ -307,6 +307,114 @@
       "skillStyle": "karet-retro",
       "description": "2D hitam-putih tangan-kaki seperti selang karet, semua bergoyang mengikuti musik, efek film tua. Cocok untuk musik, nostalgia, dan komedi. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
       "draw": []
+    },
+    {
+      "id": "av-bongkar",
+      "label": "Animantra: Kita Bongkar",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "bongkar",
+      "description": "Cara kerja satu benda (gembok, termos, payung otomatis, resleting): model 3D flat-toon bergaris tepi dengan potongan belah, close-up mekanik, kartu diagram, subtitle karaoke, cover hidup. 9:16, 45-55 detik. Render berat. Skill Animantra: Vector (paket milikmu), dikerjakan Claude persis seperti skillnya.",
+      "draw": []
+    },
+    {
+      "id": "av-bongkar-25d",
+      "label": "Animantra: Kita Bongkar 2.5D",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "bongkar-25d",
+      "description": "Kita Bongkar mode 2.5D isometrik: gaya flat toon bergaris tepi dengan potongan belah, digambar datar (tanpa bayangan 3D dan kamera berputar). Lebih cepat dibuat (sekitar 15-20 menit). 9:16. Render ringan. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-tur",
+      "label": "Animantra: Tur Lingkungan",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "tur",
+      "description": "Beberapa benda dalam satu tempat atau aliran (perjalanan listrik di rumah, air dari PDAM ke keran). 9:16, 60-80 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-story",
+      "label": "Animantra: Story / Kisah",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "story",
+      "description": "Sejarah penemuan, tokoh, atau peristiwa (kisah ditemukannya microwave). 9:16, 60-80 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-pov",
+      "label": "Animantra: POV \"Jadi Si...\"",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "pov",
+      "description": "Perjalanan dari sudut pandang benda (jadi setetes air dari tandon sampai keran). 9:16, 45-60 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-tutorial",
+      "label": "Animantra: Tutorial",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "tutorial",
+      "description": "Langkah aman/benar melakukan sesuatu (cara aman ganti tabung gas 3 kg). 9:16, 35-50 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-mitos",
+      "label": "Animantra: Mitos vs Fakta",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "mitos",
+      "description": "Menguji klaim populer (charger dicolok terus boros?). 9:16, 35-50 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-versus",
+      "label": "Animantra: A vs B",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "versus",
+      "description": "Membandingkan dua pilihan (lampu LED vs lampu pijar, kipas vs AC). 9:16, 45-60 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-toplist",
+      "label": "Animantra: Top List",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "toplist",
+      "description": "Daftar 3-5 hal, hitung mundur sampai nomor 1 (5 alat paling boros listrik). 9:16, 35-50 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-kalau",
+      "label": "Animantra: Apa Jadinya Kalau...",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "kalau",
+      "description": "Akibat situasi ekstrem atau salah pakai (colokan terminal ditumpuk banyak alat). 9:16, 40-55 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-evolusi",
+      "label": "Animantra: Evolusi",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "evolusi",
+      "description": "Perubahan benda dari masa ke masa (telepon dari engkol sampai smartphone). 9:16, 45-60 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
+    },
+    {
+      "id": "av-kuis",
+      "label": "Animantra: Kuis / Tebak",
+      "kind": "skill",
+      "engine": "animantra",
+      "skillStyle": "kuis",
+      "description": "Seri pendek pemancing komentar (lubang kecil di bawah gembok buat apa?). 9:16, 20-30 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
+      "draw": []
     }
   ],
   "rig": [

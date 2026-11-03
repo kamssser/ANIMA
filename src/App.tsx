@@ -18,6 +18,7 @@ const OverviewPage = lazy(() => import('@/pages/overview'));
 const ProjectsPage = lazy(() => import('@/pages/projects'));
 const ProjectDetailPage = lazy(() => import('@/pages/project-detail'));
 const RendersPage = lazy(() => import('@/pages/renders'));
+const LibraryPage = lazy(() => import('@/pages/library'));
 const SettingsPage = lazy(() => import('@/pages/settings'));
 
 export function App() {
@@ -79,6 +80,7 @@ export function App() {
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:id" element={<ProjectDetailPage />} />
             <Route path="/renders" element={<RendersPage />} />
+            <Route path="/library" element={<LibraryPage />} />
             <Route path="/settings" element={<SettingsPage onSaved={setSettings} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

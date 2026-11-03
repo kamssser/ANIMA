@@ -45,7 +45,7 @@ const SECTIONS = [
   { id: 'claude', label: 'Claude & akun', icon: Bot, hint: 'MCP untuk Claude Code / Desktop' },
   { id: 'remotion', label: 'Proyek Remotion', icon: Wrench, hint: 'Template skill & folder' },
   { id: 'characters', label: 'Karakter', icon: Users, hint: 'Tokoh video 2D (maks 10)' },
-  { id: 'skills', label: 'Skill video', icon: Sparkles, hint: 'Studio, Animate, Bang Motion' },
+  { id: 'skills', label: 'Skill video', icon: Sparkles, hint: 'Studio, Animate, Bang Motion, Animantra' },
   { id: 'logs', label: 'Log', icon: ScrollText, hint: 'Log sesi Claude per project' },
   { id: 'audio', label: 'Suara & audio', icon: Mic, hint: 'vibi.pro, SFX, musik' },
   { id: 'render', label: 'Render', icon: Clapperboard, hint: 'Kualitas, paralel, uji' },

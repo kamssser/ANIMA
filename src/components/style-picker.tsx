@@ -2,11 +2,15 @@
 import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { Badge } from '@/components/ui/misc';
-import { STYLE_GROUPS, VISUAL_STYLES, styleGroup, styleImage, styleSpeed, visualStyle, type StyleGroup, type VisualStyleId } from '@/lib/styles';
+import { STYLE_GROUPS, VISUAL_STYLES, styleGroup, styleImage, styleSpeed, visualStyle, type StyleGroup, type VisualStyle, type VisualStyleId } from '@/lib/styles';
+import { useSkillSamples } from '@/components/skill-video';
 import { cn } from '@/lib/utils';
 
 export function StylePicker({ value, onChange }: { value: string; onChange: (id: VisualStyleId) => void }) {
   const current = visualStyle(value);
+  // Animantra: gambar patokan dibaca dari skill yang terpasang (tidak ikut aplikasi, lisensi paket).
+  const av = useSkillSamples('animantra');
+  const imageOf = (s: VisualStyle) => styleImage(s.id) ?? (s.engine === 'animantra' && s.skillStyle ? av[s.skillStyle] : undefined);
   const [group, setGroup] = useState<StyleGroup>(styleGroup(current));
   const list = VISUAL_STYLES.filter((s) => styleGroup(s) === group);
   const info = STYLE_GROUPS.find((g) => g.id === group);
@@ -30,7 +34,7 @@ export function StylePicker({ value, onChange }: { value: string; onChange: (id:
       {info && <p className="-mt-1 text-xs text-muted-foreground">{info.hint}</p>}
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
         {list.map((s) => {
-          const img = styleImage(s.id);
+          const img = imageOf(s);
           const on = current.id === s.id;
           return (
             <button
@@ -55,13 +59,13 @@ export function StylePicker({ value, onChange }: { value: string; onChange: (id:
                   </span>
                 )}
               </div>
-              <span className="px-2 py-1.5 text-xs leading-tight font-medium">{s.label.replace(/^(Animate|Bang Motion|Studio): /, '')}</span>
+              <span className="px-2 py-1.5 text-xs leading-tight font-medium">{s.label.replace(/^(Animate|Bang Motion|Studio|Animantra): /, '')}</span>
             </button>
           );
         })}
       </div>
       <div className="flex gap-3 rounded-lg border bg-muted/30 p-3">
-        {styleImage(current.id) && <img src={styleImage(current.id)} alt="" className="h-28 w-[84px] shrink-0 rounded-md object-cover" />}
+        {imageOf(current) && <img src={imageOf(current)} alt="" className="h-28 w-[84px] shrink-0 rounded-md object-cover" />}
         <div className="min-w-0 text-sm">
           <div className="font-medium">{current.label}</div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{current.description}</p>

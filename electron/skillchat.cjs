@@ -157,7 +157,7 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
     push({ role: 'user', text: sid ? prompt : text || `Mulai project "${title}" dengan skill ${e.name}.` });
 
     const args = ['-p', '--output-format', 'stream-json', '--verbose', '--mcp-config', prep.mcpFile, '--append-system-prompt', SYSTEM, '--disallowedTools', 'AskUserQuestion', ...(sid ? ['--resume', sid] : []), '--allowedTools', ...prep.allowed];
-    const env = { ...process.env, PATH: `${prep.ffDir}${path.delimiter}${process.env.PATH}`, ...(prep.npmRoot ? { NODE_PATH: prep.npmRoot } : {}) };
+    const env = { ...process.env, PATH: prep.pathPrefix ? `${prep.pathPrefix}${path.delimiter}${process.env.PATH}` : process.env.PATH, ...(prep.npmRoot ? { NODE_PATH: prep.npmRoot } : {}) };
     const isCmd = /\.cmd$/i.test(prep.claude);
     const child = spawn(isCmd ? `"${prep.claude}"` : prep.claude, isCmd ? args.map((a) => (/[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args, { cwd: e.work, env, windowsHide: true, shell: isCmd });
     const state = { child, stopped: false };

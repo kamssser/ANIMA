@@ -167,6 +167,51 @@ export function buildBangBrief(project: Project, slug: string) {
   return lines.filter((l) => l !== '').join('\n') + '\n';
 }
 
+const AV_FORMAT: Record<string, { label: string; durasi: string }> = {
+  bongkar: { label: 'Kita Bongkar', durasi: '45-55 detik' },
+  'bongkar-25d': { label: 'Kita Bongkar', durasi: '45-55 detik' },
+  tur: { label: 'Tur Lingkungan', durasi: '60-80 detik' },
+  story: { label: 'Story / Kisah', durasi: '60-80 detik' },
+  pov: { label: 'POV "Jadi Si..."', durasi: '45-60 detik' },
+  tutorial: { label: 'Tutorial', durasi: '35-50 detik' },
+  mitos: { label: 'Mitos vs Fakta', durasi: '35-50 detik' },
+  versus: { label: 'Perbandingan A vs B', durasi: '45-60 detik' },
+  toplist: { label: 'Top List', durasi: '35-50 detik' },
+  kalau: { label: 'Apa Jadinya Kalau', durasi: '40-55 detik' },
+  evolusi: { label: 'Evolusi', durasi: '45-60 detik' },
+  kuis: { label: 'Kuis / Tebak', durasi: '20-30 detik' },
+};
+
+/**
+ * Brief untuk skill animantra-vector (paket milik pengguna). Skill dipakai persis: brief hanya menjawab isi permintaan
+ * (format, topik, nama proyek), seperti permintaan chat "buat video <format> <topik>".
+ */
+export function buildAnimantraBrief(project: Project, slug: string, workDir: string) {
+  const st = visualStyle(project.visual_style);
+  const f = AV_FORMAT[st.skillStyle ?? 'bongkar'] ?? AV_FORMAT.bongkar;
+  const iso = st.skillStyle === 'bongkar-25d';
+  const lines = [
+    `# Brief HyperForge: ${project.title}`,
+    '',
+    'Brief dari aplikasi HyperForge. Jalankan skill animantra-vector **persis seperti SKILL.md** (cek otomatis sebelum mulai, Alur 1-12, gerbang mutu wajib, pelajaran.md). Brief ini hanya isi permintaannya, sama seperti pengguna mengetik "buat video <format> <topik>" di chat.',
+    '',
+    '## Permintaan',
+    `- Format: **${f.label}**${iso ? ', **versi 2.5D** (pengguna sendiri memilih mode 2.5D isometrik)' : ' (mode 3D bawaan)'}.`,
+    `- Topik: ${project.topic || project.title}`,
+    project.hook ? `- Hook yang sudah ditulis pengguna (boleh dipakai bila cocok dengan panduan_cerita.md): ${project.hook}` : '',
+    project.script.trim() ? `- Catatan/naskah dari pengguna (bahan, bukan pengganti aturan skill):\n\n${project.script.trim()}\n` : '',
+    `- Durasi: ikuti format (${f.durasi}). Target di HyperForge: ${project.target_seconds} detik; pakai hanya bila masih masuk akal untuk format ini.`,
+    '',
+    '## Folder & nama',
+    `- Folder sesi = folder kerja ini (\`${workDir}\`). Nama proyek: \`${slug}\` (\`new_project.mjs ${slug} --di "${workDir}" ...\`). Video akhir: \`${slug}/${slug}.mp4\` dan \`${slug}/${slug}_kecil.mp4\`; HyperForge mengambilnya dari folder itu.`,
+    '',
+    '## Obrolan',
+    '- Pengguna mengobrol lewat panel Claude di aplikasi HyperForge (bukan terminal). Ikuti bagian "Pengguna awam" skill. Gambar/video yang kamu sebut path lengkapnya tampil di panel.',
+    '- API key suara tetap lewat file kunci (kunci.mjs, dibuka di Notepad), tidak pernah lewat chat.',
+  ];
+  return lines.filter((l) => l !== '').join('\n') + '\n';
+}
+
 /** Brief untuk skill HyperForge Studio (skill buatan HyperForge). */
 export function buildStudioBrief(project: Project, slug: string, characters: { key: string; name: string; nickname: string; is_main: boolean; personality: string; appearance: string; hasSvg: boolean }[]) {
   const t = contentType(project.content_type);

@@ -31,7 +31,19 @@ export type VisualStyleId =
   | 'studio-pixel'
   | 'studio-papan-kapur'
   | 'studio-cat-air'
-  | 'studio-karet-retro';
+  | 'studio-karet-retro'
+  | 'av-bongkar'
+  | 'av-bongkar-25d'
+  | 'av-tur'
+  | 'av-story'
+  | 'av-pov'
+  | 'av-tutorial'
+  | 'av-mitos'
+  | 'av-versus'
+  | 'av-toplist'
+  | 'av-kalau'
+  | 'av-evolusi'
+  | 'av-kuis';
 
 export interface VisualStyle {
   id: VisualStyleId;
@@ -39,7 +51,7 @@ export interface VisualStyle {
   /** skill = dibuat skill Claude pihak ketiga (animate / bang-motion) di Claude Code, render sendiri */
   kind: '3d' | '2d' | 'skill';
   /** mesin skill untuk kind skill */
-  engine?: 'animate' | 'bang-motion' | 'studio';
+  engine?: 'animate' | 'bang-motion' | 'studio' | 'animantra';
   /** nama style di skill (animate: cut-paper ... custom; bang-motion: kartun-kolase ... opener) */
   skillStyle?: string;
   description: string;
@@ -64,12 +76,13 @@ const IMAGES = import.meta.glob('../assets/styles/*.jpg', { eager: true, import:
 /** Gambar contoh style (src/assets/styles/<id>.jpg). */
 export const styleImage = (id: string | null | undefined) => IMAGES[`../assets/styles/${styleId(id)}.jpg`];
 
-export type StyleGroup = 'cepat' | '3d' | 'animate' | 'bang-motion' | 'studio';
+export type StyleGroup = 'cepat' | '3d' | 'animate' | 'bang-motion' | 'studio' | 'animantra';
 export const STYLE_GROUPS: { id: StyleGroup; label: string; hint: string }[] = [
   { id: 'cepat', label: '2D cepat', hint: 'Generate & render langsung di aplikasi, beberapa menit per video' },
   { id: 'studio', label: 'HyperForge Studio', hint: 'Bersama Claude di tab Claude: gaya, karakter, naskah, suara, storyboard' },
   { id: 'animate', label: 'Animate', hint: 'Skill animate (cth9191): kanvas bergaya, story/look/storyboard disetujui dulu' },
   { id: 'bang-motion', label: 'Bang Motion', hint: 'Skill bang-motion (Bang Tutorial): motion graphic & explainer seperti video' },
+  { id: 'animantra', label: 'Animantra', hint: 'Skill Animantra: Vector (paket milikmu): video 9:16 bedah 3D flat-toon, 11 format, dikerjakan Claude persis seperti skillnya' },
   { id: '3d', label: 'Kartun 3D', hint: 'Dunia 3D skill cartoon-3d-short, render paling lama' },
 ];
 export const styleGroup = (s: VisualStyle): StyleGroup => (s.kind === '3d' ? '3d' : s.kind === '2d' ? 'cepat' : (s.engine ?? 'animate'));
