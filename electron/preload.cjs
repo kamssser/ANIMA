@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('anima', {
   startRender: (job) => ipcRenderer.invoke('render:start', job),
   cancelRender: (jobId) => ipcRenderer.invoke('render:cancel', jobId),
   activeRenders: () => ipcRenderer.invoke('render:active'),
+  renderQa: (jobId) => ipcRenderer.invoke('render:qa', jobId),
+  runRenderQa: (payload) => ipcRenderer.invoke('render:qaRun', payload),
   onRenderEvent: (cb) => {
     const listener = (_e, event) => cb(event);
     ipcRenderer.on('render:event', listener);
@@ -17,6 +19,8 @@ contextBridge.exposeInMainWorld('anima', {
   vibiVoices: (opts) => ipcRenderer.invoke('vibi:voices', opts),
   voiceStatus: (slug) => ipcRenderer.invoke('voice:status', slug),
   generateVoice: (payload) => ipcRenderer.invoke('voice:generate', payload),
+  voiceWords: (slug) => ipcRenderer.invoke('voice:words', slug),
+  saveVoiceWords: (payload) => ipcRenderer.invoke('voice:saveWords', payload),
   onVoiceEvent: (cb) => {
     const listener = (_e, event) => cb(event);
     ipcRenderer.on('voice:event', listener);

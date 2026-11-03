@@ -6,6 +6,14 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.7.0 - 2026-11-03
+
+**Baru**
+- **Pemeriksaan otomatis setelah render.** Setiap video yang selesai dirender langsung dicek: layar hitam, gambar diam lebih dari 3 detik, bagian tanpa suara, dan kerasnya suara. Hasilnya muncul sebagai tombol hijau/kuning/merah di tabel render, lengkap dengan **lembar ringkasan frame** (satu gambar setiap beberapa detik) supaya seluruh video bisa dicek sekilas tanpa diputar. Video lama bisa diperiksa lewat tombol kaca pembesar.
+- **Editor timing kata** (tab Render > Timing kata): lihat gelombang suara, geser kotak kata atau tarik ujungnya, klik untuk mendengar kata itu, ketik angka detiknya langsung, atau geser semua kata sekaligus kalau teks di layar terasa terlalu cepat/lambat.
+- Tanda **"Perlu dibuat ulang"** di panel suara kalau script atau narasi shot diubah setelah suara dibuat. Tombol Render meminta konfirmasi kalau suara belum cocok atau belum ada.
+- Tanda di tab Render kalau video terakhir dibuat sebelum suara atau timing kata diubah.
+
 ## 0.6.2 - 2026-11-03
 
 **Perbaikan**

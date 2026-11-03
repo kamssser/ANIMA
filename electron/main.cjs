@@ -1,5 +1,5 @@
 // Proses utama Electron: jendela aplikasi, penyimpanan pengaturan, dan antrean render lokal.
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeImage } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { spawn, execFile } = require('node:child_process');
@@ -318,7 +318,7 @@ async function runNext() {
       if (m.ok && fs.existsSync(tmp)) fs.renameSync(tmp, outFile);
       else warning = `Gagal menggabung suara:\n${m.log.split('\n').slice(-4).join('\n')}`;
     }
-    return finish({ jobId: job.jobId, type: 'done', outFile, warning });
+    return finish({ jobId: job.jobId, type: 'done', outFile, warning, qa: await qaAfterRender(s, job.jobId, outFile) });
   }
 
   // 3D: komposisi buatan pengguna dari entry pengguna (seperti sebelumnya), lalu lapisan teks lewat mesin aplikasi.
@@ -351,8 +351,39 @@ async function runNext() {
     if (t.code !== 0 || !fs.existsSync(outFile)) return failLog(t.tail, t.code);
   }
   const warning = await finishAudio(job.jobId, s, outFile);
-  finish({ jobId: job.jobId, type: 'done', outFile, warning });
+  if (current.cancelled) return finish(null);
+  finish({ jobId: job.jobId, type: 'done', outFile, warning, qa: await qaAfterRender(s, job.jobId, outFile) });
 }
+
+// ---------- Pemeriksaan otomatis setelah render (lihat electron/qa.cjs) ----------
+
+const qa = require('./qa.cjs');
+const qaDir = () => path.join(app.getPath('userData'), 'qa');
+
+/** Ringkasan untuk event 'done'; laporan lengkap + lembar ringkasan disimpan di userData/qa/<jobId>. */
+async function qaAfterRender(s, jobId, outFile) {
+  const bin = qa.findFfmpeg(s.remotionProjectPath) || (await which('ffmpeg'));
+  if (!bin || !fs.existsSync(outFile)) return undefined;
+  emit({ jobId, type: 'progress', progress: 98, stage: 'qa' });
+  try {
+    const r = await qa.checkVideo({ ffmpegBin: bin, file: outFile, outDir: qaDir(), id: jobId, nativeImage });
+    return { ok: r.ok, errors: r.issues.filter((i) => i.level === 'error').length, warnings: r.issues.filter((i) => i.level === 'warn').length };
+  } catch {
+    return undefined; // pemeriksaan gagal tidak boleh menggagalkan render
+  }
+}
+
+ipcMain.handle('render:qa', (_e, jobId) => qa.readReport(qaDir(), String(jobId).replace(/[^\w-]/g, '')));
+/** Periksa ulang (atau periksa video lama yang belum punya laporan). */
+ipcMain.handle('render:qaRun', async (_e, { jobId, file }) => {
+  const s = readSettings();
+  const id = String(jobId).replace(/[^\w-]/g, '');
+  const bin = qa.findFfmpeg(s.remotionProjectPath) || (await which('ffmpeg'));
+  if (!bin) throw new Error('ffmpeg tidak ditemukan. Siapkan proyek Remotion dulu di Pengaturan.');
+  if (!file || !fs.existsSync(file)) throw new Error('File video tidak ada di laptop ini.');
+  await qa.checkVideo({ ffmpegBin: bin, file, outDir: qaDir(), id, nativeImage });
+  return qa.readReport(qaDir(), id);
+});
 
 /** Hapus sisa bundle Remotion di folder sementara ANIMA (hanya folder buatan Remotion/puppeteer). */
 function cleanBundles(dir) {
@@ -715,11 +746,64 @@ ipcMain.handle('voice:status', (_e, slug) => {
   const dir = voiceOutDir(s, slug);
   const mp3 = path.join(dir, 'voice.mp3');
   const words = path.join(dir, 'words.json');
+  const metaFile = path.join(dir, 'meta.json');
+  let meta = {};
+  try {
+    meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+  } catch {
+    /* suara lama (sebelum 0.7.0) belum punya meta */
+  }
   return {
     mp3: fs.existsSync(mp3) ? mp3 : null,
     words: fs.existsSync(words) ? JSON.parse(fs.readFileSync(words, 'utf8')).length : null,
     updatedAt: fs.existsSync(mp3) ? fs.statSync(mp3).mtime.toISOString() : null,
+    // Teks yang dipakai saat suara dibuat; aplikasi membandingkannya dengan script sekarang.
+    textKey: meta.textKey ?? null,
+    wordsEditedAt: meta.wordsEditedAt ?? null,
   };
+});
+
+const readMeta = (dir) => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
+  } catch {
+    return {};
+  }
+};
+const writeMeta = (dir, patch) => fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({ ...readMeta(dir), ...patch }, null, 1));
+
+/** Untuk editor timing kata: daftar kata + audio mp3 (bytes). */
+ipcMain.handle('voice:words', (_e, slug) => {
+  const s = readSettings();
+  const dir = voiceOutDir(s, slug);
+  const mp3 = path.join(dir, 'voice.mp3');
+  const words = path.join(dir, 'words.json');
+  if (!fs.existsSync(mp3)) throw new Error('Suara belum dibuat.');
+  return {
+    words: fs.existsSync(words) ? JSON.parse(fs.readFileSync(words, 'utf8')) : [],
+    audio: new Uint8Array(fs.readFileSync(mp3)),
+  };
+});
+
+/** Simpan timing kata hasil edit (dipakai render berikutnya untuk teks di layar dan panjang shot). */
+ipcMain.handle('voice:saveWords', (_e, { slug, words }) => {
+  if (!Array.isArray(words) || !words.length) throw new Error('Daftar kata kosong.');
+  const clean = words.map((w, i) => {
+    const a = Math.round(Number(w.s) * 1000) / 1000;
+    const b = Math.round(Number(w.e) * 1000) / 1000;
+    if (!Number.isFinite(a) || !Number.isFinite(b) || a < 0 || b < a) throw new Error(`Waktu kata ke-${i + 1} ("${w.text}") tidak valid.`);
+    return { s: a, e: b, text: String(w.text ?? '') };
+  });
+  clean.sort((x, y) => x.s - y.s);
+  const s = readSettings();
+  const dir = voiceOutDir(s, slug);
+  const json = JSON.stringify(clean, null, 1);
+  fs.writeFileSync(path.join(dir, 'words.json'), json);
+  if (s.remotionProjectPath && fs.existsSync(path.join(s.remotionProjectPath, s.voiceDir))) {
+    fs.writeFileSync(path.join(s.remotionProjectPath, s.voiceDir, 'words.json'), json);
+  }
+  writeMeta(dir, { wordsEditedAt: new Date().toISOString() });
+  return { count: clean.length };
 });
 
 /** Satu kali TTS vibi.pro dengan konfigurasi suara tertentu; hasilnya ditulis ke file mp3. */
@@ -755,7 +839,7 @@ const voiceB = (s) => ({ provider: s.vibi2Provider, model: s.vibi2Model, voiceId
  * payload.lines : dialog/film [{ speaker: 'A'|'B', text }] -> tiap giliran pakai suara A atau B
  *                 (boleh beda provider/model), digabung dengan jeda 0,3 detik.
  */
-ipcMain.handle('voice:generate', async (_e, { slug, text, lines }) => {
+ipcMain.handle('voice:generate', async (_e, { slug, text, lines, textKey }) => {
   const s = readSettings();
   const say = (step, progress) => win && !win.isDestroyed() && win.webContents.send('voice:event', { slug, step, progress });
   if (!s.vibiVoiceId) throw new Error('Pilih suara A dulu di Pengaturan > Suara & audio.');
@@ -841,6 +925,9 @@ ipcMain.handle('voice:generate', async (_e, { slug, text, lines }) => {
     }
     wordCount = words.length;
   }
+
+  // Catat teks yang dipakai: kalau script/narasi diubah sesudah ini, aplikasi memberi tanda "perlu dibuat ulang".
+  writeMeta(dir, { textKey: textKey ?? null, createdAt: new Date().toISOString(), wordsEditedAt: null });
 
   say('Selesai', 100);
   return { mp3, words: wordCount, credits, notes };

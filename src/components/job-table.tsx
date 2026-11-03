@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { FolderOpen, Play, X } from 'lucide-react';
 import { JobBadge } from '@/components/status';
+import { QaButton } from '@/components/qa-report';
 import { Button } from '@/components/ui/button';
 import { Progress, TBody, TD, TH, THead, TR, Table } from '@/components/ui/misc';
 import type { RenderJob } from '@/lib/types';
@@ -57,6 +58,7 @@ export function JobTable({ jobs, showProject, onChanged }: { jobs: RenderJob[]; 
               <div className="flex justify-end gap-1">
                 {j.status === 'done' && j.output_path && (
                   <>
+                    <QaButton job={j} />
                     <Button size="sm" variant="ghost" onClick={() => window.anima.openPath(j.output_path!)} title="Putar video">
                       <Play />
                     </Button>

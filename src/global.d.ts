@@ -1,5 +1,7 @@
 import type {
   BenchResult,
+  QaReport,
+  Word,
   ClaudeDetect,
   PythonCheck,
   RenderEvent,
@@ -21,6 +23,8 @@ declare global {
       startRender(job: RenderRequest): Promise<boolean>;
       cancelRender(jobId: string): Promise<boolean>;
       activeRenders(): Promise<{ current: string | null; queued: string[] }>;
+      renderQa(jobId: string): Promise<QaReport | null>;
+      runRenderQa(payload: { jobId: string; file: string }): Promise<QaReport | null>;
       onRenderEvent(cb: (e: RenderEvent) => void): () => void;
       vibiVoices(opts: { provider: 'elevenlabs' | 'minimax' | 'capcut'; search?: string; indo?: boolean }): Promise<VibiVoice[]>;
       voiceStatus(slug: string): Promise<VoiceStatus>;
@@ -28,7 +32,11 @@ declare global {
         slug: string;
         text: string;
         lines?: { speaker: string; text: string }[];
+        /** teks yang dipakai, untuk mendeteksi script yang berubah setelah suara dibuat */
+        textKey?: string;
       }): Promise<{ mp3: string; words: number | null; credits: number | null; notes: string[] }>;
+      voiceWords(slug: string): Promise<{ words: Word[]; audio: Uint8Array }>;
+      saveVoiceWords(payload: { slug: string; words: Word[] }): Promise<{ count: number }>;
       onVoiceEvent(cb: (e: { slug: string; step: string; progress: number }) => void): () => void;
       updateState(): Promise<UpdateState>;
       checkUpdate(): Promise<UpdateState>;

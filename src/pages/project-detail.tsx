@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { BookOpen, Clapperboard, Copy, FileText, Film, Image, Loader2, Sparkles, Trash2, X, Zap } from 'lucide-react';
+import { AlertTriangle, BookOpen, Clapperboard, Copy, FileText, Film, Image, Loader2, Sparkles, Trash2, X, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageBody, PageHeader } from '@/components/layout';
 import { ProjectBadge } from '@/components/status';
 import { ShotEditor } from '@/components/shot-editor';
 import { JobTable } from '@/components/job-table';
-import { VoicePanel } from '@/components/voice-panel';
+import { VoicePanel, useVoiceStatus } from '@/components/voice-panel';
 import { Button } from '@/components/ui/button';
 import { Input, NativeSelect, Textarea } from '@/components/ui/input';
 import {
@@ -457,8 +457,15 @@ function RenderTab({ project, shots, onProject }: { project: Project; shots: Sho
 
   const totalSec = framesToSeconds(shots.reduce((n, s) => n + s.duration_frames, 0));
   const active = jobs.some((j) => j.status === 'queued' || j.status === 'running');
+  const voice = useVoiceStatus(project, shots);
+  // Video terakhir lebih lama dari suara / timing kata: perlu render ulang supaya ikut berubah.
+  const lastDone = jobs.find((j) => j.status === 'done' && j.finished_at);
+  const voiceChangedAt = Math.max(Date.parse(voice.status?.updatedAt ?? '') || 0, Date.parse(voice.status?.wordsEditedAt ?? '') || 0);
+  const videoOld = Boolean(lastDone && voiceChangedAt > Date.parse(lastDone.finished_at!));
 
   async function start() {
+    if (!voice.status?.mp3 && !window.confirm('Suara belum dibuat, jadi video akan tanpa suara dan teks tidak mengikuti ucapan. Tetap render?')) return;
+    if (voice.stale && !window.confirm('Suara belum mengikuti script terbaru (script atau narasi shot berubah setelah suara dibuat). Suara, teks di layar, dan panjang shot tidak akan cocok. Tetap render?')) return;
     setBusy(true);
     try {
       await queueRender(project);
@@ -473,7 +480,7 @@ function RenderTab({ project, shots, onProject }: { project: Project; shots: Sho
 
   return (
     <div className="flex flex-col gap-4">
-      <VoicePanel project={project} shots={shots} />
+      <VoicePanel project={project} shots={shots} voice={voice} />
       <Card>
         <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div className="text-sm">
@@ -483,6 +490,11 @@ function RenderTab({ project, shots, onProject }: { project: Project; shots: Sho
             <div className="mt-1 text-muted-foreground">
               Render berjalan di laptop ini dengan mode hemat (1 proses). Laptop boleh dipakai ringan, tapi akan terasa lebih lambat.
             </div>
+            {videoOld && !active && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-warning">
+                <AlertTriangle className="size-3.5" /> Video terakhir dibuat sebelum suara atau timing kata diubah. Render ulang supaya ikut berubah.
+              </div>
+            )}
           </div>
           <Button onClick={start} disabled={busy || active || shots.length === 0}>
             <Clapperboard /> {active ? 'Sedang dirender' : 'Render sekarang'}

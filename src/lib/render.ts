@@ -36,11 +36,21 @@ export function wireRenderEvents() {
         case 'done':
           await updateJob(e.jobId, { status: 'done', progress: 100, output_path: e.outFile, finished_at: new Date().toISOString() });
           await setProjectStatusFromJob(e.jobId, 'done');
-          (e.warning ? toast.warning : toast.success)(e.warning ? 'Video selesai, audio belum lengkap' : 'Render selesai', {
-            description: e.warning || undefined,
-            duration: e.warning ? 15000 : 4000,
-            action: { label: 'Buka folder', onClick: () => window.anima.showItem(e.outFile) },
-          });
+          {
+            const qaNote = e.qa
+              ? e.qa.errors
+                ? `Pemeriksaan otomatis menemukan ${e.qa.errors} masalah. Klik tombol merah di tabel render untuk melihat.`
+                : e.qa.warnings
+                  ? `Pemeriksaan otomatis: ${e.qa.warnings} catatan (tombol kuning di tabel render).`
+                  : 'Lolos pemeriksaan otomatis.'
+              : '';
+            const bad = Boolean(e.warning || e.qa?.errors);
+            (bad ? toast.warning : toast.success)(e.warning ? 'Video selesai, audio belum lengkap' : e.qa?.errors ? 'Render selesai, ada masalah' : 'Render selesai', {
+              description: [e.warning, qaNote].filter(Boolean).join(' ') || undefined,
+              duration: bad ? 15000 : 6000,
+              action: { label: 'Buka folder', onClick: () => window.anima.showItem(e.outFile) },
+            });
+          }
           break;
         case 'failed':
           await updateJob(e.jobId, { status: 'failed', error: e.error, finished_at: new Date().toISOString() });

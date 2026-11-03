@@ -161,6 +161,28 @@ export interface VoiceStatus {
   mp3: string | null;
   words: number | null;
   updatedAt: string | null;
+  /** teks yang dipakai saat suara dibuat (lihat voiceTextKey); null untuk suara lama */
+  textKey: string | null;
+  wordsEditedAt: string | null;
+}
+
+export type Word = { s: number; e: number; text: string };
+
+export type QaIssue = { level: 'error' | 'warn'; kind: string; at?: number; text: string };
+export type QaSummary = { ok: boolean; errors: number; warnings: number };
+export interface QaReport {
+  ok: boolean;
+  checkedAt: string;
+  duration: number;
+  width: number;
+  height: number;
+  lufs: number | null;
+  peak: number | null;
+  issues: QaIssue[];
+  /** data URL JPEG */
+  sheet: string | null;
+  sheetStep?: number;
+  sheetCols?: number;
 }
 
 export type PythonCheck = { ok: boolean; python: string | null; numpy?: string; scipy?: string; error?: string };
@@ -187,7 +209,7 @@ export type RenderEvent =
   | { jobId: string; type: 'queued'; position: number }
   | { jobId: string; type: 'started'; outFile: string }
   | { jobId: string; type: 'progress'; progress: number; stage: string }
-  | { jobId: string; type: 'done'; outFile: string; warning?: string }
+  | { jobId: string; type: 'done'; outFile: string; warning?: string; qa?: QaSummary }
   | { jobId: string; type: 'failed'; error: string }
   | { jobId: string; type: 'cancelled' };
 
