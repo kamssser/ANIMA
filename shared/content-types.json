@@ -7,6 +7,16 @@
     "Cerita harus SELESAI tuntas di video ini: akhiri dengan payoff yang memuaskan (jawaban/twist/hasil) + satu kalimat kesimpulan, lalu ucapan terima kasih sudah menonton dan sampai jumpa yang hangat dan pendek. Jangan menutup dengan teaser atau pertanyaan menggantung ('di video berikutnya...', 'nantikan...').",
     "Tulis isi hook (kalimat pembuka) juga di field 'hook' saat menyimpan."
   ],
+  "narrationRules": [
+    "Naskah suara harus MUDAH DIPAHAMI sekali dengar: bahasa lisan sehari-hari yang sopan, seperti bercerita ke teman. Bukan bahasa tulisan, berita, atau makalah yang kaku.",
+    "Satu kalimat = satu gagasan (sekitar 6-14 kata). Jangan menumpuk anak kalimat, kalimat pasif panjang, atau beberapa fakta dalam satu kalimat.",
+    "Alur jelas dan berurutan (waktu atau sebab-akibat). Pakai penghubung lisan seperti 'jadi', 'nah', 'ternyata', 'karena itu', 'akhirnya' supaya penonton tidak tersesat. Bahas satu tokoh/ide dalam satu waktu dan sebut namanya lagi bila kata ganti bisa membingungkan.",
+    "Istilah sulit langsung dijelaskan dengan kata sederhana atau perbandingan sehari-hari. Hindari istilah asing yang tidak perlu.",
+    "Tulis seperti diucapkan: angka dibulatkan dan ditulis dengan huruf bila lebih enak didengar ('sekitar tiga ratus tahun'), singkatan ditulis lengkap atau sesuai ucapannya, tanpa simbol (%, &, /, #), emoji, tanda kurung, atau format markdown di teks suara.",
+    "Ekspresi lewat tanda baca dan pilihan kata: koma untuk jeda napas, titik untuk berhenti, tanda tanya untuk nada bertanya, tanda seru seperlunya untuk kaget/semangat, '...' sesekali untuk jeda dramatis. Kata seperti 'wah', 'eh', 'bayangkan', 'sayangnya' dipakai sesuai suasana. Jangan menulis arahan/tag di dalam teks suara (mis. [tertawa], (sedih)): teks suara hanya berisi kata yang diucapkan.",
+    "Variasikan panjang kalimat supaya ritme hidup dan tidak monoton, tapi jangan sampai ada kalimat yang tidak bisa diucapkan dalam satu napas.",
+    "Sebelum disimpan, baca ulang seluruh naskah seolah diucapkan keras: pecah atau ganti kalimat yang berbelit, ambigu, atau sulit diucapkan."
+  ],
   "twoVoiceRules": [
     "Project ini memakai DUA suara: A = karakter utama milik pengguna (tokoh yang dibuat di Pengaturan > Karakter, ditandai utama) yang tampil dan berbicara sebagai dirinya sendiri; B = narator (pencerita) yang membawakan alur, fakta, dan perpindahan adegan. Gaya bicara keduanya jelas berbeda.",
     "A muncul di momen yang menghidupkan: bicara langsung sebagai tokoh, bertanya seperti penonton, menyanggah, atau bereaksi kaget. Minimal sepertiga giliran milik A, dan tidak lebih dari 3 giliran B (narator) berturut-turut.",

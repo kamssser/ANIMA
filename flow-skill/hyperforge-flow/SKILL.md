@@ -78,10 +78,11 @@ Google Flow **tidak** membuat narasi, dialog, atau musik latar untuk video ini. 
      "sfx": 0.55,
      "musik": null,
      "musikGain": 0.18,
+     "brand": "",
      "shot": [{ "klip": "klip/shot_01.mp4", "mulai": 0.0, "selesai": 6.4, "dari": 0.3 }]
    }
    ```
-   `mulai`/`selesai` = waktu di narasi; `dari` = detik awal yang dipakai dari klip (lewati awal klip yang kaku). Klip yang lebih pendek dari shot diperlambat sedikit (maks 1,25x), bukan diulang. Hasil: `<slug>/hasil/<slug>.mp4` (+ `<slug>/hasil/<slug>_tanpa_subtitle.mp4`).
+   `mulai`/`selesai` = waktu di narasi; `dari` = detik awal yang dipakai dari klip (lewati awal klip yang kaku). Klip yang lebih pendek dari shot diperlambat sedikit (maks 1,25x), bukan diulang. `brand` = teks branding kanal dari brief (kosong/tidak ada = tanpa branding): ditulis kecil di tengah paling bawah sepanjang video. Hasil: `<slug>/hasil/<slug>.mp4` (+ `<slug>/hasil/<slug>_tanpa_subtitle.mp4`).
 7. **Cek & serahkan.** Lihat 4-6 frame hasil (lembar kontak: `ffmpeg -i hasil/<slug>.mp4 -vf "fps=1/3,scale=320:-2,tile=4x2" -frames:v 1 hasil/kontak.jpg`), dengar ulang awal & akhir (cek suara tidak terpotong). Tunjukkan video (blok `video`). Lalu thumbnail + judul hook sesuai brief (`hasil/thumbnail.jpg`, `hasil/judul.txt`).
 
 ## Catatan

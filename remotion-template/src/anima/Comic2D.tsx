@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { AbsoluteFill, Sequence, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import { fitSvg, RigSvg, scopeSvg } from './rig';
 import { Subtitles } from './Subtitles';
+import { Brand } from './Brand';
 import { styleLook } from './styles';
 import type { CastMember, Comic2DProps, Framing, Pose, PropPlacement, Shot2D } from './types';
 import { FPS } from './types';
@@ -390,9 +391,7 @@ export const Comic2D: React.FC<Comic2DProps> = (p) => {
         </Sequence>
       ))}
       <Subtitles words={p.words} shots={p.shots} starts={starts} look={styleLook(p.style).subtitle} />
-      {p.watermark && (
-        <div style={{ position: 'absolute', top: 36, right: 40, font: '700 30px Arial, sans-serif', color: 'rgba(255,255,255,0.85)', textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}>{p.watermark}</div>
-      )}
+      <Brand text={p.watermark} />
     </AbsoluteFill>
   );
 };

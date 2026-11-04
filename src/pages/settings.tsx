@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bot, Brain, Clapperboard, FolderOpen, Globe, HardDrive, Mic, Palette, Save, ScrollText, Sparkles, Users, Wrench } from 'lucide-react';
+import { BadgeCheck, Bot, Brain, Clapperboard, FolderOpen, Globe, HardDrive, Mic, Palette, Save, ScrollText, Sparkles, Users, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageBody, PageHeader } from '@/components/layout';
 import { ClaudeIntegration } from '@/components/claude-integration';
@@ -13,6 +13,7 @@ import { UpdatePanel } from '@/components/update';
 import { BrainSettings } from '@/components/brain-settings';
 import { StorageSettings } from '@/components/storage-settings';
 import { ReachSettings } from '@/components/reach-settings';
+import { BrandSettings } from '@/components/brand-settings';
 import { getTheme, setTheme, type Theme } from '@/lib/theme';
 import { Button } from '@/components/ui/button';
 import { Input, NativeSelect } from '@/components/ui/input';
@@ -53,6 +54,7 @@ const SECTIONS = [
   { id: 'reach', label: 'Riset internet', icon: Globe, hint: 'Agent Reach untuk riset Claude' },
   { id: 'logs', label: 'Log', icon: ScrollText, hint: 'Log sesi Claude per project' },
   { id: 'audio', label: 'Suara & audio', icon: Mic, hint: 'vibi.pro, SFX, musik' },
+  { id: 'brand', label: 'Branding', icon: BadgeCheck, hint: 'Nama kanal / sosmed di video' },
   { id: 'render', label: 'Render', icon: Clapperboard, hint: 'Kualitas, paralel, uji' },
   { id: 'storage', label: 'Penyimpanan', icon: HardDrive, hint: 'Bersihkan hasil & cache' },
   { id: 'look', label: 'Tampilan & update', icon: Palette, hint: 'Tema, mode hemat, versi' },
@@ -192,6 +194,8 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
               <AudioMixSettings s={s} setS={setS} />
             </>
           )}
+
+          {section === 'brand' && <BrandSettings s={s} setS={setS} />}
 
           {section === 'render' && (
             <>

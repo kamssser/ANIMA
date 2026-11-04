@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Progress } from '@/components/ui/misc';
 import { createJob, updateJob } from '@/lib/api';
-import { usesTwoVoices, buildAnimantraBrief, buildAnimateBrief, buildBangBrief, buildFlowBrief, buildKamalBrief, buildLemoBrief, buildMotionBrief, buildStickmanBrief, buildStudioBrief } from '@/lib/content';
+import { NARRATION_RULES, usesTwoVoices, buildAnimantraBrief, buildAnimateBrief, buildBangBrief, buildFlowBrief, buildKamalBrief, buildLemoBrief, buildMotionBrief, buildStickmanBrief, buildStudioBrief } from '@/lib/content';
 import { listCharacters } from '@/lib/api';
 import { visualStyle } from '@/lib/styles';
 import { cleanErr, runTask, setValue, usePersisted, useTask, useTaskFinished } from '@/lib/tasks';
@@ -88,10 +88,42 @@ function storyRule(engine: SkillEngine, slug: string, two: boolean) {
   ].join('\n');
 }
 
+/** Naskah suara mudah dipahami + suara natural: berlaku untuk semua style. */
+function narrationRule() {
+  return [
+    '',
+    '## Naskah suara: mudah dipahami & natural (WAJIB, semua style)',
+    ...NARRATION_RULES.map((r) => `- ${r}`),
+    '- Suara dibuat dengan pengaturan ekspresif dari HyperForge. Buat suara per kalimat/adegan bila skill mendukung, supaya jeda dan intonasi tiap kalimat alami. Cek hasilnya (timing kata): kalau ada kata yang salah ucap atau terdengar datar, ubah ejaan/tanda bacanya lalu buat ulang kalimat itu saja.',
+  ].join('\n');
+}
+
+/** Branding pengguna (Pengaturan > Branding): teks kecil di tengah paling bawah setiap video. */
+function brandRule(engine: SkillEngine, text: string) {
+  if (!text) return '';
+  const how =
+    engine === 'flow'
+      ? `isi "brand": ${JSON.stringify(text)} di rakit.json; tools/rakit.mjs menulisnya otomatis.`
+      : engine === 'kamal'
+        ? 'gambar di setiap frame dengan K.label/ctx.fillText di x = tengah, y = tinggi video x 0,975 (di bawah caption).'
+        : 'gambar di dalam komposisi/kanvas video (lapisan paling atas, setiap frame). Kalau video akhir dirakit dengan ffmpeg dan komposisi tidak bisa diubah, tambahkan dengan filter drawtext/subtitles saat perakitan akhir.';
+  return [
+    '',
+    '## Branding kanal (WAJIB)',
+    `- Setiap video menampilkan teks ${JSON.stringify(text)} persis (nama kanal/akun sosmed pengguna) sepanjang video, KECIL di TENGAH PALING BAWAH: tinggi huruf sekitar 2,4% sisi pendek video (~26 px di 1080x1920), tebal sedang, putih ~75% dengan bayangan tipis gelap (di latar terang: gelap ~70%), jarak ~1,8% tinggi video dari tepi bawah, tanpa animasi berlebihan.`,
+    '- Tidak boleh menabrak subtitle/caption: subtitle tetap di atasnya. Jangan menambah logo, ikon, atau teks lain.',
+    `- Cara: ${how}`,
+    '- Periksa satu frame hasil akhir: teks branding terbaca, kecil, dan di tengah bawah.',
+  ].join('\n');
+}
+
 /** Brief + file pendukung untuk sesi skill sebuah project (dipakai panel obrolan dan jendela terminal). */
 export async function buildSkillBrief(engine: SkillEngine, fresh: Project, slug: string) {
   const r = await buildSkillBriefBase(engine, fresh, slug);
-  return { ...r, brief: r.brief.trimEnd() + '\n' + storyRule(engine, slug, usesTwoVoices(fresh)) + '\n' };
+  const s = await window.anima.getSettings().catch(() => null);
+  const brand = s?.brandOn ? String(s.brandText || '').trim() : '';
+  const extra = [narrationRule(), brandRule(engine, brand), storyRule(engine, slug, usesTwoVoices(fresh))].filter(Boolean).join('\n');
+  return { ...r, brief: r.brief.trimEnd() + '\n' + extra + '\n' };
 }
 
 async function buildSkillBriefBase(engine: SkillEngine, fresh: Project, slug: string) {

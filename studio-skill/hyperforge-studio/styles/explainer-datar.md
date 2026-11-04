@@ -78,6 +78,34 @@ proyek, lalu potret ke `benda.png` (`tools/snap.mjs`). Bandingkan dengan lembar 
 - [ ] benda nyata cocok dengan foto/peta referensinya (siluet & ciri utama)
 Tunjukkan `benda.png` bersama frame contoh saat persetujuan karakter. Benda yang ditambahkan nanti ikut lembar ini.
 
+## Gaya narator & cara bercerita (WAJIB)
+
+Naratornya seperti teman pintar yang asyik ngobrol, bukan guru atau pembaca berita. Santai, lucu sedikit, tapi
+faktanya tetap akurat dan bersumber.
+- **Bahasa:** Indonesia lisan sehari-hari yang santai dan sopan: "kita", "kamu", "emang", "kayak", "gara-gara",
+  "banget", "ngga", "liat", "denger", "pengen". Hindari bahasa baku kaku ("adalah merupakan", "oleh karena itu",
+  "sebagaimana"). Tidak pakai "gue/lo" dan tidak kasar.
+- **Pembuka:** mulai dari pengalaman atau keluhan yang akrab dengan penonton ("Kita mungkin sering denger ...",
+  "Pernah ngga sih kamu ..."), boleh disambung peribahasa/ungkapan populer yang dipelesetkan ringan, lalu lempar satu
+  pertanyaan besar yang jadi judul video ("Tapi emang bener ...?").
+- **Alur bertanya-jawab:** narator memecah topik jadi pertanyaan kecil yang dijawab satu per satu. Pola:
+  pertanyaan → jawaban sederhana → contoh/perbandingan sehari-hari → "Nah, masalahnya ..." / "Tapi tunggu dulu ...".
+  Penghubung lisan: "Jadi", "Nah", "Ternyata", "Bayangin aja", "Gampangnya gini", "Kenapa begitu?".
+- **Angka & data:** satu angka per kalimat, langsung diterjemahkan ke hal yang kebayang ("itu kira-kira sama dengan
+  ..."). Sebut sumbernya singkat dengan bahasa lisan ("menurut laporan PBB tahun ini ..."). Istilah sulit langsung
+  dijelaskan ("PDB, gampangnya, total nilai barang dan jasa yang dibuat satu negara").
+- **Humor ringan:** sesekali celetukan pendek atau perbandingan lucu yang nyambung dengan visual (1 tiap 20–40 detik),
+  tidak mengejek kelompok mana pun dan tidak mengganggu fakta. Raka boleh bereaksi (kaget, bingung, nyengir).
+- **Sudut pandang adil:** kalau topiknya pro-kontra, tampilkan dua sisi lalu simpulkan dengan jujur ("jawabannya:
+  tergantung ...").
+- **Akhir:** kembali ke pertanyaan pembuka, jawab tuntas, satu kalimat refleksi yang dekat dengan penonton, lalu
+  terima kasih + sampai jumpa (lihat Penutup).
+- **Ritme suara:** kalimat pendek-sedang, banyak tanda tanya dan koma untuk jeda alami, tanda seru hanya untuk kaget
+  atau lucu. Suara harus terdengar seperti orang ngobrol yang antusias, bukan membaca.
+- Contoh nada (jangan disalin mentah, sesuaikan topik): "Kita mungkin sering denger orang bilang, hidup di luar
+  negeri itu enak banget. Ya, kayak kata pepatah, rumput tetangga emang keliatan lebih hijau. Tapi emang bener
+  begitu? Nah, buat jawabnya, kita perlu tahu dulu: 'enak' itu diukur pakai apa sih?"
+
 ## Informasi di layar
 - Label angka: `XD.label` (pil aksen, teks putih tebal), muncul dengan pegas. Maksimal dua tingkat teks (angka besar +
   label); subtitle tetap ada di bawah.

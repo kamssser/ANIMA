@@ -64,9 +64,12 @@ fs.writeFileSync(path.join(tmp, 'daftar.txt'), segs.map((s) => `file '${path.bas
 ff(['-f', 'concat', '-safe', '0', '-i', 'hasil/_rakit/daftar.txt', '-c', 'copy', 'hasil/_rakit/badan.mp4'], 'gabung shot');
 
 // ---------- 2. subtitle dari words.json ----------
+// Branding pengguna (nama kanal/sosmed): kecil di tengah paling bawah sepanjang video. rakit.json "brand".
+const brand = String(cfg.brand || '').replace(/[{}\\\r\n]/g, '').trim().slice(0, 80);
+const wantSubs = cfg.subtitle !== false && cfg.words && fs.existsSync(path.join(proj, cfg.words));
 let subs = null;
-if (cfg.subtitle !== false && cfg.words && fs.existsSync(path.join(proj, cfg.words))) {
-  const words = JSON.parse(fs.readFileSync(path.join(proj, cfg.words), 'utf8'));
+if (wantSubs || brand) {
+  const words = wantSubs ? JSON.parse(fs.readFileSync(path.join(proj, cfg.words), 'utf8')) : [];
   const chunks = [];
   let cur = [];
   for (const w of words) {
@@ -99,6 +102,7 @@ if (cfg.subtitle !== false && cfg.words && fs.existsSync(path.join(proj, cfg.wor
     const body = c.map((w, j) => `{\\k${Math.max(1, Math.round(((c[j + 1]?.s ?? w.e) - w.s) * 100))}}${esc(w.text)}`).join(' ');
     return `Dialogue: 0,${t(s)},${t(e)},Kata,,0,0,0,,${body}`;
   });
+  if (brand) lines.push(`Dialogue: 1,${t(0)},${t(end)},Brand,,0,0,0,,${brand}`);
   subs = 'hasil/_rakit/subtitle.ass';
   fs.writeFileSync(
     path.join(proj, subs),
@@ -113,6 +117,7 @@ if (cfg.subtitle !== false && cfg.words && fs.existsSync(path.join(proj, cfg.wor
       'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
       // Primary = sudah diucapkan (kuning), Secondary = belum (putih)
       `Style: Kata,Arial,${size},&H0000E5FF,&H00FFFFFF,&H00101010,&H80000000,-1,0,0,0,100,100,0,0,1,6,2,2,80,80,${marginV},1`,
+      `Style: Brand,Arial,${Math.round(Math.min(W, H) * 0.026)},&H38FFFFFF,&H38FFFFFF,&H60000000,&H80000000,-1,0,0,0,100,100,1,0,1,1.5,1,2,40,40,${Math.round(H * 0.018)},1`,
       '',
       '[Events]',
       'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',

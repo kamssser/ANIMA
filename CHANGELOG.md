@@ -6,6 +6,18 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.18.0 - 2026-11-04
+
+**Baru**
+
+- **Branding kanal** (Pengaturan > Branding): tulis nama kanal YouTube atau akun sosmed kamu, lalu teks itu muncul kecil di tengah paling bawah setiap video, di bawah subtitle. Berlaku untuk render 2D/3D dan semua style yang dikerjakan Claude.
+
+**Perubahan**
+
+- Naskah suara di semua style dibuat lebih mudah dipahami: bahasa lisan sehari-hari, satu kalimat satu gagasan, alur jelas, istilah sulit langsung dijelaskan, angka ditulis seperti diucapkan.
+- Ekspresi suara lebih natural: intonasi lebih hidup dan tidak datar (suara ElevenLabs lewat vibi.pro).
+- Explainer Datar: narator bercerita santai seperti teman yang ngobrol, alur tanya-jawab, angka diterjemahkan ke perbandingan sehari-hari, dan humor ringan.
+
 ## 0.17.0 - 2026-11-04
 
 **Baru**

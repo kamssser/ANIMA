@@ -70,6 +70,9 @@ const defaultSettings = () => ({
   vibi2Language: 'id',
   vibi2Speed: 1,
   wordTimestamps: true,
+  // Branding: nama kanal/akun sosmed, tampil kecil di tengah paling bawah semua video ('' = mati).
+  brandOn: false,
+  brandText: '',
   // Pipeline audio skill: <proyek Remotion>/voice (input) dan /audio (mix.py).
   voiceDir: 'voice',
   audioDir: 'audio',
@@ -262,6 +265,9 @@ const commonArgs = (s) => [
  *  - '3d' (bawaan): komposisi buatan pengguna (job.composition) + lapisan teks wajib (job.overlay), lalu mix audio skill.
  *  - '2d': mesin AnimaComic2D (job.comic, tanpa kode per video), lalu gabung suara narasi/dialog.
  */
+/** Teks branding aktif ('' kalau mati). */
+const brandOf = (s) => (s.brandOn ? String(s.brandText || '').trim().slice(0, 80) : '');
+
 async function runNext() {
   if (current || queue.length === 0) return;
   const job = queue.shift();
@@ -317,7 +323,7 @@ async function runNext() {
   if (job.kind === '2d') {
     const pub = anima2d.smallPublicDir(s.tempDir, job.jobId);
     cleanups.push(pub.cleanup);
-    const props2d = anima2d.build2DProps(job.comic, voiceDir);
+    const props2d = { ...anima2d.build2DProps(job.comic, voiceDir), watermark: brandOf(s) || undefined };
     fs.writeFileSync(propsFile, JSON.stringify(props2d));
     // Panjang video = jumlah frame semua shot (sama dengan comic2DDuration di Comic2D.tsx), 30 fps.
     const videoSec = (Math.max(1, props2d.shots.reduce((n, x) => n + x.durationInFrames, 0)) / 30).toFixed(3);
@@ -345,7 +351,9 @@ async function runNext() {
 
   // 3D: komposisi buatan pengguna dari entry pengguna (seperti sebelumnya), lalu lapisan teks lewat mesin aplikasi.
   fs.writeFileSync(propsFile, JSON.stringify(withQuality(s, job.props)));
-  const withText = Boolean(job.overlay && job.overlay.shots?.some((x) => x.text));
+  const brand = brandOf(s);
+  // Lapisan teks juga dipakai untuk branding (tanpa teks narasi pun).
+  const withText = Boolean(job.overlay && (brand || job.overlay.shots?.some((x) => x.text)));
   const raw3d = withText ? path.join(s.tempDir, `video3d-${job.jobId}.mp4`) : outFile;
   if (withText) cleanups.push(() => fs.rmSync(raw3d, { force: true }));
   const r = await remotionRun(
@@ -364,7 +372,7 @@ async function runNext() {
     const pub = anima2d.smallPublicDir(s.tempDir, job.jobId);
     cleanups.push(pub.cleanup);
     const scale = Number(s.scale) || 1;
-    const props = anima2d.buildOverlayProps(pub.dir, raw3d, { ...job.overlay, width: Math.round(1080 * scale), height: Math.round(1920 * scale) }, voiceDir);
+    const props = anima2d.buildOverlayProps(pub.dir, raw3d, { ...job.overlay, brand, width: Math.round(1080 * scale), height: Math.round(1920 * scale) }, voiceDir);
     const overlayProps = path.join(s.tempDir, `props-text-${job.jobId}.json`);
     fs.writeFileSync(overlayProps, JSON.stringify(props));
     cleanups.push(() => fs.rmSync(overlayProps, { force: true }));
@@ -829,22 +837,35 @@ ipcMain.handle('voice:saveWords', (_e, { slug, words }) => {
   return { count: clean.length };
 });
 
+
+/**
+ * Pengaturan suara yang lebih ekspresif/natural. ElevenLabs v2/turbo/flash: stabilitas sedikit lebih rendah
+ * (intonasi hidup), style ringan, speaker boost. eleven_v3 hanya menerima stabilitas 0 / 0,5 / 1 (0,5 = Natural).
+ * plain=true: pengaturan lama (cadangan kalau vibi.pro menolak field tambahan).
+ */
+function voiceSettings(provider, model, speed, plain = false) {
+  const sp = Number(speed) || 1;
+  if (provider !== 'elevenlabs') return { speed: sp, pitch: 0 };
+  if (plain) return { stability: 0.5, similarity_boost: 0.75, speed: sp };
+  if (/v3/.test(String(model || ''))) return { stability: 0.5, similarity_boost: 0.8, use_speaker_boost: true, speed: sp };
+  return { stability: 0.38, similarity_boost: 0.8, style: 0.3, use_speaker_boost: true, speed: sp };
+}
+
 /** Satu kali TTS vibi.pro dengan konfigurasi suara tertentu; hasilnya ditulis ke file mp3. */
 async function vibiTts(s, voice, text, outFile, onProgress) {
-  const isEleven = voice.provider === 'elevenlabs';
-  const task = await vibi(s, `/v1/text-to-speech/${encodeURIComponent(voice.voiceId)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text,
-      provider: voice.provider,
-      ...(voice.provider !== 'capcut' && voice.model ? { model_id: voice.model } : {}),
-      language_code: voice.language,
-      voice_settings: isEleven
-        ? { stability: 0.5, similarity_boost: 0.75, speed: Number(voice.speed) || 1 }
-        : { speed: Number(voice.speed) || 1, pitch: 0 },
-    }),
-  });
+  const post = (plain) =>
+    vibi(s, `/v1/text-to-speech/${encodeURIComponent(voice.voiceId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        provider: voice.provider,
+        ...(voice.provider !== 'capcut' && voice.model ? { model_id: voice.model } : {}),
+        language_code: voice.language,
+        voice_settings: voiceSettings(voice.provider, voice.model, voice.speed, plain),
+      }),
+    });
+  const task = await post(false).catch((e) => (/vibi.pro (400|422)/.test(e.message) ? post(true) : Promise.reject(e)));
   const done = await vibiPoll(s, `/v1/history/${task.id}`, onProgress);
   const audioUrl = done.result?.audio_url;
   if (!audioUrl) throw new Error('vibi.pro tidak mengembalikan audio_url.');

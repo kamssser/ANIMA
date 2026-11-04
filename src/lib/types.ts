@@ -121,6 +121,9 @@ export interface Settings {
   vibi2VoiceName: string;
   vibi2Language: string;
   vibi2Speed: number;
+  /** Branding: teks nama kanal/sosmed kecil di tengah bawah semua video. */
+  brandOn: boolean;
+  brandText: string;
   wordTimestamps: boolean;
   voiceDir: string;
   audioDir: string;

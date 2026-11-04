@@ -137,6 +137,7 @@ server.tool(
       const guide = {
         type: t.label,
         hook: CONTENT.hookRules,
+        narration: CONTENT.narrationRules,
         rules: two && !t.twoVoices ? [...t.rules, ...CONTENT.twoVoiceRules] : t.rules,
         sourcesRequired: t.needsSources,
         twoSpeakers: two,
@@ -406,19 +407,35 @@ const voiceOf = (s, who) =>
       }
     : { provider: s.vibiProvider, model: s.vibiModel, voiceId: s.vibiVoiceId, name: s.vibiVoiceName, language: s.vibiLanguage, speed: s.vibiSpeed };
 
+
+/**
+ * Pengaturan suara yang lebih ekspresif/natural. ElevenLabs v2/turbo/flash: stabilitas sedikit lebih rendah
+ * (intonasi hidup), style ringan, speaker boost. eleven_v3 hanya menerima stabilitas 0 / 0,5 / 1 (0,5 = Natural).
+ * plain=true: pengaturan lama (cadangan kalau vibi.pro menolak field tambahan).
+ */
+function voiceSettings(provider, model, speed, plain = false) {
+  const sp = Number(speed) || 1;
+  if (provider !== 'elevenlabs') return { speed: sp, pitch: 0 };
+  if (plain) return { stability: 0.5, similarity_boost: 0.75, speed: sp };
+  if (/v3/.test(String(model || ''))) return { stability: 0.5, similarity_boost: 0.8, use_speaker_boost: true, speed: sp };
+  return { stability: 0.38, similarity_boost: 0.8, style: 0.3, use_speaker_boost: true, speed: sp };
+}
+
 async function vibiLine(s, v, text, outFile) {
   const provider = v.provider || 'elevenlabs';
-  const task = await vibiCall(s, `/v1/text-to-speech/${encodeURIComponent(v.voiceId)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text,
-      provider,
-      ...(provider !== 'capcut' && v.model ? { model_id: v.model } : {}),
-      language_code: v.language,
-      voice_settings: provider === 'elevenlabs' ? { stability: 0.5, similarity_boost: 0.75, speed: Number(v.speed) || 1 } : { speed: Number(v.speed) || 1, pitch: 0 },
-    }),
-  });
+  const post = (plain) =>
+    vibiCall(s, `/v1/text-to-speech/${encodeURIComponent(v.voiceId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        provider,
+        ...(provider !== 'capcut' && v.model ? { model_id: v.model } : {}),
+        language_code: v.language,
+        voice_settings: voiceSettings(provider, v.model, v.speed, plain),
+      }),
+    });
+  const task = await post(false).catch((e) => (/vibi.pro (400|422)/.test(e.message) ? post(true) : Promise.reject(e)));
   for (let i = 0; i < 450; i++) {
     await new Promise((r) => setTimeout(r, 2000));
     const t = await vibiCall(s, `/v1/history/${task.id}`);

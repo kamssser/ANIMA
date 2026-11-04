@@ -3,6 +3,7 @@
 import React from 'react';
 import { AbsoluteFill, OffthreadVideo, staticFile } from 'remotion';
 import { Subtitles } from './Subtitles';
+import { Brand } from './Brand';
 import { styleLook } from './styles';
 import type { Word } from './types';
 
@@ -15,9 +16,11 @@ export type TextOverlayProps = {
   words?: Word[];
   shots: { durationInFrames: number; text: string }[];
   look?: string;
+  /** teks branding pengguna (nama kanal), kecil di tengah bawah */
+  brand?: string;
 };
 
-export const TextOverlay: React.FC<TextOverlayProps> = ({ video, words, shots, look }) => {
+export const TextOverlay: React.FC<TextOverlayProps> = ({ video, words, shots, look, brand }) => {
   let at = 0;
   const starts = shots.map((s) => {
     const a = at;
@@ -28,6 +31,7 @@ export const TextOverlay: React.FC<TextOverlayProps> = ({ video, words, shots, l
     <AbsoluteFill style={{ background: '#000' }}>
       {video && <OffthreadVideo src={staticFile(video)} muted />}
       <Subtitles words={words} shots={shots} starts={starts} look={styleLook(look ?? 'manhwa').subtitle} />
+      <Brand text={brand} />
     </AbsoluteFill>
   );
 };

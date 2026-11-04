@@ -91,10 +91,10 @@ function smallPublicDir(tempDir, jobId) {
 }
 
 /** Props lapisan teks 3D: video 3D disalin ke folder public kecil supaya bisa dibaca Remotion. */
-function buildOverlayProps(publicDir, video3d, { shots, width, height, look }, voiceDir) {
+function buildOverlayProps(publicDir, video3d, { shots, width, height, look, brand }, voiceDir) {
   fs.copyFileSync(video3d, path.join(publicDir, 'video3d.mp4'));
   const durationInFrames = shots.reduce((n, s) => n + s.durationInFrames, 0);
-  return { video: 'video3d.mp4', durationInFrames, width, height, shots, words: readWords(voiceDir) || undefined, look };
+  return { video: 'video3d.mp4', durationInFrames, width, height, shots, words: readWords(voiceDir) || undefined, look, brand: brand || undefined };
 }
 
 module.exports = { syncAnima, build2DProps, buildOverlayProps, smallPublicDir, voiceFile, alignShots, readWords };

@@ -16,6 +16,8 @@ export interface ContentType {
 
 export const CONTENT_TYPES = data.types as ContentType[];
 export const HOOK_RULES = data.hookRules as string[];
+/** Naskah suara mudah dipahami + ekspresif (berlaku untuk semua style). */
+export const NARRATION_RULES = data.narrationRules as string[];
 /** Aturan tambahan saat jenis satu-narator dipakai dengan 2 suara. */
 export const TWO_VOICE_RULES = data.twoVoiceRules as string[];
 
@@ -47,7 +49,7 @@ export function buildPrompt(project: Project) {
   const two = is2D(project.visual_style);
   const st = visualStyle(project.visual_style);
   const steps: string[] = [
-    `Panggil anima_get_project dengan id itu dan IKUTI semua aturan di field guide (hook + rules${two ? ' + style + stage + background' : ''}).`,
+    `Panggil anima_get_project dengan id itu dan IKUTI semua aturan di field guide (hook + narration + rules${two ? ' + style + stage + background' : ''}).`,
     t.needsSources
       ? 'WAJIB riset dulu dengan WebSearch lalu baca minimal 2 sumber kredibel dengan WebFetch sebelum menulis. Jangan mengarang fakta.'
       : 'Kembangkan ide dari topik project menjadi cerita yang kuat.',
@@ -423,7 +425,7 @@ export function buildStudioBrief(project: Project, slug: string, characters: { k
     `- Gaya: **${st.skillStyle}** (styles/${st.skillStyle}.md), sudah dipilih di HyperForge. Tetap tunjukkan 1 frame contoh untuk disetujui.`,
     '- Teks di layar wajib (subtitle per kata + kata kunci tebal).',
     st.skillStyle === 'explainer-datar'
-      ? '- Gaya ini: pembawa **tokoh tetap Raka** (`XD.pembawa`, jangan dirancang ulang atau diubah; karakter HyperForge di bawah tidak dipakai sebagai pembawa). Tokoh & benda lain WAJIB dari pustaka `kit/explainer-datar.js` (XD), buat lembar tokoh & benda sebelum storyboard. Cerita selesai tuntas, ditutup ucapan terima kasih + sampai jumpa dengan kartu `XD.penutup` (tanpa teaser video berikutnya). Lihat styles/explainer-datar.md.'
+      ? '- Gaya ini: pembawa **tokoh tetap Raka** (`XD.pembawa`, jangan dirancang ulang atau diubah; karakter HyperForge di bawah tidak dipakai sebagai pembawa). Tokoh & benda lain WAJIB dari pustaka `kit/explainer-datar.js` (XD), buat lembar tokoh & benda sebelum storyboard. Cerita selesai tuntas, ditutup ucapan terima kasih + sampai jumpa dengan kartu `XD.penutup` (tanpa teaser video berikutnya). **Narator** mengikuti bagian "Gaya narator & cara bercerita": santai seperti teman pintar yang ngobrol, alur tanya-jawab, angka diterjemahkan ke hal sehari-hari, humor ringan. Lihat styles/explainer-datar.md.'
       : '',
     '- **Thumbnail + judul hook wajib** setelah video disetujui (SKILL.md langkah 6.6): 5 pasangan judul + teks thumbnail untuk dipilih, `hasil/thumbnail.jpg` (+ `hasil/cover.jpg` untuk 9:16) dan `hasil/judul.txt`.',
     '',

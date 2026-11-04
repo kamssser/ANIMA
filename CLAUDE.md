@@ -68,6 +68,7 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
 - Storyboard cerita + teks suara: semua brief skill mendapat aturan `storyRule` (src/components/skill-video.tsx): Claude menulis
   `<proyek>/cerita.json` lalu menunggu; pengguna mengedit di dialog **Storyboard & naskah** (src/components/story-editor.tsx,
   IPC story:read/story:write di electron/skills.cjs).
+- Branding (Pengaturan > Branding, `brandOn`/`brandText`): render 2D/3D lewat `remotion-template/src/anima/Brand.tsx` (Comic2D watermark, TextOverlay brand); skill lewat `brandRule` di brief (src/components/skill-video.tsx); Flow lewat `brand` di rakit.json. Aturan naskah suara semua style: `narrationRules` di shared/content-types.json. Suara ElevenLabs ekspresif: `voiceSettings` (electron/main.cjs, mcp/server.mjs), mundur ke pengaturan lama kalau vibi.pro menolak (400/422).
 - Python: `ensurePython` di electron/skills.cjs melewati alias Microsoft Store dan memasang Python 3.12 via winget; paket pip
   opsional yang gagal hanya peringatan.
 - Otak custom (`electron/brain.cjs`): env ANTHROPIC_* diset di process.env proses utama, jadi semua proses `claude`
