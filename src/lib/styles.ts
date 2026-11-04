@@ -85,6 +85,10 @@ export const styleId = (id: string | null | undefined) => (id && ALIASES[id]) ||
 export const visualStyle = (id: string | null | undefined): VisualStyle => VISUAL_STYLES.find((s) => s.id === styleId(id)) ?? VISUAL_STYLES[0];
 export const is2D = (id: string | null | undefined) => visualStyle(id).kind === '2d';
 export const isSkill = (id: string | null | undefined) => visualStyle(id).kind === 'skill';
+
+/** Durasi maksimal project (detik): landscape 16:9 sampai 15 menit, portrait 9:16 sampai 5 menit. Kartun 3D selalu 9:16. */
+export const maxSeconds = (style: string | null | undefined, format: string | null | undefined) =>
+  format === '16:9' && (is2D(style) || isSkill(style)) ? 900 : 300;
 export const STYLES_SKILL = VISUAL_STYLES.filter((s) => s.kind === 'skill');
 
 // ---------- gambar contoh & kelompok style (kartu pemilih style) ----------

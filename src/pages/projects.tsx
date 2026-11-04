@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input, Textarea } from '@/components/ui/input';
 import { Badge, Label, Skeleton } from '@/components/ui/misc';
 import { CONTENT_TYPES, contentType, type ContentTypeId } from '@/lib/content';
-import { is2D, isSkill, styleImage, visualStyle, type VisualStyleId } from '@/lib/styles';
+import { is2D, isSkill, maxSeconds, styleImage, visualStyle, type VisualStyleId } from '@/lib/styles';
 import { StylePicker } from '@/components/style-picker';
 import { cn } from '@/lib/utils';
 import { createProject, listProjects } from '@/lib/api';
@@ -113,8 +113,8 @@ function NewProjectDialog() {
   const twoVoices = voices ? voices === 2 : contentType(kind).twoVoices;
   const [busy, setBusy] = useState(false);
   const two = is2D(style) || isSkill(style);
-  // Semua style sampai 5 menit; Kartun 3D tetap paling lama dirender.
-  const max = 300;
+  // Portrait sampai 5 menit, landscape 16:9 sampai 15 menit; Kartun 3D tetap paling lama dirender.
+  const max = maxSeconds(style, two ? format : '9:16');
   const st = visualStyle(style);
 
   function reset(o: boolean) {

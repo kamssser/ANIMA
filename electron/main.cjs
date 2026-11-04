@@ -839,6 +839,25 @@ ipcMain.handle('voice:saveWords', (_e, { slug, words }) => {
 
 
 /**
+ * Rapikan teks sebelum TTS supaya tidak ada kata yang terjeda/terpisah: baris baru dan spasi ganda jadi satu spasi,
+ * "..." / "--" (sering jadi jeda panjang di tengah kalimat) jadi koma, tag arahan [..] dibuang, isi kurung jadi sisipan berkoma, markdown dibuang,
+ * tanda baca ganda dirapikan, dan tidak ada spasi sebelum tanda baca.
+ */
+function cleanTtsText(text) {
+  return String(text || '')
+    .replace(/\[[^\]]*\]/g, ' ')
+    .replace(/\(([^)]*)\)/g, ', $1, ')
+    .replace(/[*_#`~]+/g, '')
+    .replace(/\s*(\.{2,}|…|--|—|–)\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.!?;:])/g, '$1')
+    .replace(/([,;:])\s*(?=[,.!?;:])/g, '')
+    .replace(/([!?.]){2,}/g, '$1')
+    .replace(/^[,\s]+/, '')
+    .trim();
+}
+
+/**
  * Pengaturan suara yang lebih ekspresif/natural. ElevenLabs v2/turbo/flash: stabilitas sedikit lebih rendah
  * (intonasi hidup), style ringan, speaker boost. eleven_v3 hanya menerima stabilitas 0 / 0,5 / 1 (0,5 = Natural).
  * plain=true: pengaturan lama (cadangan kalau vibi.pro menolak field tambahan).
@@ -848,17 +867,18 @@ function voiceSettings(provider, model, speed, plain = false) {
   if (provider !== 'elevenlabs') return { speed: sp, pitch: 0 };
   if (plain) return { stability: 0.5, similarity_boost: 0.75, speed: sp };
   if (/v3/.test(String(model || ''))) return { stability: 0.5, similarity_boost: 0.8, use_speaker_boost: true, speed: sp };
-  return { stability: 0.38, similarity_boost: 0.8, style: 0.3, use_speaker_boost: true, speed: sp };
+  return { stability: 0.45, similarity_boost: 0.8, style: 0.2, use_speaker_boost: true, speed: sp };
 }
 
 /** Satu kali TTS vibi.pro dengan konfigurasi suara tertentu; hasilnya ditulis ke file mp3. */
 async function vibiTts(s, voice, text, outFile, onProgress) {
+  const clean = cleanTtsText(text);
   const post = (plain) =>
     vibi(s, `/v1/text-to-speech/${encodeURIComponent(voice.voiceId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text,
+        text: clean,
         provider: voice.provider,
         ...(voice.provider !== 'capcut' && voice.model ? { model_id: voice.model } : {}),
         language_code: voice.language,

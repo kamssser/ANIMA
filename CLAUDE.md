@@ -43,7 +43,7 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
 - Mengubah isi skill/alat yang diambil dari GitHub pada commit tetap (tidak ada di repo, dipasang lewat Siapkan otomatis):
   `lemo-opuscar` (lemomo-ai/lemo-opuscar, MIT; contoh film CC BY 4.0), `motionmaxxing` (Tejashmakwana/motionmaxxing,
   Apache-2.0), dan `google-flow-browser-mcp` (TMSSS05, MIT), `directing-stickman-videos` (kaomei/stickman-video-director, MIT),
-  `hand-drawn-video-prompts` (kaomei, MIT). Untuk memperbarui: ganti `commit` di `electron/skills.cjs`.
+  `hand-drawn-video-prompts` (kaomei, MIT). Juga `human-voice` (zircote/human-voice, MIT, `VOICE_SKILL`), dipasang opsional untuk semua style. Untuk memperbarui: ganti `commit` di `electron/skills.cjs`.
   Agent Reach dipasang dengan uv dari rilis GitHub-nya (bukan PyPI; paket PyPI bernama sama bukan proyek itu).
 
 ## Catatan teknis

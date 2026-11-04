@@ -10,7 +10,7 @@ create table if not exists public.projects (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   title text not null,
   topic text not null default '',
-  target_seconds int not null default 60 check (target_seconds between 15 and 180),
+  target_seconds int not null default 60,
   style_preset text not null default 'cartoon-3d',
   composition text not null default 'Main',
   script text not null default '',
@@ -92,6 +92,10 @@ alter table public.shots add column if not exists speaker text not null default 
 
 alter table public.projects add column if not exists visual_style text not null default 'kartun-3d';
 alter table public.projects add column if not exists format text not null default '9:16';
+-- 0.18.1: durasi portrait sampai 5 menit, landscape 16:9 sampai 15 menit (sama dengan migrations/004_durasi_panjang.sql).
+alter table public.projects drop constraint if exists projects_target_seconds_check;
+alter table public.projects add constraint projects_target_seconds_check
+  check (target_seconds between 15 and (case when format = '16:9' then 900 else 300 end));
 -- { backgrounds: { <id>: { description, svg } }, references: [{ title, url, image, license }] }
 alter table public.projects add column if not exists assets jsonb not null default '{}'::jsonb;
 

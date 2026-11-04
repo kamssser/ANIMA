@@ -30,7 +30,7 @@ import { sb } from '@/lib/supabase';
 import type { Project, ProjectStatus, RenderJob, Shot } from '@/lib/types';
 import { WORDS_PER_SECOND, cn, countWords, formatSeconds, framesToSeconds } from '@/lib/utils';
 import { CONTENT_TYPES, buildPrompt, contentType, usesTwoVoices } from '@/lib/content';
-import { is2D, isSkill, styleImage, visualStyle, type VisualStyleId } from '@/lib/styles';
+import { is2D, isSkill, maxSeconds, styleImage, visualStyle, type VisualStyleId } from '@/lib/styles';
 import { StylePicker } from '@/components/style-picker';
 import { SkillPanel, SkillRenders } from '@/components/skill-video';
 import { SkillChat } from '@/components/skill-chat';
@@ -256,7 +256,7 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
       ...assetsPatch,
       title: draft.title,
       topic: draft.topic,
-      target_seconds: draft.target_seconds,
+      target_seconds: Math.max(15, Math.min(Number(draft.target_seconds) || 60, maxSeconds(draft.visual_style, draft.format || '9:16'))),
       composition: draft.composition,
       script: draft.script,
       status: draft.status,
@@ -391,8 +391,8 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
               </div>
             )}
             <div className="grid gap-2">
-              <Label htmlFor="sec">Durasi target (detik)</Label>
-              <Input id="sec" type="number" min={15} max={300} value={draft.target_seconds} onChange={(e) => setDraft({ ...draft, target_seconds: Number(e.target.value) })} />
+              <Label htmlFor="sec">Durasi target (detik, maks {maxSeconds(draft.visual_style, draft.format || '9:16')})</Label>
+              <Input id="sec" type="number" min={15} max={maxSeconds(draft.visual_style, draft.format || '9:16')} value={draft.target_seconds} onChange={(e) => setDraft({ ...draft, target_seconds: Number(e.target.value) })} />
             </div>
             {!is2D(draft.visual_style) && !isSkill(draft.visual_style) && (
               <div className="grid gap-2">

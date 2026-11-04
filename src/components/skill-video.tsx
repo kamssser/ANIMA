@@ -94,7 +94,10 @@ function narrationRule() {
     '',
     '## Naskah suara: mudah dipahami & natural (WAJIB, semua style)',
     ...NARRATION_RULES.map((r) => `- ${r}`),
-    '- Suara dibuat dengan pengaturan ekspresif dari HyperForge. Buat suara per kalimat/adegan bila skill mendukung, supaya jeda dan intonasi tiap kalimat alami. Cek hasilnya (timing kata): kalau ada kata yang salah ucap atau terdengar datar, ubah ejaan/tanda bacanya lalu buat ulang kalimat itu saja.',
+    '- **Cek "terdengar manusia" dengan skill `human-voice`** (kalau terpasang di ~/.claude/skills/human-voice) SEBELUM menunjukkan naskah/storyboard ke pengguna: jalankan `node ~/.claude/skills/human-voice/scripts/validate-character-restrictions.js <folder naskah>` untuk tanda pisah panjang, kutip miring, elipsis, dan emoji, lalu tinjau tier bahasa, struktur, dan suara dari SKILL.md-nya, diterapkan ke Bahasa Indonesia: buang frasa klise khas AI ("mari kita selami", "di era modern ini", "tak hanya itu", "perlu dicatat bahwa", "dalam dunia yang serba ...", "pada akhirnya"), daftar bertiga yang dipaksakan, kalimat yang panjang dan polanya sama terus, dan pembuka meta ("di video ini kita akan membahas"). Perbaiki narasinya (juga di cerita.json), jangan mengubah fakta.',
+    '- Suara dibuat dengan pengaturan ekspresif dari HyperForge. Supaya kalimat mengalir tanpa kata yang terjeda/terpisah: buat suara per bagian utuh (beberapa kalimat sekaligus, mis. satu bab atau beberapa adegan), JANGAN per kata atau per potongan frasa, dan JANGAN memotong satu kalimat ke dua file suara. Kalau adegan harus dipisah, potong hanya di akhir kalimat (setelah titik/tanda tanya).',
+    '- Saat menggabungkan file suara: jeda antar-file pendek (0,15-0,3 dtk), jangan memotong ujung kata (sisakan ~0,05 dtk hening di awal/akhir), dan jangan mempercepat/memperlambat potongan.',
+    '- Cek hasilnya dengan timing kata (words): kalau ada jeda > 0,5 dtk di tengah kalimat, kata yang terpecah jadi dua, salah ucap, atau terdengar datar, perbaiki teks/tanda bacanya lalu buat ulang bagian itu saja.',
   ].join('\n');
 }
 

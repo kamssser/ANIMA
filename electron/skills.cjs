@@ -736,6 +736,29 @@ const HAND_SKILL = {
   marker: path.join(SKILLS_DIR, '.hyperforge-hand-drawn-video-prompts.json'),
 };
 
+// human-voice (zircote, MIT): skill pemeriksa pola tulisan "khas AI" untuk naskah suara SEMUA style. Dipasang persis
+// dari GitHub (commit tetap), opsional: gagal pasang tidak menghalangi style apa pun.
+const VOICE_SKILL = {
+  name: 'human-voice',
+  commit: '9095b0427447e75b19ec174db4a6c4b92428eb76',
+  git: { repo: 'https://github.com/zircote/human-voice.git', sub: 'skills/human-voice', sparse: ['/skills/human-voice/'] },
+  dst: path.join(SKILLS_DIR, 'human-voice'),
+  marker: path.join(SKILLS_DIR, '.hyperforge-human-voice.json'),
+};
+let voiceSkillTry = null;
+/** Pasang human-voice sekali bila belum ada (tidak pernah melempar error). */
+function ensureVoiceSkill(which, say) {
+  if (skillState(VOICE_SKILL).installed) return Promise.resolve(true);
+  voiceSkillTry ||= gitInstallSkill(VOICE_SKILL, which, say || (() => {}))
+    .then(() => true)
+    .catch((err) => {
+      voiceSkillTry = null;
+      if (say) say('Skill human-voice belum terpasang (opsional)', String(err.message || err).slice(0, 200));
+      return false;
+    });
+  return voiceSkillTry;
+}
+
 ENGINES.flow = {
   id: 'flow',
   name: 'hyperforge-flow',
@@ -910,6 +933,8 @@ async function prepareSession(e, { slug, title, brief, files }, { which, claudeC
   const st = await check(e.id);
   const missing = st.items.filter((i) => !i.ok && !i.optional).map((i) => i.label);
   if (missing.length) throw new Error(`Belum siap: ${missing.join(', ')}. Buka Pengaturan > Skill video lalu klik Siapkan otomatis.`);
+  // Skill human-voice untuk memeriksa naskah (opsional; pengguna lama mendapatkannya tanpa Siapkan otomatis ulang).
+  await Promise.race([ensureVoiceSkill(which), new Promise((r) => setTimeout(r, 20000))]);
   fs.mkdirSync(path.join(e.work, 'briefs'), { recursive: true });
   const briefFile = path.join(e.work, 'briefs', `${slug}.md`);
   if (brief) fs.writeFileSync(briefFile, brief);
@@ -973,6 +998,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
       // Skill dengan ffmpeg sendiri (Animantra) tidak butuh ffmpeg lengkap sistem.
       ...(e.ffmpegPath ? [] : [{ id: 'ffmpeg', label: 'ffmpeg lengkap', ok: Boolean(ffmpeg), detail: ffmpeg ?? 'dipasang lewat winget (Gyan.FFmpeg)' }]),
       ...extra,
+      { id: 'humanvoice', label: 'Skill human-voice (naskah terdengar manusia)', ok: skillState(VOICE_SKILL).installed, optional: true, detail: `zircote/human-voice commit ${VOICE_SKILL.commit.slice(0, 7)}, dipasang otomatis` },
     ];
     return { engine: e.id, ready: items.every((i) => i.ok || i.optional), items, workDir: e.work, commit: e.commit, url: e.url, optionalLabel: e.optionalLabel, license: e.license || 'MIT' };
   }
@@ -990,6 +1016,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
     if (e.src) installSkill(e, say);
     else if (e.git) await gitInstallSkill(e, which, say);
     await e.setup({ which, say, optional });
+    await ensureVoiceSkill(which, say);
     if (!e.ffmpegPath) await installFfmpeg(which, say);
     fs.mkdirSync(path.join(e.work, 'briefs'), { recursive: true });
     say('Selesai');

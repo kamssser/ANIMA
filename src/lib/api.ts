@@ -12,6 +12,10 @@ function check<T>(res: { data: T | null; error: { message: string } | null }): T
     if (/visual_style|format|assets|characters/.test(res.error.message) && /column|schema cache|relation|does not exist/i.test(res.error.message)) {
       throw new Error('Database belum diperbarui. Pemilik Supabase perlu menjalankan supabase/migrations/003_styles_characters.sql di SQL Editor.');
     }
+    // 0.18.1: durasi sampai 5 menit; database lama masih membatasi 180 detik.
+    if (/target_seconds_check/.test(res.error.message)) {
+      throw new Error('Durasi ditolak database. Batasnya: portrait 9:16 maks 5 menit, landscape 16:9 maks 15 menit. Kalau durasimu sudah di dalam batas itu, pemilik Supabase perlu menjalankan supabase/migrations/004_durasi_panjang.sql di SQL Editor (sementara itu pilih 180 detik atau kurang).');
+    }
     throw new Error(res.error.message);
   }
   return res.data as T;

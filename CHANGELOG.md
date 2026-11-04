@@ -6,6 +6,18 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.18.1 - 2026-11-04
+
+**Baru**
+
+- Video landscape (16:9) bisa sampai **15 menit**. Video tegak (9:16) sampai 5 menit.
+- Naskah suara diperiksa dengan skill **human-voice** supaya terdengar seperti tulisan manusia, bukan tulisan AI (dipasang otomatis untuk semua style).
+
+**Perbaikan**
+
+- Membuat project lebih dari 3 menit tidak lagi gagal dengan pesan "violates check constraint" (pemilik database perlu menjalankan pembaruan database sekali).
+- Suara narasi mengalir tanpa kata yang terjeda atau terpisah: teks dirapikan otomatis sebelum dibuat suaranya, dan Claude membuat suara per bagian utuh, bukan per potongan kalimat.
+
 ## 0.18.0 - 2026-11-04
 
 **Baru**
