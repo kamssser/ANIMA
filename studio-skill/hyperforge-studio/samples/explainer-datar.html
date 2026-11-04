@@ -1,33 +1,138 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Explainer datar</title>
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Explainer datar v2</title>
 <style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
 <script src="/kit/studio-kit.js"></script><script src="/kit/explainer-datar.js"></script></head><body><canvas id="c"></canvas>
 <script>
-// Contoh gaya explainer datar (16:9). Semua tokoh & benda dari kit/explainer-datar.js (XD), bukan digambar dari nol.
-const W = 1920, H = 1080, FPS = 24;
+// Contoh gaya explainer datar v2 (16:9) dengan tokoh tetap Tora + tokoh pendamping XD.chibi. 6 adegan x 5 detik: "Kenapa kota terasa lebih panas daripada desa?"
+const W = 1920, H = 1080, FPS = 24, D = 5;
 const cv = document.getElementById('c'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
-const P = XD.palet;
-const LATAR = '#352b24';
-const rim = XD.rimUntuk(LATAR);
-const words = [{ s: 0.2, e: 0.6, text: 'Kerja' }, { s: 0.6, e: 1.0, text: 'seharian,' }, { s: 1.1, e: 1.5, text: 'upahnya' }, { s: 1.5, e: 2.4, text: 'segini.' }];
-HF.setup({ width: W, height: H, fps: FPS, duration: 4, draw(t) {
-  // kamera: zoom pelan
-  const z = 1 + 0.05 * HF.ease.inOut(HF.prog(t, 0, 4));
-  ctx.save(); ctx.translate(W * 0.45, H * 0.6); ctx.scale(z, z); ctx.translate(-W * 0.45, -H * 0.6);
-  XD.langit(ctx, W, H, '#2a221d', '#4a3b2e');
-  XD.cahaya(ctx, 640, 330, 640, '255,214,140', 0.42);
-  // dinding tambang pudar
-  ctx.fillStyle = 'rgba(120,96,78,0.35)';
-  for (const [x, y, r] of [[160, 300, 110], [1700, 240, 150], [1420, 520, 90], [300, 640, 70]]) { ctx.beginPath(); ctx.ellipse(x, y, r * 1.4, r, 0.2, 0, 7); ctx.fill(); }
-  XD.tanah(ctx, W, H, 880, '#3b2f25');
-  XD.batu(ctx, 1500, 900, 1.5, { bijih: true, rim, seed: 4 });
-  XD.batu(ctx, 1730, 900, 0.9, { rim, seed: 9 });
-  // tokoh tetap gaya ini (Raka, XD.PEMBAWA) menjelaskan; tokoh cerita (penambang) di kiri
-  XD.pembawa(ctx, 1240, 930, 1.55, { t, pose: t < 1.6 ? 'diam' : 'tunjuk', ekspresi: t < 1.6 ? 'senyum' : 'mantap', bicara: t > 0.2 && t < 2.4, rim, hadap: -1 });
-  const pose = t < 1.6 ? 'diam' : 'kepala';
-  XD.tokoh(ctx, 700, 960, 2.0, { t, id: 1, kulit: P.kulit[3], gayaRambut: 'keriting', topi: 'helm', lampuNyala: true, baju: '#9cc0d6', overall: '#e2b45a', ekspresi: t < 1.6 ? 'netral' : 'sedih', pose, rim });
-  const u = HF.spring(t, 1.5, 0, 1, 16, 0.5);
-  XD.label(ctx, 1000, 250, 'Upah sehari: sangat kecil', { muncul: Math.max(0, u) });
+const SARI = { nama: 'Sari', kulit: '#f1cfa8', rambut: '#2c2a30', gayaRambut: 'bob', baju: '#e8837a', celana: '#6a6f7c', sepatu: '#f1ede4' };
+const SUB = [
+  'Pernah ngga sih, siang-siang di rumah rasanya kayak dipanggang?',
+  'Termometer bilang tiga puluh empat derajat. Padahal belum jam dua belas.',
+  'Nah, fenomena ini punya nama: pulau panas perkotaan.',
+  'Di jalan kota, aspal dan beton nyimpen panas matahari seharian.',
+  'Sementara di desa, pohon dan tanah bikin udaranya lebih adem.',
+  'Jadi, makin banyak pohon di kota, makin sejuk juga kotanya!',
+];
+const sub = (i, t) => {
+  const kata = SUB[i].split(' '); const per = 3.6 / kata.length;
+  HF.drawSubtitle(ctx, t, HF.chunkWords(kata.map((w, k) => ({ s: 0.3 + k * per, e: 0.3 + (k + 1) * per, text: w })), 6), { hi: '#ffd166', size: 44, y: H * 0.92, font: '"Segoe UI", Arial, sans-serif', stroke: 'rgba(0,0,0,0.55)' });
+};
+const muncul = (t, t0) => HF.clamp(HF.spring(t, t0, 0, 1, 14, 0.8));
+const kotak = (c, x, y, w, h, warna, r = 6) => { c.fillStyle = warna; c.beginPath(); c.roundRect(x, y, w, h, r); c.fill(); };
+
+function ruang(c, t) {
+  kotak(c, -100, -100, W + 200, 900, '#e3bb6c', 0);
+  kotak(c, -100, 780, W + 200, 400, '#8fa6a3', 0);
+  kotak(c, -100, 770, W + 200, 16, '#c79a55', 0);
+  kotak(c, 980, 60, 780, 470, '#c99b58', 10); kotak(c, 1000, 80, 740, 430, '#fff6dc', 6);
+  for (const x of [1000, 1250, 1500]) { kotak(c, x + 6, 86, 236, 200, '#f7f1d2', 4); kotak(c, x + 6, 300, 236, 204, '#eef0c9', 4); }
+  kotak(c, 1240, 80, 12, 430, '#c99b58', 0); kotak(c, 1490, 80, 12, 430, '#c99b58', 0); kotak(c, 1000, 288, 740, 12, '#c99b58', 0);
+  XD.cahaya(c, 1370, 300, 700, '255,244,210', 0.6);
+  kotak(c, 190, 120, 260, 300, '#a9733f', 6); for (let j = 0; j < 3; j++) { kotak(c, 200, 140 + j * 95, 240, 8, '#8a5a30', 0); for (let i = 0; i < 7; i++) kotak(c, 210 + i * 32, 150 + j * 95, 24, 70, ['#4e7d8c', '#c25a4a', '#6d9a5a', '#e0b04a', '#7a5a8c'][(i + j) % 5], 3); }
+  kotak(c, 80, 560, 760, 230, '#b9463f', 30); kotak(c, 60, 640, 100, 160, '#a53c36', 24); kotak(c, 760, 640, 100, 160, '#a53c36', 24); kotak(c, 140, 520, 640, 120, '#c45049', 26);
+  kotak(c, 1080, 590, 560, 200, '#a56d3c', 8); for (let i = 0; i < 3; i++) { kotak(c, 1096 + i * 182, 606, 166, 168, '#b57c47', 6); kotak(c, 1170 + i * 182, 680, 20, 8, '#e8c088', 3); }
+}
+
+function adegan1(t) {
+  const lapis = XD.kamera(ctx, W, H, t, { t1: D, zoom: 0.05, geser: [-30, -8], fokus: [900, 560] });
+  lapis(0.4); XD.lapisan(ctx, (c) => ruang(c, t), { blur: 7 });
+  lapis(1);
+  kotak(ctx, 1290, 700, 18, 160, '#d9d4c8', 8); ctx.fillStyle = '#eee8dc'; ctx.beginPath(); ctx.ellipse(1300, 860, 70, 16, 0, 0, 7); ctx.fill();
+  ctx.save(); ctx.translate(1300, 650); ctx.fillStyle = '#e9e4d8'; ctx.beginPath(); ctx.arc(0, 0, 78, 0, 7); ctx.fill(); ctx.rotate(t * 14); ctx.fillStyle = 'rgba(160,190,200,0.75)'; for (let k = 0; k < 3; k++) { ctx.rotate(2.09); ctx.beginPath(); ctx.ellipse(0, -36, 18, 36, 0, 0, 7); ctx.fill(); } ctx.restore();
+  XD.tora(ctx, 860, 1060, 1.45, { t, pose: 'garuk', ekspresi: 'ragu', keringat: true, bicara: t > 0.3 && t < 3.9 });
+  lapis(null); XD.bokeh(ctx, W, H, t, { a: 0.08 }); XD.vinyet(ctx, W, H, 0.28); XD.grade(ctx, W, H);
+  XD.penanda(ctx, 110, 860, 'Pukul 11.30', { muncul: muncul(t, 0.4) });
+}
+function adegan2(t) {
+  const lapis = XD.kamera(ctx, W, H, t, { t1: D, zoom: 0.05, geser: [20, -6], fokus: [1100, 560] });
+  lapis(0.4); XD.lapisan(ctx, (c) => { c.translate(-200, -60); c.scale(1.15, 1.15); ruang(c, t); }, { blur: 10 });
+  XD.tora(ctx, 360, 1000, 1.05, { t, pose: 'tunjuk', ekspresi: 'kaget', blur: 9 });
+  lapis(1); kotak(ctx, 700, 900, 1500, 260, '#b07a45', 14); kotak(ctx, 700, 900, 1500, 22, '#c48d55', 8);
+  const tx = 1240, ty = 910;
+  XD.lapisan(ctx, (c) => {
+    c.fillStyle = '#f7f3ec'; c.beginPath(); c.roundRect(tx - 46, ty - 600, 92, 560, 46); c.fill(); c.beginPath(); c.arc(tx, ty - 70, 84, 0, 7); c.fill();
+    const naik = 0.5 + 0.4 * HF.ease.out(HF.prog(t, 0.4, 3));
+    c.fillStyle = '#e5404a'; c.beginPath(); c.roundRect(tx - 20, ty - 100 - 460 * naik, 40, 460 * naik + 40, 20); c.fill(); c.beginPath(); c.arc(tx, ty - 70, 60, 0, 7); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.4)'; c.beginPath(); c.roundRect(tx - 34, ty - 580, 14, 480, 7); c.fill();
+    XD.mataBenda(c, tx, ty - 74, 1.5, { t, id: 4, warna: '#3a1418' });
+  }, { tepi: 'rgba(255,236,205,0.85)', tebal: 5 });
+  lapis(null); XD.vinyet(ctx, W, H, 0.3); XD.grade(ctx, W, H);
+  XD.angkaBesar(ctx, 600, 380, { judul: '>34°C', isi: 'padahal belum tengah hari', ukuran: 130, muncul: muncul(t, 1.0) });
+}
+function adegan3(t) {
+  const lapis = XD.kamera(ctx, W, H, t, { t1: D, zoom: 0.08, geser: [0, 0], fokus: [1200, 560] });
+  lapis(0.2); XD.langit(ctx, W, H, '#10141f', '#1b1626'); XD.bokeh(ctx, W, H, t, { n: 50, a: 0.12, warna: '255,255,255', tinggi: 1, seed: 8 });
+  const r = HF.rng(21); ctx.fillStyle = '#ffffff'; for (let i = 0; i < 140; i++) { ctx.globalAlpha = 0.2 + r() * 0.6; ctx.fillRect(r() * W, r() * H, 2, 2); } ctx.globalAlpha = 1;
+  lapis(1); const cx = 1200, cy = 560;
+  XD.cahaya(ctx, cx, cy, 520, '255,90,80', 0.35 + 0.08 * Math.sin(t * 2));
+  XD.lapisan(ctx, (c) => {
+    c.fillStyle = '#d9474f'; c.beginPath(); c.ellipse(cx, cy, 170, 150, 0, 0, 7); c.fill();
+    for (const [dx, dy, rx] of [[-150, -10, 70], [150, -10, 70], [-60, 130, 50], [60, 130, 50]]) { c.beginPath(); c.ellipse(cx + dx, cy + dy, rx, rx * 0.6, dx * 0.004, 0, 7); c.fill(); }
+    c.fillStyle = '#f0a26a'; c.beginPath(); c.ellipse(cx, cy - 10, 90, 70, 0, 0, 7); c.fill();
+    for (let i = 0; i < 6; i++) kotak(c, cx - 70 + i * 24, cy - 40 - (i % 3) * 22, 18, 50 + (i % 3) * 22, '#c9744a', 3);
+    XD.mataBenda(c, cx, cy + 50, 2, { t, id: 7, warna: '#2a1214' });
+  }, { tepi: 'rgba(255,220,200,0.6)', tebal: 4 });
+  XD.cahaya(ctx, cx - 30, cy - 30, 160, '255,240,220', 0.5);
+  lapis(null); XD.vinyet(ctx, W, H, 0.45, '5,8,15'); XD.grade(ctx, W, H, { glow: 0.35, hangat: 0.08 });
+  XD.kartuIstilah(ctx, 110, 200, { kecil: 'Urban Heat Island', judul: 'Pulau panas perkotaan', isi: ['Kota menyimpan panas lebih banyak', 'daripada daerah hijau di sekitarnya'], muncul: muncul(t, 0.4), gelap: 0 });
+}
+function adegan4(t) {
+  const lapis = XD.kamera(ctx, W, H, t, { t1: D, zoom: 0.05, geser: [-30, -6], fokus: [960, 560] });
+  lapis(0.4); XD.lapisan(ctx, (c) => {
+    XD.langit(c, W, H, '#f3d39c', '#f8e7c8'); XD.cahaya(c, 1600, 120, 800, '255,230,170', 0.6);
+    const r = HF.rng(5); let x = -40; while (x < W + 40) { const w = 200 + r() * 160, h = 380 + r() * 300; kotak(c, x, 800 - h, w - 20, h, ['#c9a07e', '#b98f74', '#d4b08e'][Math.floor(r() * 3)], 6); for (let i = 0; i < 3; i++) for (let j = 0; j < h / 80 - 1; j++) kotak(c, x + 24 + i * (w - 70) / 3, 830 - h + j * 74, 30, 40, '#ecd3b0', 3); x += w; }
+    kotak(c, -100, 800, W + 200, 400, '#7b736e', 0); kotak(c, -100, 790, W + 200, 20, '#b0a69c', 0);
+  }, { blur: 8 });
+  lapis(1); XD.tora(ctx, 780, 1060, 1.35, { t, pose: 'garuk', ekspresi: 'ragu', keringat: true, lihat: 0.4 });
+  XD.chibi(ctx, 1180, 1060, 1.3, { ...SARI, t, pose: 'pinggang', ekspresi: 'kaget', hadap: -1, lihat: -0.4, bicara: t > 0.4 && t < 3 });
+  lapis(null); XD.vinyet(ctx, W, H, 0.28); XD.grade(ctx, W, H);
+  XD.bicara(ctx, 1440, 330, 'Panas\nbanget!', { ukuran: 44, ekor: [1290, 470], muncul: muncul(t, 0.6) });
+}
+function adegan5(t) {
+  const half = W / 2;
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, half, H); ctx.clip();
+  XD.langit(ctx, half, H, '#cdb79c', '#e9d6bc'); XD.cahaya(ctx, 300, 200, 600, '255,200,140', 0.5);
+  const r = HF.rng(9); let x = -40; while (x < half + 40) { const w = 140 + r() * 90, h = 320 + r() * 340; kotak(ctx, x, 820 - h, w - 14, h, ['#8f8580', '#a3968c', '#7d7470'][Math.floor(r() * 3)], 4); x += w; }
+  for (const [cx2, cy2] of [[200, 330], [620, 260]]) { ctx.fillStyle = 'rgba(120,110,105,0.55)'; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.arc(cx2 + k * 30, cy2 - k * 50 - ((t * 20) % 50), 36 + k * 8, 0, 7); ctx.fill(); } }
+  kotak(ctx, -10, 820, half + 20, 300, '#6e6764', 0);
+  XD.cahaya(ctx, half / 2, 760, 500, '255,120,60', 0.35);
   ctx.restore();
-  HF.drawSubtitle(ctx, t, HF.chunkWords(words, 4), { hi: '#ffd166', size: 54, y: H * 0.92 });
+  ctx.save(); ctx.beginPath(); ctx.rect(half, 0, half, H); ctx.clip(); ctx.translate(half, 0);
+  XD.langit(ctx, half, H, '#9fcde6', '#eef3df'); XD.awan(ctx, 300, 200, 0.9, 0.95, 3);
+  XD.bukit(ctx, half, H, 690, 80, '#a9c78c', 4); XD.bukit(ctx, half, H, 770, 50, '#86ad66', 7);
+  kotak(ctx, -10, 820, half + 20, 300, '#7ea35b', 0);
+  XD.pohon(ctx, 330, 860, 2.0, { warna: '#5f9447' });
+  XD.tora(ctx, 560, 960, 0.85, { t, pose: 'diam', ekspresi: 'senang' });
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(half - 3, 0, 6, H);
+  XD.vinyet(ctx, W, H, 0.22); XD.grade(ctx, W, H);
+  const k = muncul(t, 0.5);
+  for (const [x0, a, b] of [[60, 'Kota', 'Aspal, beton, sedikit pohon'], [half + 60, 'Desa', 'Pohon, tanah, dan sawah']]) {
+    ctx.save(); ctx.globalAlpha = k; const g = ctx.createLinearGradient(0, 780, 0, 980); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.45)'); ctx.fillStyle = g; ctx.fillRect(x0 - 60, 780, half, 200);
+    ctx.fillStyle = '#fff'; ctx.font = '800 40px "Segoe UI", Arial'; ctx.fillText(a, x0, 880); ctx.font = '400 26px "Segoe UI", Arial'; ctx.fillText(b, x0, 920); ctx.restore();
+  }
+}
+function adegan6(t) {
+  const lapis = XD.kamera(ctx, W, H, t, { t1: D, zoom: 0.06, geser: [30, -10], fokus: [900, 560] });
+  lapis(0.4); XD.lapisan(ctx, (c) => {
+    XD.langit(c, W, H, '#a5d1ea', '#f3efdc'); XD.awan(c, 1500, 220, 1.2, 0.95, 7); XD.awan(c, 400, 160, 0.9, 0.9, 2);
+    const r = HF.rng(13); let x = -40; while (x < W + 40) { const w = 200 + r() * 160, h = 300 + r() * 260; kotak(c, x, 760 - h, w - 20, h, '#dcc9af', 6); XD.semak(c, x + w / 2, 760 - h, 0.9, '#78a85a', x); x += w; }
+    kotak(c, -100, 760, W + 200, 400, '#8cb86a', 0); for (const px of [150, 520, 1420, 1780]) XD.pohon(c, px, 820, 1.7, { warna: '#5f9a48' });
+  }, { blur: 7 });
+  XD.sinar(ctx, 1500, 0, W, H, 0.1);
+  lapis(1); XD.tora(ctx, 820, 1060, 1.4, { t, pose: 'lambai', ekspresi: 'senang', bicara: t > 0.3 && t < 3.9 });
+  XD.chibi(ctx, 1180, 1060, 1.3, { ...SARI, t, pose: 'diam', ekspresi: 'senang', hadap: -1 });
+  lapis(null); XD.bokeh(ctx, W, H, t, { a: 0.1 }); XD.vinyet(ctx, W, H, 0.25); XD.grade(ctx, W, H);
+  XD.kartuIstilah(ctx, 110, 180, { kecil: 'Solusinya', judul: 'Kota yang lebih hijau', isi: ['Pohon, taman, dan atap hijau', 'menurunkan suhu di sekitarnya'], muncul: muncul(t, 1.0), ukuran: 58 });
+}
+const SCENES = [adegan1, adegan2, adegan3, adegan4, adegan5, adegan6];
+HF.setup({ width: W, height: H, fps: FPS, duration: D * SCENES.length, draw(t) {
+  const i = Math.min(SCENES.length - 1, Math.floor(t / D)); const lt = t - i * D;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
+  SCENES[i](lt); ctx.setTransform(1, 0, 0, 1, 0, 0);
+  sub(i, lt);
+  XD.gelembung(ctx, W, H, HF.prog(t, 2 * D - 0.4, 2 * D + 0.4), '#e8344a');
+  XD.sapuan(ctx, W, H, HF.prog(t, 4 * D - 0.35, 4 * D + 0.35), '#8fd16a', 1);
 } });
 </script></body></html>

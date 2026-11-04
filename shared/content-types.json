@@ -113,6 +113,110 @@
         "Gunakan kamera yang dramatis (dolly, crane, close-up) dan bangun ketegangan menuju klimaks.",
         "Bangun menuju klimaks, lalu selesaikan ceritanya dengan tuntas (tanpa cliffhanger) dan menjawab hook."
       ]
+    },
+    {
+      "id": "bagaimana-jika",
+      "label": "Bagaimana jika",
+      "description": "Skenario hipotesis: apa jadinya kalau sesuatu di dunia berubah.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dengan pencarian web; utamakan sumber primer (jurnal, universitas, lembaga pemerintah, museum, arsip, data resmi) dan cek klaim penting ke minimal 2 sumber kredibel. Jangan mengarang kutipan, angka, tanggal, atau nama ahli.",
+        "Sebut asumsi skenarionya di awal dengan jelas (\"anggap saja ...\"), lalu jelaskan akibatnya berantai langkah demi langkah.",
+        "Bedakan yang masuk akal secara ilmiah dari yang spekulatif ('para ilmuwan memperkirakan ...' vs 'mungkin saja ...'). Jangan membuat skenario terdengar seperti kejadian nyata.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
+    },
+    {
+      "id": "luar-angkasa",
+      "label": "Luar angkasa",
+      "description": "Planet, bintang, galaksi, dan penjelajahan antariksa.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dengan pencarian web; utamakan sumber primer (jurnal, universitas, lembaga pemerintah, museum, arsip, data resmi) dan cek klaim penting ke minimal 2 sumber kredibel. Jangan mengarang kutipan, angka, tanggal, atau nama ahli.",
+        "Angka astronomi yang sangat besar WAJIB diterjemahkan ke perbandingan sehari-hari (berapa lama naik pesawat, berapa kali ukuran Bumi).",
+        "Bedakan hal yang sudah teramati dari teori atau perkiraan.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
+    },
+    {
+      "id": "geografi",
+      "label": "Geografi & dunia",
+      "description": "Negara, batas wilayah, peta, iklim, lautan, dan sumber daya.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dengan pencarian web; utamakan sumber primer (jurnal, universitas, lembaga pemerintah, museum, arsip, data resmi) dan cek klaim penting ke minimal 2 sumber kredibel. Jangan mengarang kutipan, angka, tanggal, atau nama ahli.",
+        "Pakai peta atau perbandingan wilayah supaya tempat yang dibahas mudah dibayangkan.",
+        "Pastikan data (penduduk, luas, iklim) masih terbaru dan sebut tahunnya.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
+    },
+    {
+      "id": "psikologi",
+      "label": "Psikologi manusia",
+      "description": "Ingatan, persepsi, kebiasaan, dan perilaku manusia.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dengan pencarian web; utamakan sumber primer (jurnal, universitas, lembaga pemerintah, museum, arsip, data resmi) dan cek klaim penting ke minimal 2 sumber kredibel. Jangan mengarang kutipan, angka, tanggal, atau nama ahli.",
+        "Contoh harus dekat dengan pengalaman sehari-hari penonton (\"pernah ngga kamu ...\").",
+        "Jangan melebih-lebihkan hasil satu penelitian; sebut kalau temuannya masih diperdebatkan. Bukan nasihat medis/psikologis pribadi.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
+    },
+    {
+      "id": "teknologi",
+      "label": "Teknologi & penemuan",
+      "description": "Mesin, internet, AI, dan cara kerja penemuan penting.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dengan pencarian web; utamakan sumber primer (jurnal, universitas, lembaga pemerintah, museum, arsip, data resmi) dan cek klaim penting ke minimal 2 sumber kredibel. Jangan mengarang kutipan, angka, tanggal, atau nama ahli.",
+        "Jelaskan cara kerjanya bertahap seperti membongkar benda: bagian -> fungsi -> hasil.",
+        "Istilah teknis langsung dijelaskan dengan kata sederhana atau analogi.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
+    },
+    {
+      "id": "ekonomi",
+      "label": "Ekonomi & sosial",
+      "description": "Uang, perdagangan, pekerjaan, dan sistem dalam masyarakat.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dengan pencarian web; utamakan sumber primer (jurnal, universitas, lembaga pemerintah, museum, arsip, data resmi) dan cek klaim penting ke minimal 2 sumber kredibel. Jangan mengarang kutipan, angka, tanggal, atau nama ahli.",
+        "Angka uang dan statistik dibandingkan dengan hal sehari-hari (harga makan siang, gaji bulanan).",
+        "Kalau topiknya pro-kontra, tampilkan dua sisi dengan adil sebelum menyimpulkan.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
+    },
+    {
+      "id": "misteri",
+      "label": "Misteri",
+      "description": "Kasus dan pertanyaan yang belum terpecahkan, berdasarkan bukti.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dengan pencarian web; utamakan sumber primer (jurnal, universitas, lembaga pemerintah, museum, arsip, data resmi) dan cek klaim penting ke minimal 2 sumber kredibel. Jangan mengarang kutipan, angka, tanggal, atau nama ahli.",
+        "Pisahkan dengan tegas bukti yang tercatat dari teori atau dugaan ('yang pasti diketahui ...' vs 'ada yang menduga ...').",
+        "Hindari framing konspirasi dan jangan menyajikan dugaan sebagai fakta. Kalau jawabannya memang belum ada, katakan dengan jujur.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
+    },
+    {
+      "id": "sains-sehari",
+      "label": "Sains sehari-hari",
+      "description": "Benda dan pengalaman biasa dijelaskan lewat sains.",
+      "needsSources": true,
+      "twoVoices": false,
+      "rules": [
+        "WAJIB riset dengan pencarian web; utamakan sumber primer (jurnal, universitas, lembaga pemerintah, museum, arsip, data resmi) dan cek klaim penting ke minimal 2 sumber kredibel. Jangan mengarang kutipan, angka, tanggal, atau nama ahli.",
+        "Mulai dari hal yang penonton alami sendiri (makanan, suara, cuaca, alat rumah), lalu bongkar sains di baliknya.",
+        "Satu video menjawab satu pertanyaan utama dengan contoh yang bisa dicoba atau dilihat sendiri.",
+        "Simpan daftar sumber (judul + URL) di field 'sources'."
+      ]
     }
   ]
 }

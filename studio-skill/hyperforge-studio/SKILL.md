@@ -69,7 +69,7 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
 - Tulis `gaya.md` singkat dengan poin. File ini dibaca ulang di setiap video.
 
 ### 2. Karakter → `karakter/`, `karakter.md`
-- **Gaya dengan tokoh tetap** (explainer datar: **Raka**, `XD.pembawa`): pembawa TIDAK dirancang ulang dan tidak
+- **Gaya dengan tokoh tetap** (explainer datar: **Tora**, `XD.tora`): pembawa TIDAK dirancang ulang dan tidak
   diubah. Langkah ini hanya untuk tokoh cerita tambahan; pembawa tetap sama di semua video gaya itu.
 - Sumber desain, salah satu: (a) karakter HyperForge di brief (SVG rig di `karakter-hyperforge/`, pakai bentuk dan
   warnanya), (b) gambar/turnaround sheet dari pengguna (Read gambarnya), (c) deskripsi teks.
@@ -140,7 +140,7 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
    lihat lembarnya: subtitle terbaca dan tidak terpotong, warna karakter sesuai `karakter.md`, suara tidak tertutup
    musik (LUFS sekitar -14, puncak ≤ -1 dB). Perbaiki sebelum mengirim.
 6. **Thumbnail + judul hook (wajib):** tawarkan 5 pasangan *judul video + teks thumbnail* (angka mengejutkan,
-   kontras/ironi, "kenapa/kok bisa", rahasia dibongkar; judul ≤ 60 karakter; teks thumbnail 2–6 kata, maks 2 baris,
+   kontras/ironi, "kenapa bisa begitu", rahasia dibongkar; judul ≤ 60 karakter; teks thumbnail 2–6 kata, maks 2 baris,
    satu kata disorot; jujur, dijawab isi video). Gambar `<proyek>/thumbnail.html` (`HF.setup` 1280x720, durasi 1) dengan
    karakter utama berekspresi kuat + satu benda kunci + judul besar (gaya explainer datar: `XD.judulBesar`, contoh
    `samples/explainer-datar-thumbnail.html`); untuk 9:16 juga `cover.html` 1080x1920. Potret:
@@ -165,8 +165,8 @@ prompt/aturan yang terbukti jalan), lalu kerjakan langkah 3–6. Simpan pelajara
 `HF.safe(W,H)`, `HF.chunkWords(words, n)`, `HF.drawSubtitle(ctx, t, chunks, {keywords, hi, y, size})`.
 three.js: `import * as THREE from 'three'` (importmap di templat 3D, dari `node_modules`, tanpa internet).
 
-Pustaka gaya (dimuat setelah kit): `kit/explainer-datar.js` (`XD`: tokoh berparameter, **tokoh tetap Raka**
-`XD.pembawa`, benda, label, latar, kartu penutup terima kasih, judul thumbnail) untuk gaya explainer datar. Gaya yang punya pustaka **wajib** memakainya; tokoh dan benda tidak digambar
+Pustaka gaya (dimuat setelah kit): `kit/explainer-datar.js` (`XD`: tokoh berparameter, **tokoh tetap Tora**
+`XD.tora`, tokoh pendamping `XD.chibi`, lapisan blur/tepi cahaya, kamera, grade, kartu istilah/lokasi, benda, label, latar, kartu penutup terima kasih, judul thumbnail) untuk gaya explainer datar. Gaya yang punya pustaka **wajib** memakainya; tokoh dan benda tidak digambar
 dari nol supaya tidak melenceng dari gaya.
 
 ## Alat (`tools/`)

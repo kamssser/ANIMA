@@ -194,7 +194,8 @@
   XD.EKSPRESI = ['netral', 'senang', 'senyum', 'sedih', 'kaget', 'marah', 'ragu', 'mantap'];
 
   /**
-   * TOKOH TETAP gaya explainer datar: "Raka", pembawa acara di SEMUA video gaya ini. Penampilannya dikunci:
+   * (LAMA, v1) Preset "Raka". Sejak v2 tokoh tetap gaya ini adalah TORA (XD.tora); XD.pembawa kini menggambar Tora.
+   * Preset ini hanya disimpan untuk proyek lama yang memakai XD.tokoh({...XD.PEMBAWA}) langsung.
    * kulit sawo matang, rambut pendek hitam, kacamata bulat, kemeja biru muda berkerah, celana biru gelap.
    * Pakai: XD.tokoh(ctx, x, y, s, { ...XD.PEMBAWA, t, pose, ekspresi, bicara }) dan JANGAN menimpa kunci lain.
    */
@@ -211,8 +212,8 @@
     sepatu: '#2f2a28',
   });
   /** Hanya pose/ekspresi/gerak yang boleh berubah untuk tokoh tetap. */
-  XD.pembawa = (ctx, x, y, s, o = {}) =>
-    XD.tokoh(ctx, x, y, s, { ...XD.PEMBAWA, t: o.t, pose: o.pose, ekspresi: o.ekspresi, bicara: o.bicara, lihat: o.lihat, hadap: o.hadap, rim: o.rim, napas: o.napas });
+  /** Tokoh tetap gaya ini = Tora (v2). Skala disamakan dengan tinggi tokoh lama (~330 px per s). */
+  XD.pembawa = (ctx, x, y, s, o = {}) => XD.tora(ctx, x, y, s * 0.69, o);
 
   function lengan(ctx, sisi, pose, t, warnaLengan, kulit) {
     const def = pose[sisi > 0 ? 'k' : 'i'];
@@ -275,6 +276,19 @@
     }
     p.closePath();
     XD.bentuk(ctx, p, c, { sd: 9 });
+    if (gaya === 'jambul') {
+      // jambul: tiga jumput rambut mencuat di ubun-ubun (ciri khas Tora)
+      const j = new Path2D();
+      j.moveTo(-rx * 0.42, cy - ry + 8);
+      j.quadraticCurveTo(-rx * 0.5, cy - ry - 34, -rx * 0.2, cy - ry - 46);
+      j.quadraticCurveTo(-rx * 0.18, cy - ry - 22, -rx * 0.02, cy - ry - 8);
+      j.quadraticCurveTo(rx * 0.02, cy - ry - 52, rx * 0.34, cy - ry - 58);
+      j.quadraticCurveTo(rx * 0.24, cy - ry - 30, rx * 0.3, cy - ry - 6);
+      j.quadraticCurveTo(rx * 0.5, cy - ry - 30, rx * 0.66, cy - ry - 26);
+      j.quadraticCurveTo(rx * 0.6, cy - ry + 2, rx * 0.5, cy - ry + 16);
+      j.closePath();
+      XD.bentuk(ctx, j, c, { sd: 6 });
+    }
     if (gaya === 'keriting') {
       for (const sx of [-1, 1]) for (let j = 0; j < 4; j++) XD.bentuk(ctx, XD.ellipse(sx * (rx + 2 - j * 4), cy - 16 + j * 15, 14, 13), c, { sd: 4 });
     }
@@ -463,7 +477,14 @@
     const p = XD.poly([[-62, top], [62, top], [76, -38], [-76, -38]], 26);
     XD.bentuk(ctx, p, baju, { sd: 16 });
     if (SIL) return;
-    if (o.kerah === 'v' || o.kerah === undefined) {
+    if (o.kerah === 'hoodie') {
+      // tudung terlipat di leher + dua tali + kantong depan
+      XD.bentuk(ctx, XD.rect(-58, top - 16, 116, 40, 20), XD.gelap(baju, 0.88), { sd: 6 });
+      XD.bentuk(ctx, XD.rect(-44, top - 6, 88, 22, 11), XD.gelap(baju, 0.72), { sd: 2 });
+      XD.garis(ctx, [[-14, top + 14], [-16, top + 56]], 5, o.warnaTali ?? '#f4efe4');
+      XD.garis(ctx, [[14, top + 14], [16, top + 50]], 5, o.warnaTali ?? '#f4efe4');
+      XD.bentuk(ctx, XD.rect(-40, -92, 80, 36, 12), XD.gelap(baju, 0.9), { sd: 4 });
+    } else if (o.kerah === 'v' || o.kerah === undefined) {
       XD.bentuk(ctx, XD.poly([[-22, top + 2], [22, top + 2], [0, top + 34]], 4), o.warnaKerah ?? XD.terang(baju, 0.75), { sd: 4 });
     } else if (o.kerah === 'kemeja') {
       XD.bentuk(ctx, XD.poly([[-30, top + 2], [-2, top + 2], [-4, top + 30]], 4), '#f4f0e6', { sd: 3 });
@@ -907,8 +928,10 @@
     const ts = lk ? H / 560 : W / 650;
     const tx = lk ? W * 0.27 : W * 0.5;
     const ty = lk ? H * 0.9 : H * 0.685;
-    // bawaan: tokoh tetap (Raka); o.tokoh hanya untuk proyek yang memang punya pembawa lain yang disetujui
-    XD.tokoh(ctx, tx, ty + (1 - HF.ease.out(u)) * H * 0.3, ts, { ...XD.PEMBAWA, ...o.tokoh, pose: 'lambai', ekspresi: 'senang', bicara: Boolean(o.bicara), rim, t });
+    // bawaan: tokoh tetap Tora; o.tokoh hanya untuk proyek yang memang punya pembawa lain yang disetujui
+    const py = ty + (1 - HF.ease.out(u)) * H * 0.3;
+    if (o.tokoh) XD.tokoh(ctx, tx, py, ts, { ...o.tokoh, pose: 'lambai', ekspresi: 'senang', bicara: Boolean(o.bicara), rim, t });
+    else XD.tora(ctx, tx, py, ts * 0.69, { pose: 'lambai', ekspresi: 'senang', bicara: Boolean(o.bicara), t });
     // ucapan
     const cx = lk ? W * 0.66 : W * 0.5;
     const cy = lk ? H * 0.4 : H * 0.2;
@@ -984,6 +1007,862 @@
         px += w;
       }
     });
+    ctx.restore();
+  };
+
+  // =====================================================================
+  //  v2 "sinematik lembut": tokoh tetap Tora, dunia berlapis (jauh berkabut, tengah tajam, depan buram),
+  //  cahaya hangat, kamera dolly pelan + paralaks, kartu istilah/lokasi editorial, transisi sapuan.
+  // =====================================================================
+
+  /**
+   * TOKOH TETAP gaya explainer datar v2: "Tora". Penampilan dikunci: kulit krem persik, rambut hitam
+   * dengan jambul tiga jumput, hoodie kuning mustard bertali, celana hijau zaitun, sepatu putih. Tanpa kacamata.
+   */
+  XD.TORA = Object.freeze({
+    nama: 'Tora',
+    id: 2,
+    kulit: '#f3d2ae',
+    rambut: '#2c2a30',
+    gayaRambut: 'jambul',
+    baju: '#e6a93c',
+    kerah: 'hoodie',
+    celana: '#56664f',
+    sepatu: '#f1ede4',
+  });
+  // Proporsi v3 (mengikuti referensi): kepala kotak-membulat lebar, badan ramping, kaki panjang, lengan tipis,
+  // mata titik kecil di bawah kepala, tanpa alis/mulut kecuali ekspresi, tepi cahaya krem tipis, gradasi halus.
+  // Satuan lokal: tinggi total ~480 (kaki 150, badan 128, kepala 214). (x, y) = titik tumpu di tanah.
+  const K2 = { w: 252, h: 214, r: 92, top: -150 - 128 - 214 + 14 };
+  const BADAN = { y0: -150, y1: -278, atas: 46, bawah: 54 };
+  const POSE2 = {
+    diam: { k: [8, 2], i: [8, 2] },
+    tunjuk: { k: [112, 98], i: [8, 2] },
+    lambai: { k: [62, (t) => 150 + 16 * Math.sin(t * 9)], i: [8, 2] },
+    garuk: { k: [150, 196], i: [8, 2] },
+    tanya: { k: [40, 110], i: [40, 110] },
+    pinggang: { k: [40, -60], i: [40, -60] },
+    angkat: { k: [160, 176], i: [160, 176] },
+    pegang: { k: [24, -84], i: [24, -84] },
+    sedekap: { k: [26, -100], i: [26, -92] },
+    kepala: { k: [150, 196], i: [150, 196] },
+    hitung: { k: [30, 150], i: [8, 2] },
+  };
+  const gradV = (ctx, y0, y1, a, b) => {
+    const g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, a);
+    g.addColorStop(1, b);
+    return g;
+  };
+  const gradD = (ctx, x0, y0, x1, y1, a, b) => {
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    g.addColorStop(0, a);
+    g.addColorStop(1, b);
+    return g;
+  };
+  function lengan2(ctx, sisi, pose, t, warna, kulit) {
+    const def = pose[sisi > 0 ? 'k' : 'i'];
+    const val = (v) => (typeof v === 'function' ? v(t) : v);
+    const a1 = (val(def[0]) * Math.PI) / 180;
+    const a2 = (val(def[1]) * Math.PI) / 180;
+    const sx = (BADAN.atas - 6) * sisi;
+    const sy = BADAN.y1 + 16;
+    const ex = sx + sisi * Math.sin(a1) * 64;
+    const ey = sy + Math.cos(a1) * 64;
+    const hx = ex + sisi * Math.sin(a2) * 60;
+    const hy = ey + Math.cos(a2) * 60;
+    XD.garis(ctx, [[sx, sy], [ex, ey]], 19, warna);
+    XD.garis(ctx, [[ex, ey], [hx, hy]], 15, kulit);
+    ctx.fillStyle = kulit;
+    ctx.beginPath();
+    ctx.arc(hx, hy, 11, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  function rambutTora(ctx, C, belakang) {
+    const { w, h, r, top } = K2;
+    const hw = w / 2;
+    ctx.fillStyle = gradV(ctx, top - 60, top + h * 0.7, XD.terang(C.rambut, 0.1), C.rambut);
+    ctx.beginPath();
+    if (belakang) {
+      ctx.roundRect(-hw - 8, top - 10, w + 16, h * 0.9, [r + 8, r + 8, r * 0.6, r * 0.6]);
+    } else {
+      // helm rambut tebal: menutup atas + sisi sampai setengah kepala, poni miring
+      ctx.moveTo(-hw - 8, top + h * 0.56);
+      ctx.lineTo(-hw - 8, top + r * 0.8);
+      ctx.quadraticCurveTo(-hw - 8, top - 10, -hw + r, top - 10);
+      ctx.lineTo(hw - r, top - 10);
+      ctx.quadraticCurveTo(hw + 8, top - 10, hw + 8, top + r * 0.8);
+      ctx.lineTo(hw + 8, top + h * 0.5);
+      ctx.quadraticCurveTo(hw - 6, top + h * 0.44, hw - 18, top + h * 0.3);
+      ctx.quadraticCurveTo(hw * 0.4, top + h * 0.36, -hw * 0.05, top + h * 0.3);
+      ctx.quadraticCurveTo(-hw * 0.5, top + h * 0.24, -hw + 22, top + h * 0.36);
+      ctx.quadraticCurveTo(-hw + 6, top + h * 0.46, -hw + 2, top + h * 0.58);
+    }
+    ctx.closePath();
+    ctx.fill();
+    if (C.gayaRambut === 'bob') {
+      // bob: sisi turun sampai rahang, poni rata
+      ctx.beginPath();
+      ctx.roundRect(-hw - 14, top - 12, w + 28, h * 0.92, [r + 12, r + 12, 26, 26]);
+      ctx.fill();
+      if (!belakang) {
+        ctx.fillStyle = gradD(ctx, -w / 2, top, w / 2, top + h, XD.terang(C.kulit, 0.12), XD.gelap(C.kulit, 0.9));
+        ctx.beginPath();
+        ctx.roundRect(-hw + 22, top + h * 0.34, w - 44, h * 0.66, [24, 24, r * 0.8, r * 0.8]);
+        ctx.fill();
+      }
+      return;
+    }
+    if (C.gayaRambut === 'cepak') return;
+    // jambul runcing ke atas-kanan (ciri khas Tora)
+    ctx.beginPath();
+    ctx.moveTo(-hw * 0.62, top + 6);
+    ctx.quadraticCurveTo(-hw * 0.6, top - 42, -hw * 0.3, top - 58);
+    ctx.quadraticCurveTo(-hw * 0.28, top - 30, -hw * 0.12, top - 8);
+    ctx.quadraticCurveTo(-hw * 0.04, top - 72, hw * 0.34, top - 86);
+    ctx.quadraticCurveTo(hw * 0.18, top - 44, hw * 0.24, top - 8);
+    ctx.quadraticCurveTo(hw * 0.5, top - 52, hw * 0.86, top - 50);
+    ctx.quadraticCurveTo(hw * 0.7, top - 12, hw * 0.6, top + 14);
+    ctx.closePath();
+    ctx.fill();
+  }
+  function wajahTora(ctx, C, o, t) {
+    const { h, top } = K2;
+    const ek = o.ekspresi ?? 'netral';
+    const lx = (o.lihat ?? 0) * 18;
+    const ey = top + h * 0.64;
+    const ex = 44;
+    const tt = HF.stepTime(t, 12);
+    const kedip = o.kedip !== false && ((tt + 1.3) % 3.3) < 0.12;
+    const ink = '#2b2224';
+    ctx.save();
+    ctx.fillStyle = ink;
+    ctx.strokeStyle = ink;
+    ctx.lineCap = 'round';
+    for (const sx of [-1, 1]) {
+      const x = sx * ex + lx;
+      ctx.beginPath();
+      if (kedip || ek === 'tenang') {
+        ctx.lineWidth = 4.5;
+        ctx.moveTo(x - 9, ey);
+        ctx.lineTo(x + 9, ey);
+        ctx.stroke();
+      } else if (ek === 'senang') {
+        ctx.lineWidth = 4.5;
+        ctx.arc(x, ey + 5, 9, Math.PI * 1.15, Math.PI * 1.85);
+        ctx.stroke();
+      } else {
+        ctx.arc(x, ey, ek === 'kaget' ? 8.5 : 6.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // alis hanya untuk ekspresi kuat (referensi: wajah polos tanpa alis)
+    const alis = { sedih: -0.4, marah: 0.5, ragu: [0.3, -0.25], bingung: [0.4, -0.35], kaget: -0.1 }[ek];
+    if (alis !== undefined) {
+      ctx.lineWidth = 4.5;
+      for (const sx of [-1, 1]) {
+        const a = Array.isArray(alis) ? alis[sx < 0 ? 0 : 1] : alis;
+        ctx.save();
+        ctx.translate(sx * ex + lx, ey - 26 - (ek === 'kaget' ? 8 : 0));
+        ctx.rotate(-sx * a);
+        ctx.beginPath();
+        ctx.moveTo(-10, 0);
+        ctx.lineTo(10, 0);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+    // mulut hanya saat bicara / kaget / sedih
+    const my = ey + 30;
+    const mx = lx * 0.8;
+    if (o.bicara) {
+      const buka = 1.5 + 6 * HF.noise(tt * 9, 2);
+      ctx.fillStyle = '#6a3a34';
+      ctx.beginPath();
+      ctx.ellipse(mx, my, 7, buka, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (ek === 'kaget') {
+      ctx.fillStyle = '#6a3a34';
+      ctx.beginPath();
+      ctx.ellipse(mx, my + 2, 6, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (ek === 'sedih') {
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(mx, my + 6, 7, Math.PI * 1.2, Math.PI * 1.8);
+      ctx.stroke();
+    }
+    if (ek === 'senang' || ek === 'malu' || o.merona) {
+      ctx.fillStyle = 'rgba(236,120,110,0.28)';
+      for (const sx of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(sx * (ex + 28) + lx * 0.6, ey + 20, 17, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  function gambarTora(ctx, o, C = XD.TORA) {
+    const t = o.t ?? 0;
+    const tt = HF.stepTime(t, 12);
+    const pose = POSE2[o.pose ?? 'diam'] ?? POSE2.diam;
+    const belakang = o.dari === 'belakang';
+    const napas = o.napas === false ? 0 : 2 * Math.sin(tt * 2.4 + 2);
+    const { w, h, r, top } = K2;
+    // kaki panjang ramping + sepatu
+    for (const sx of [-1, 1]) {
+      ctx.fillStyle = gradV(ctx, BADAN.y0, 0, C.celana, XD.gelap(C.celana, 0.85));
+      ctx.beginPath();
+      ctx.roundRect(sx > 0 ? 6 : -40, BADAN.y0 - 6, 34, 150, 12);
+      ctx.fill();
+      ctx.fillStyle = gradV(ctx, -16, 0, C.sepatu, XD.gelap(C.sepatu, 0.8));
+      ctx.beginPath();
+      ctx.ellipse(sx * 26, -8, 28, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const tangan = () => {
+      const warna = XD.gelap(C.baju, 0.95);
+      lengan2(ctx, 1, pose, tt, warna, C.kulit);
+      lengan2(ctx, -1, pose, tt, warna, C.kulit);
+    };
+    if (belakang) tangan();
+    // badan hoodie ramping
+    const y1 = BADAN.y1 - napas;
+    ctx.fillStyle = gradD(ctx, -60, y1, 60, BADAN.y0, XD.terang(C.baju, 0.12), XD.gelap(C.baju, 0.84));
+    ctx.beginPath();
+    ctx.moveTo(-BADAN.atas + 10, y1);
+    ctx.lineTo(BADAN.atas - 10, y1);
+    ctx.quadraticCurveTo(BADAN.atas + 4, y1 + 4, BADAN.atas + 2, y1 + 30);
+    ctx.lineTo(BADAN.bawah, BADAN.y0 + 2);
+    ctx.lineTo(-BADAN.bawah, BADAN.y0 + 2);
+    ctx.lineTo(-BADAN.atas - 2, y1 + 30);
+    ctx.quadraticCurveTo(-BADAN.atas - 4, y1 + 4, -BADAN.atas + 10, y1);
+    ctx.closePath();
+    ctx.fill();
+    // ujung hoodie (rib) + kantong + tali
+    ctx.fillStyle = XD.gelap(C.baju, 0.82);
+    ctx.fillRect(-BADAN.bawah, BADAN.y0 - 14, BADAN.bawah * 2, 16);
+    if (!belakang) {
+      ctx.beginPath();
+      ctx.roundRect(-30, BADAN.y0 - 58, 60, 30, 10);
+      ctx.fill();
+      ctx.strokeStyle = '#f6f0e4';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      for (const sx of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(sx * 11, y1 + 8);
+        ctx.lineTo(sx * 12, y1 + 44);
+        ctx.stroke();
+      }
+    } else {
+      ctx.beginPath();
+      ctx.roundRect(-40, y1 - 6, 80, 50, [16, 16, 34, 34]);
+      ctx.fill();
+    }
+    // kepala
+    ctx.save();
+    ctx.translate(0, -napas * 0.6);
+    for (const sx of [-1, 1]) {
+      ctx.fillStyle = XD.gelap(C.kulit, 0.93);
+      ctx.beginPath();
+      ctx.ellipse(sx * (w / 2 + 1), top + h * 0.62, 13, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = gradD(ctx, -w / 2, top, w / 2, top + h, XD.terang(C.kulit, 0.12), XD.gelap(C.kulit, 0.9));
+    ctx.beginPath();
+    ctx.roundRect(-w / 2, top, w, h, [r, r, r * 0.86, r * 0.86]);
+    ctx.fill();
+    rambutTora(ctx, C, belakang);
+    if (!belakang) wajahTora(ctx, C, o, t);
+    if (o.keringat) {
+      const u = (t * 0.8) % 1;
+      ctx.fillStyle = 'rgba(160,212,242,0.95)';
+      ctx.beginPath();
+      ctx.ellipse(w / 2 - 22, top + h * 0.42 + u * 34, 8, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+    if (!belakang) tangan();
+  }
+
+  // kanvas bantu (satu untuk semua): untuk tepi cahaya & blur per lapisan tanpa artefak antarbentuk
+  let BANTU = null;
+  const bantu = (ctx) => {
+    const { width, height } = ctx.canvas;
+    if (!BANTU) BANTU = document.createElement('canvas');
+    if (BANTU.width !== width || BANTU.height !== height) {
+      BANTU.width = width;
+      BANTU.height = height;
+    }
+    const b = BANTU.getContext('2d');
+    b.setTransform(1, 0, 0, 1, 0, 0);
+    b.clearRect(0, 0, width, height);
+    b.filter = 'none';
+    b.globalAlpha = 1;
+    b.globalCompositeOperation = 'source-over';
+    return b;
+  };
+  /**
+   * Gambar fn(ctx) sebagai satu lapisan utuh: o.tepi = warna garis cahaya di sekeliling siluet (px o.tebal),
+   * o.blur = px kabur (latar depan/belakang di luar fokus), o.alpha.
+   */
+  XD.lapisan = (ctx, fn, o = {}) => {
+    const b = bantu(ctx);
+    b.setTransform(ctx.getTransform());
+    fn(b);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const f = [];
+    if (o.tepi) {
+      const k = o.tebal ?? 4;
+      f.push(`drop-shadow(${k}px 0 0 ${o.tepi})`, `drop-shadow(-${k}px 0 0 ${o.tepi})`, `drop-shadow(0 ${k}px 0 ${o.tepi})`, `drop-shadow(0 -${k}px 0 ${o.tepi})`);
+    }
+    if (o.blur) f.push(`blur(${o.blur}px)`);
+    ctx.filter = f.length ? f.join(' ') : 'none';
+    if (o.alpha !== undefined) ctx.globalAlpha = o.alpha;
+    ctx.drawImage(BANTU, 0, 0);
+    ctx.restore();
+  };
+
+  /**
+   * Tora (tokoh tetap explainer datar v2). (x, y) = titik tumpu, s = skala (s=1 tinggi ~480 px).
+   * o = { t, pose: diam|tunjuk|lambai|garuk|tanya|pinggang|angkat|pegang|sedekap,
+   *       ekspresi: netral|senang|tenang|sedih|kaget|marah|ragu|bingung|malu, bicara, lihat: -1..1, hadap: 1|-1,
+   *       dari: 'depan'|'belakang', keringat, merona, tepi (warna tepi cahaya, bawaan krem; false = tanpa), blur }
+   * Hanya pose/ekspresi/gerak/arah yang boleh berubah; penampilan dikunci XD.TORA.
+   */
+  /**
+   * Tokoh pendamping dengan proporsi & gaya yang sama dengan Tora (teman, orang tua, guru, tokoh cerita).
+   * o = { ...seperti XD.tora, kulit, rambut, gayaRambut: 'bob'|'cepak'|'jambul', baju, celana, sepatu }
+   */
+  XD.chibi = (ctx, x, y, s, o = {}) => {
+    const C = { ...XD.TORA, gayaRambut: 'bob', baju: '#5fb7a8', celana: '#5b5f6a', ...o, nama: o.nama ?? 'teman' };
+    if (!o.blur) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(40,24,12,0.2)';
+      ctx.beginPath();
+      ctx.ellipse(x, y, 100 * s, 14 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    XD.lapisan(
+      ctx,
+      (c) => {
+        c.translate(x, y);
+        c.scale(s * (o.hadap === -1 ? -1 : 1), s);
+        gambarTora(c, o, C);
+      },
+      { tepi: o.tepi === false ? null : o.tepi ?? 'rgba(255,236,205,0.85)', tebal: Math.max(2, Math.round(2.6 * s)), blur: o.blur },
+    );
+  };
+
+  /**
+   * Gelembung bicara: badan bulat-lonjong putih + ekor melengkung yang menyatu (satu bentuk, tanpa sambungan),
+   * bayangan lembut, teks kapital tebal gelap. Pusat (x, y); o.ekor = [x, y] ujung ekor (ke mulut pembicara).
+   * o = { ekor, ukuran (px huruf, 40), muncul: 0..1 (pop + goyang kecil), warna, warnaTeks }
+   */
+  XD.bicara = (ctx, x, y, teks, o = {}) => {
+    const u = HF.clamp(o.muncul ?? 1);
+    if (u <= 0.01) return;
+    const size = o.ukuran ?? 40;
+    const baris = String(teks).toUpperCase().split('\n');
+    ctx.save();
+    ctx.font = `800 ${size}px ${FONT}`;
+    const tw = Math.max(...baris.map((b) => ctx.measureText(b).width));
+    const th = baris.length * size * 1.08;
+    // badan: elips yang cukup lega untuk teks (sudut kotak teks muat di dalam elips)
+    const rx = Math.max(tw * 0.5 + size * 1.15, th * 0.95);
+    const ry = th * 0.5 + size * 0.85;
+    const ex = (o.ekor?.[0] ?? x - rx * 0.7) - x;
+    const ey = (o.ekor?.[1] ?? y + ry * 1.7) - y;
+    // pangkal ekor di tepi elips ke arah ujung ekor, lebar ~0.5 rad
+    const a = Math.atan2(ey / ry, ex / rx);
+    const p = (ang) => [Math.cos(ang) * rx, Math.sin(ang) * ry];
+    const [ax, ay] = p(a - 0.24);
+    const [bx, by] = p(a + 0.24);
+    const pop = HF.ease.back(u, 1.6);
+    ctx.translate(x, y);
+    ctx.scale(pop, pop);
+    ctx.rotate((1 - u) * -0.08);
+    const path = new Path2D();
+    path.ellipse(0, 0, rx, ry, 0, a + 0.24, a - 0.24 + Math.PI * 2);
+    // ekor melengkung (sedikit menekuk ke samping, ujung membulat)
+    const tekuk = 0.22;
+    const mx = (bx + ex) / 2 - ey * tekuk;
+    const my = (by + ey) / 2 + ex * tekuk;
+    path.quadraticCurveTo(mx, my, ex, ey);
+    const nx = (ax + ex) / 2 - ey * tekuk * 0.6;
+    const ny = (ay + ey) / 2 + ex * tekuk * 0.6;
+    path.quadraticCurveTo(nx, ny, ax, ay);
+    path.closePath();
+    ctx.shadowColor = 'rgba(30,20,10,0.22)';
+    ctx.shadowBlur = size * 0.5;
+    ctx.shadowOffsetY = size * 0.12;
+    ctx.fillStyle = o.warna ?? '#ffffff';
+    ctx.fill(path);
+    ctx.shadowColor = 'transparent';
+    // tepi bawah sedikit gelap (volume lembut)
+    ctx.save();
+    ctx.clip(path);
+    const g = ctx.createLinearGradient(0, -ry, 0, ry);
+    g.addColorStop(0, 'rgba(255,255,255,0)');
+    g.addColorStop(1, 'rgba(120,110,100,0.12)');
+    ctx.fillStyle = g;
+    ctx.fillRect(-rx - Math.abs(ex), -ry, (rx + Math.abs(ex)) * 2, ry * 2 + Math.abs(ey));
+    ctx.restore();
+    ctx.fillStyle = o.warnaTeks ?? '#1f1a1c';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    baris.forEach((b, i) => ctx.fillText(b, 0, (i - (baris.length - 1) / 2) * size * 1.08 + size * 0.04));
+    ctx.restore();
+  };
+
+  /** Teks penanda tebal di kiri bawah (mis. "HARI 1", "PUKUL 12.00"). */
+  XD.penanda = (ctx, x, y, teks, o = {}) => {
+    const u = HF.clamp(o.muncul ?? 1);
+    if (u <= 0.01) return;
+    ctx.save();
+    ctx.globalAlpha = u;
+    ctx.font = `800 ${o.ukuran ?? 64}px ${FONT}`;
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 16;
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(String(teks).toUpperCase(), x + (1 - u) * -20, y);
+    ctx.restore();
+  };
+
+  XD.tora = (ctx, x, y, s, o = {}) => {
+    if (!o.blur) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(40,24,12,0.2)';
+      ctx.beginPath();
+      ctx.ellipse(x, y, 100 * s, 14 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    XD.lapisan(
+      ctx,
+      (c) => {
+        c.translate(x, y);
+        c.scale(s * (o.hadap === -1 ? -1 : 1), s);
+        gambarTora(c, o);
+      },
+      { tepi: o.tepi === false ? null : o.tepi ?? 'rgba(255,236,205,0.85)', tebal: Math.max(2, Math.round(2.6 * s)), blur: o.blur },
+    );
+  };
+
+  /**
+   * Penilaian warna akhir gaya referensi: hangat, kontras rendah, cahaya berpendar (bloom). Panggil paling akhir
+   * SEBELUM teks/subtitle. o = { glow: 0..1 (bawaan 0.28), hangat: 0..1 (0.16), kabut: 0..1 (0.06) }
+   */
+  XD.grade = (ctx, W, H, o = {}) => {
+    const b = bantu(ctx);
+    b.drawImage(ctx.canvas, 0, 0);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = o.glow ?? 0.16;
+    ctx.filter = `blur(${Math.round(W / 60)}px) brightness(1.05)`;
+    ctx.drawImage(BANTU, 0, 0);
+    ctx.filter = 'none';
+    ctx.globalCompositeOperation = 'soft-light';
+    ctx.globalAlpha = o.hangat ?? 0.14;
+    ctx.fillStyle = '#ffb56a';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = o.kabut ?? 0.025;
+    ctx.fillStyle = '#fff3e0';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  };
+
+  /**
+   * Kamera dolly pelan + paralaks. Panggil sekali per frame: const lapis = XD.kamera(ctx, W, H, t, { t0, t1, zoom, geser });
+   * lalu lapis(kedalaman) sebelum menggambar tiap lapisan (0 = langit diam, 1 = lapisan tokoh, 1.4 = latar depan).
+   * Akhiri dengan lapis(null) untuk kembali normal (teks, subtitle).
+   */
+  XD.kamera = (ctx, W, H, t, o = {}) => {
+    const u = HF.ease.inOut(HF.prog(t, o.t0 ?? 0, o.t1 ?? 6));
+    const zoom = o.zoom ?? 0.05;
+    const [gx, gy] = o.geser ?? [-40, -10];
+    const fx = o.fokus?.[0] ?? W / 2;
+    const fy = o.fokus?.[1] ?? H * 0.6;
+    return (d) => {
+      if (d === null || d === undefined) return ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const z = 1 + zoom * u * d;
+      ctx.setTransform(z, 0, 0, z, fx - fx * z + gx * u * d, fy - fy * z + gy * u * d);
+    };
+  };
+
+  /** Awan bergaya lukis: gumpalan bertumpuk, sisi bawah biru keabuan, puncak putih, sedikit tepi terang. */
+  XD.awan = (ctx, x, y, s = 1, a = 0.95, seed = 1) => {
+    const r = HF.rng(seed);
+    const lobus = [];
+    for (let i = 0; i < 7; i++) {
+      const dx = (i - 3) * 46 + (r() - 0.5) * 18;
+      const rr = 30 + r() * 26 - Math.abs(i - 3) * 4;
+      lobus.push([dx, -rr * 0.45 - r() * 10, rr]);
+    }
+    ctx.save();
+    ctx.globalAlpha = a;
+    // bayangan bawah
+    ctx.fillStyle = '#b9cfe0';
+    for (const [dx, dy, rr] of lobus) {
+      ctx.beginPath();
+      ctx.arc(x + dx * s, y + (dy + 10) * s, rr * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.roundRect(x - 170 * s, y - 6 * s, 340 * s, 30 * s, 15 * s);
+    ctx.fill();
+    // badan putih (sedikit naik)
+    ctx.fillStyle = '#f7fbfd';
+    for (const [dx, dy, rr] of lobus) {
+      ctx.beginPath();
+      ctx.arc(x + dx * s, y + (dy - 2) * s, rr * 0.92 * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // garis lengkung lembut di dalam awan (kesan lukisan)
+    ctx.strokeStyle = 'rgba(170,196,216,0.6)';
+    ctx.lineWidth = 3 * s;
+    ctx.lineCap = 'round';
+    for (const [dx, dy, rr] of lobus.slice(1, 5)) {
+      ctx.beginPath();
+      ctx.arc(x + dx * s, y + (dy + 4) * s, rr * 0.55 * s, Math.PI * 0.15, Math.PI * 0.75);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  /** Angka/fakta BESAR di tengah (mis. "525.000 HEKTAR" + keterangan). o = { judul, isi, muncul, ukuran } */
+  XD.angkaBesar = (ctx, x, y, o = {}) => {
+    const u = HF.clamp(o.muncul ?? 1);
+    if (u <= 0.01) return;
+    const size = o.ukuran ?? 110;
+    ctx.save();
+    ctx.globalAlpha = u;
+    ctx.translate(x, y);
+    ctx.scale(0.9 + 0.1 * u, 0.9 + 0.1 * u);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 22;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `800 ${size}px ${FONT}`;
+    ctx.fillText(String(o.judul ?? '').toUpperCase(), 0, 0);
+    if (o.isi) {
+      ctx.font = `400 ${Math.round(size * 0.44)}px ${FONT}`;
+      ctx.fillText(o.isi, 0, size * 0.72);
+    }
+    ctx.restore();
+  };
+
+  /** Transisi GELEMBUNG: lingkaran warna muncul memenuhi layar lalu menghilang. u 0..1. */
+  XD.gelembung = (ctx, W, H, u, warna = '#e8344a', seed = 4) => {
+    if (u <= 0 || u >= 1) return;
+    const r = HF.rng(seed);
+    const tutup = u < 0.5 ? HF.ease.out(u * 2) : 1 - HF.ease.in((u - 0.5) * 2);
+    ctx.save();
+    ctx.fillStyle = warna;
+    for (let i = 0; i < 9; i++) {
+      const cx = r() * W;
+      const cy = r() * H;
+      const d = r() * 0.35;
+      const k = HF.clamp((tutup - d) / (1 - d));
+      ctx.beginPath();
+      ctx.arc(cx, cy, k * Math.max(W, H) * (0.35 + r() * 0.3), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  };
+
+  /** Bukit bergelombang selebar layar (puncak sekitar y0, tinggi amp). */
+  XD.bukit = (ctx, W, H, y0, amp, warna, seed = 1) => {
+    const r = HF.rng(seed);
+    const ph = r() * 6;
+    ctx.fillStyle = warna;
+    ctx.beginPath();
+    ctx.moveTo(-200, H + 200);
+    for (let x = -200; x <= W + 200; x += 40) ctx.lineTo(x, y0 - amp * (0.55 + 0.3 * Math.sin(x / 310 + ph) + 0.15 * Math.sin(x / 113 + ph * 2)));
+    ctx.lineTo(W + 200, H + 200);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  /** Kabut atmosfer: pita terang di cakrawala supaya lapisan jauh terasa jauh. */
+  XD.kabut = (ctx, W, y, tinggi, warna = '255,246,228', a = 0.55) => {
+    const g = ctx.createLinearGradient(0, y - tinggi, 0, y + tinggi);
+    g.addColorStop(0, `rgba(${warna},0)`);
+    g.addColorStop(0.5, `rgba(${warna},${a})`);
+    g.addColorStop(1, `rgba(${warna},0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(-200, y - tinggi, W + 400, tinggi * 2);
+  };
+
+  /** Pohon/ranting kering bercabang (dasar di x, y). */
+  XD.ranting = (ctx, x, y, s = 1, warna = '#8a6a52', seed = 3) => {
+    const r = HF.rng(seed);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.strokeStyle = warna;
+    ctx.lineCap = 'round';
+    const cab = (len, w, d) => {
+      ctx.lineWidth = w;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -len);
+      ctx.stroke();
+      if (d >= 4) return;
+      ctx.save();
+      ctx.translate(0, -len);
+      for (const k of [-1, 1]) {
+        ctx.save();
+        ctx.rotate(k * (0.32 + r() * 0.3));
+        cab(len * (0.6 + r() * 0.15), w * 0.62, d + 1);
+        ctx.restore();
+      }
+      ctx.restore();
+    };
+    cab(190, 30, 0);
+    ctx.restore();
+  };
+
+  /** Semak/rumpun daun membulat. */
+  XD.semak = (ctx, x, y, s = 1, warna = '#7fa05a', seed = 5) => {
+    const r = HF.rng(seed);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    for (let i = 0; i < 5; i++) {
+      const dx = (i - 2) * 46 + (r() - 0.5) * 16;
+      const rr = 46 + r() * 22 - Math.abs(i - 2) * 6;
+      XD.bentuk(ctx, XD.ellipse(dx, -rr * 0.7, rr, rr * 0.8), i % 2 ? XD.gelap(warna, 0.92) : warna, { sd: 8 });
+    }
+    ctx.restore();
+  };
+
+  /** Gambar sesuatu dengan blur (latar depan di luar fokus). fn(ctx) menggambar seperti biasa. */
+  XD.buram = (ctx, px, fn) => {
+    ctx.save();
+    ctx.filter = `blur(${px}px)`;
+    fn(ctx);
+    ctx.restore();
+  };
+
+  /** Titik cahaya bokeh yang berkedip pelan. */
+  XD.bokeh = (ctx, W, H, t, o = {}) => {
+    const r = HF.rng(o.seed ?? 3);
+    const n = o.n ?? 12;
+    const warna = o.warna ?? '255,236,200';
+    for (let i = 0; i < n; i++) {
+      const x = r() * W;
+      const y = r() * H * (o.tinggi ?? 0.8);
+      const rr = 10 + r() * 34;
+      const a = (o.a ?? 0.1) * (0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * 1.2 + i * 1.7)));
+      ctx.fillStyle = `rgba(${warna},${a})`;
+      ctx.beginPath();
+      ctx.arc(x + Math.sin(t * 0.3 + i) * 14, y + Math.cos(t * 0.25 + i) * 8, rr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+
+  /** Berkas sinar matahari miring dari (x, y). */
+  XD.sinar = (ctx, x, y, W, H, a = 0.12, warna = '255,240,205') => {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 5; i++) {
+      const ang = 0.35 + i * 0.16;
+      const g = ctx.createLinearGradient(x, y, x - Math.sin(ang) * H * 1.4, y + Math.cos(ang) * H * 1.4);
+      g.addColorStop(0, `rgba(${warna},${a})`);
+      g.addColorStop(1, `rgba(${warna},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - Math.sin(ang - 0.04) * H * 1.6, y + Math.cos(ang - 0.04) * H * 1.6);
+      ctx.lineTo(x - Math.sin(ang + 0.04) * H * 1.6, y + Math.cos(ang + 0.04) * H * 1.6);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+    void W;
+  };
+
+  /** Vinyet halus (pinggir sedikit gelap & hangat). */
+  XD.vinyet = (ctx, W, H, a = 0.32, warna = '40,24,10') => {
+    const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.42, W / 2, H / 2, Math.max(W, H) * 0.62);
+    g.addColorStop(0, `rgba(${warna},0)`);
+    g.addColorStop(1, `rgba(${warna},${a})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  };
+
+  /** Mata kecil untuk benda (benih, termometer, tetes air) supaya terasa hidup. */
+  XD.mataBenda = (ctx, x, y, s = 1, o = {}) => {
+    const tt = HF.stepTime(o.t ?? 0, 12);
+    const kedip = ((tt + (o.id ?? 3) * 0.61) % 3.4) < 0.12;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.fillStyle = ctx.strokeStyle = o.warna ?? XD.palet.tinta;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    for (const sx of [-1, 1]) {
+      ctx.beginPath();
+      if (kedip) {
+        ctx.moveTo(sx * 14 - 6, 0);
+        ctx.lineTo(sx * 14 + 6, 0);
+        ctx.stroke();
+      } else if (o.senang) {
+        ctx.arc(sx * 14, 3, 7, Math.PI * 1.1, Math.PI * 1.9);
+        ctx.stroke();
+      } else {
+        ctx.arc(sx * 14, 0, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  };
+
+  function teksBayang(ctx) {
+    ctx.shadowColor = 'rgba(0,0,0,0.38)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 2;
+  }
+  /** Bayangan gelap lembut di belakang teks supaya terbaca di latar terang. */
+  function latarTeks(ctx, x, y, w, h, a) {
+    if (!a) return;
+    // elips lembut (diskala vertikal) supaya tidak ada tepi kotak
+    const cx = x + w * 0.3;
+    const cy = y + h * 0.4;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(1, (h * 1.6) / w);
+    const g = ctx.createRadialGradient(0, 0, 10, 0, 0, w * 0.75);
+    g.addColorStop(0, `rgba(18,26,36,${a})`);
+    g.addColorStop(0.6, `rgba(18,26,36,${a * 0.45})`);
+    g.addColorStop(1, 'rgba(18,26,36,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(-w * 0.75, -w * 0.75, w * 1.5, w * 1.5);
+    ctx.restore();
+  }
+
+  /**
+   * Kartu ISTILAH editorial (kiri atas): istilah asli kecil miring, judul tebal kapital, 1-2 baris penjelasan.
+   * o = { kecil, judul, isi: [baris], muncul: 0..1, ukuran (judul, bawaan 64), gelap: alpha latar (bawaan 0.4) }
+   */
+  XD.kartuIstilah = (ctx, x, y, o = {}) => {
+    const u = HF.clamp(o.muncul ?? 1);
+    if (u <= 0.01) return;
+    const size = o.ukuran ?? 64;
+    ctx.save();
+    ctx.globalAlpha = u;
+    ctx.translate(0, (1 - u) * 20);
+    latarTeks(ctx, x, y, size * 9, size * 2.4, o.gelap ?? 0.4);
+    teksBayang(ctx);
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    if (o.kecil) {
+      ctx.font = `italic 400 ${Math.round(size * 0.42)}px ${FONT}`;
+      ctx.fillText(o.kecil, x, y);
+    }
+    ctx.font = `800 ${size}px ${FONT}`;
+    ctx.fillText(String(o.judul ?? '').toUpperCase(), x, y + size * 1.1);
+    ctx.font = `400 ${Math.round(size * 0.45)}px ${FONT}`;
+    (o.isi ?? []).forEach((b, i) => ctx.fillText(b, x, y + size * 1.85 + i * size * 0.6));
+    ctx.restore();
+  };
+
+  /**
+   * Kartu LOKASI/WAKTU (kiri atas): baris kecil (tahun), nama tempat tebal kapital, keterangan.
+   * o = { atas, judul, isi, muncul, tag: true = judul di kotak aksen merah (untuk tempat nyata yang penting) }
+   */
+  XD.kartuLokasi = (ctx, x, y, o = {}) => {
+    const u = HF.clamp(o.muncul ?? 1);
+    if (u <= 0.01) return;
+    const size = o.ukuran ?? 44;
+    ctx.save();
+    ctx.globalAlpha = u;
+    ctx.translate((1 - u) * -24, 0);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const judul = String(o.judul ?? '').toUpperCase();
+    ctx.font = `800 ${size}px ${FONT}`;
+    const w = ctx.measureText(judul).width;
+    if (o.tag) {
+      // tag merah: judul tebal + satu baris kecil (tanggal/keterangan) di DALAM kotak
+      const kecil = o.isi ?? o.atas ?? '';
+      ctx.font = `400 ${Math.round(size * 0.5)}px ${FONT}`;
+      const w2 = ctx.measureText(kecil).width;
+      const bw = Math.max(w, w2) + size * 0.8;
+      const bh = size * (kecil ? 1.95 : 1.4);
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.beginPath();
+      ctx.roundRect(x + 4, y + 6, bw, bh, 6);
+      ctx.fill();
+      ctx.fillStyle = o.warna ?? '#e0384c';
+      ctx.beginPath();
+      ctx.roundRect(x, y, bw, bh, 6);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `800 ${size}px ${FONT}`;
+      ctx.fillText(judul, x + size * 0.4, y + size * 1.0);
+      if (kecil) {
+        ctx.font = `400 ${Math.round(size * 0.5)}px ${FONT}`;
+        ctx.fillText(kecil, x + size * 0.4, y + size * 1.62);
+      }
+      ctx.restore();
+      return;
+    } else {
+      latarTeks(ctx, x, y, size * 10, size * 2, o.gelap ?? 0.32);
+      teksBayang(ctx);
+    }
+    ctx.fillStyle = '#ffffff';
+    if (o.atas) {
+      ctx.font = `400 ${Math.round(size * 0.55)}px ${FONT}`;
+      ctx.fillText(o.atas, x, y - size * 0.5);
+    }
+    ctx.font = `800 ${size}px ${FONT}`;
+    ctx.fillText(judul, x, y + size * 0.85);
+    if (o.isi) {
+      ctx.font = `400 ${Math.round(size * 0.58)}px ${FONT}`;
+      ctx.fillText(o.isi, x, y + size * 1.8);
+    }
+    ctx.restore();
+  };
+
+  /**
+   * Transisi SAPUAN warna penuh layar. u: 0..1 (0-0.5 menutup, 0.5-1 membuka). arah: 1 = ke kanan, -1 = ke kiri.
+   * Gambar paling akhir (di atas semuanya), mis. u = HF.prog(t, tPotong - 0.35, tPotong + 0.35).
+   */
+  XD.sapuan = (ctx, W, H, u, warna = '#f2c14e', arah = 1) => {
+    if (u <= 0 || u >= 1) return;
+    const e = HF.ease.inOut(u < 0.5 ? u * 2 : (u - 0.5) * 2);
+    const miring = W * 0.12;
+    ctx.save();
+    ctx.fillStyle = warna;
+    ctx.beginPath();
+    let a;
+    let b;
+    if (u < 0.5) {
+      a = -miring;
+      b = -miring + (W + miring * 2) * e;
+    } else {
+      a = -miring + (W + miring * 2) * e;
+      b = W + miring;
+    }
+    if (arah < 0) [a, b] = [W - b, W - a];
+    ctx.moveTo(a, 0);
+    ctx.lineTo(b + miring, 0);
+    ctx.lineTo(b, H);
+    ctx.lineTo(a - miring, H);
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
   };
 

@@ -215,7 +215,7 @@
       "kind": "skill",
       "engine": "studio",
       "skillStyle": "explainer-datar",
-      "description": "2D datar ala video explainer edukasi: tokoh berkepala besar dengan mata titik, bayangan lembut tanpa garis hitam, palet hangat, label pil dan peta infografis. Dibawakan tokoh tetap Raka (sama di semua video), cerita selesai tuntas lalu ditutup ucapan terima kasih, plus thumbnail dengan judul hook. Ringan. Cocok untuk explainer 3-5 menit di YouTube. Bisa memakai frame referensi gaya milikmu. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "description": "2D datar sinematik ala video explainer edukasi: tokoh chibi berkepala besar dengan mata titik, kamera dekat dengan latar buram, cahaya hangat berpendar, kartu istilah, angka besar, dan gelembung bicara. Dibawakan tokoh tetap Tora (sama di semua video), riset dan naskah dibantu skill edu-motion-studio, cerita selesai tuntas lalu ditutup ucapan terima kasih, plus thumbnail dengan judul hook. Ringan. Cocok untuk explainer 3-5 menit di YouTube. Bisa memakai frame referensi gaya milikmu. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
       "draw": []
     },
     {

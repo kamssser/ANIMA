@@ -6,6 +6,15 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.19.0 - 2026-11-04
+
+**Baru**
+
+- **Explainer Datar versi baru**: tampilan sinematik yang lebih nyaman di mata. Kamera dekat dengan latar buram, cahaya hangat berpendar, kartu istilah dan lokasi, angka besar, gelembung bicara, layar terbelah, serta transisi gelembung dan sapuan warna.
+- Tokoh tetap baru untuk Explainer Datar: **Tora** (rambut jambul, hoodie kuning), ditambah tokoh pendamping dengan gaya yang sama.
+- **8 jenis konten baru**: Bagaimana jika, Luar angkasa, Geografi & dunia, Psikologi manusia, Teknologi & penemuan, Ekonomi & sosial, Misteri, dan Sains sehari-hari. Semuanya dengan aturan riset dan sumber.
+- Skill **edu-motion-studio** dipasang otomatis bersama HyperForge Studio. Explainer Datar memakainya untuk riset, hook, naskah, dan storyboard.
+
 ## 0.18.1 - 2026-11-04
 
 **Baru**

@@ -59,6 +59,8 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
 - `flow-skill/hyperforge-flow/` = skill buatan HyperForge (MIT, boleh diedit) untuk style Google Flow: naskah Claude,
   suara vibi.pro, klip + SFX dari Flow yang dioperasikan Claude lewat Playwright MCP (`@playwright/mcp` versi tetap di `electron/skills.cjs`,
   tersambung ke Chrome Flow port 9333), `tools/rakit.mjs` merakit MP4.
+- Explainer Datar v2: tokoh tetap **Tora** (`XD.tora`, `XD.TORA`; `XD.pembawa` kini menggambar Tora), pendamping `XD.chibi`, `XD.lapisan` (blur/tepi cahaya), `XD.kamera`, `XD.grade`, kartu istilah/lokasi, `XD.bicara` di `studio-skill/hyperforge-studio/kit/explainer-datar.js`; aturan di `styles/explainer-datar.md`. Gaya diambil dari referensi pemilik (kanal edukasi), jangan menyalin nama/logo kanal referensi.
+- `edu-skill/edu-motion-studio/` = skill milik pemilik (boleh dibagikan), dipasang bersama HyperForge Studio (`EDU_SKILL`), dipakai Explainer Datar; aturan HyperForge menang.
 - `kamal-skill/kamal/` = skill buatan HyperForge (MIT, boleh diedit) untuk style Kamal (gelap/terang) dari video referensi
   pemilik. Alat render disalin dari hyperforge-studio; pustaka gaya `kit/kamal-kit.js`; huruf Plus Jakarta Sans (OFL) di
   `kit/fonts/`. Jangan menyalin nama/logo kanal referensi (Garis Hidup, Dalekta) ke skill.

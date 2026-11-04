@@ -317,6 +317,7 @@ ENGINES.studio = {
     return [
       { id: 'puppeteer', label: 'Puppeteer + Chrome', ok: nm('puppeteer') && hasDir(cache, /^chrome/), detail: `npm i puppeteer di ${this.work} (sekitar 170 MB)` },
       { id: 'three', label: 'three.js (3D tanpa internet)', ok: nm('three'), detail: `npm i three di ${this.work}` },
+      { id: 'edu', label: 'Skill edu-motion-studio (riset & naskah edukasi)', ok: skillState(EDU_SKILL).installed, optional: true, detail: 'dipasang otomatis bersama HyperForge Studio' },
     ];
   },
   async setup({ which, say }) {
@@ -328,6 +329,7 @@ ENGINES.studio = {
     const r = await run(npm, ['i', 'puppeteer', 'three', '--no-audit', '--no-fund'], { cwd: this.work, onLine: (l) => say('Memasang Puppeteer + Chrome dan three.js', l.trim().slice(-160)) });
     if (!r.ok) throw new Error(`Gagal memasang Puppeteer/three.js:
 ${tail(r.out)}`);
+    ensureEduSkill(say);
   },
   optionalLabel: '',
   prompt: (slug, title) => `/hyperforge-studio Kerjakan brief HyperForge di briefs/${slug}.md untuk project: ${title}. Folder proyek: ${slug}/.`,
@@ -339,6 +341,26 @@ ${tail(r.out)}`);
 };
 // Skill buatan sendiri: "commit" = hash isi skill, jadi pembaruan skill di rilis berikutnya terpasang ulang otomatis.
 ENGINES.studio.commit = dirHash(ENGINES.studio.src);
+
+// edu-motion-studio (milik pemilik HyperForge): "otak redaksi" explainer edukasi (riset, hook, naskah, storyboard).
+// Dipasang bersama HyperForge Studio; dipakai penuh oleh style Explainer Datar (aturan HyperForge di brief menang).
+const EDU_SKILL = {
+  name: 'edu-motion-studio',
+  src: path.join(__dirname, '..', 'edu-skill', 'edu-motion-studio'),
+  dst: path.join(SKILLS_DIR, 'edu-motion-studio'),
+  marker: path.join(SKILLS_DIR, '.hyperforge-edu-motion-studio.json'),
+};
+EDU_SKILL.commit = dirHash(EDU_SKILL.src);
+/** Pasang/perbarui edu-motion-studio bila perlu (tidak pernah melempar error). */
+function ensureEduSkill(say) {
+  try {
+    if (!skillState(EDU_SKILL).installed) installSkill(EDU_SKILL, say || (() => {}));
+    return true;
+  } catch (err) {
+    if (say) say('Skill edu-motion-studio belum terpasang', String(err.message || err).slice(0, 200));
+    return false;
+  }
+}
 
 // ---------- Animantra: Vector (paket milik pengguna, dipakai utuh, tidak disalin HyperForge) ----------
 const AV_DST = path.join(SKILLS_DIR, 'animantra-vector');
@@ -933,6 +955,7 @@ async function prepareSession(e, { slug, title, brief, files }, { which, claudeC
   const st = await check(e.id);
   const missing = st.items.filter((i) => !i.ok && !i.optional).map((i) => i.label);
   if (missing.length) throw new Error(`Belum siap: ${missing.join(', ')}. Buka Pengaturan > Skill video lalu klik Siapkan otomatis.`);
+  if (e.id === 'studio') ensureEduSkill();
   // Skill human-voice untuk memeriksa naskah (opsional; pengguna lama mendapatkannya tanpa Siapkan otomatis ulang).
   await Promise.race([ensureVoiceSkill(which), new Promise((r) => setTimeout(r, 20000))]);
   fs.mkdirSync(path.join(e.work, 'briefs'), { recursive: true });

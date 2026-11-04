@@ -3,7 +3,7 @@ import type { Project } from './types';
 import { is2D, visualStyle } from './styles';
 import { WORDS_PER_SECOND } from './utils';
 
-export type ContentTypeId = 'sejarah' | 'fakta' | 'dongeng' | 'karangan' | 'tutorial' | 'dialog' | 'film';
+export type ContentTypeId = 'sejarah' | 'fakta' | 'dongeng' | 'karangan' | 'tutorial' | 'dialog' | 'film' | 'bagaimana-jika' | 'luar-angkasa' | 'geografi' | 'psikologi' | 'teknologi' | 'ekonomi' | 'misteri' | 'sains-sehari';
 
 export interface ContentType {
   id: ContentTypeId;
@@ -425,7 +425,7 @@ export function buildStudioBrief(project: Project, slug: string, characters: { k
     `- Gaya: **${st.skillStyle}** (styles/${st.skillStyle}.md), sudah dipilih di HyperForge. Tetap tunjukkan 1 frame contoh untuk disetujui.`,
     '- Teks di layar wajib (subtitle per kata + kata kunci tebal).',
     st.skillStyle === 'explainer-datar'
-      ? '- Gaya ini: pembawa **tokoh tetap Raka** (`XD.pembawa`, jangan dirancang ulang atau diubah; karakter HyperForge di bawah tidak dipakai sebagai pembawa). Tokoh & benda lain WAJIB dari pustaka `kit/explainer-datar.js` (XD), buat lembar tokoh & benda sebelum storyboard. Cerita selesai tuntas, ditutup ucapan terima kasih + sampai jumpa dengan kartu `XD.penutup` (tanpa teaser video berikutnya). **Narator** mengikuti bagian "Gaya narator & cara bercerita": santai seperti teman pintar yang ngobrol, alur tanya-jawab, angka diterjemahkan ke hal sehari-hari, humor ringan. Lihat styles/explainer-datar.md.'
+      ? '- Gaya ini (v2): pembawa **tokoh tetap Tora** (`XD.tora`, jangan dirancang ulang atau diubah; karakter HyperForge di bawah tidak dipakai sebagai pembawa), tokoh cerita `XD.chibi`. Ikuti "Tampilan v2" di styles/explainer-datar.md: kamera dekat, latar buram (`XD.lapisan` blur), tepi cahaya krem, `XD.grade` hangat, kartu istilah/lokasi, angka besar, gelembung bicara, transisi gelembung/sapuan. Contoh: samples/explainer-datar.html. Tokoh & benda lain WAJIB dari pustaka `kit/explainer-datar.js` (XD), buat lembar tokoh & benda sebelum storyboard. **Riset, hook, naskah, dan storyboard pakai skill `edu-motion-studio`** (Skill tool; kalau terpasang): satu pertanyaan utama per video, 3 pilihan hook, sumber primer, bedakan fakta/perkiraan/dugaan, nilai kualitas 1-5 sebelum final (fakta < 4 = belum layak). Bila bertentangan, aturan HyperForge yang menang: penutup tuntas + terima kasih (tanpa pertanyaan menggantung), narator santai, tempo 2,2-2,6 kata/detik, visual Explainer Datar (bukan prompt gambar AI). Cerita selesai tuntas, ditutup ucapan terima kasih + sampai jumpa dengan kartu `XD.penutup` (tanpa teaser video berikutnya). **Narator** mengikuti bagian "Gaya narator & cara bercerita": santai seperti teman pintar yang ngobrol, alur tanya-jawab, angka diterjemahkan ke hal sehari-hari, humor ringan. Lihat styles/explainer-datar.md.'
       : '',
     '- **Thumbnail + judul hook wajib** setelah video disetujui (SKILL.md langkah 6.6): 5 pasangan judul + teks thumbnail untuk dipilih, `hasil/thumbnail.jpg` (+ `hasil/cover.jpg` untuk 9:16) dan `hasil/judul.txt`.',
     '',
