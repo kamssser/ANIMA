@@ -23,7 +23,7 @@ const PROVIDERS: { id: Provider; label: string }[] = [
   { id: 'capcut', label: 'CapCut' },
 ];
 
-// Kunci pengaturan per slot suara: A = narator/tokoh 1, B = tokoh 2 (project 2 suara).
+// Kunci pengaturan per slot suara: A = karakter utama pengguna (1 suara: sekaligus narator), B = narator (project 2 suara).
 const KEYS = {
   A: { provider: 'vibiProvider', model: 'vibiModel', voiceId: 'vibiVoiceId', voiceName: 'vibiVoiceName', language: 'vibiLanguage', speed: 'vibiSpeed' },
   B: { provider: 'vibi2Provider', model: 'vibi2Model', voiceId: 'vibi2VoiceId', voiceName: 'vibi2VoiceName', language: 'vibi2Language', speed: 'vibi2Speed' },
@@ -73,9 +73,9 @@ function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
           {slot}
         </span>
         <div>
-          <div className="text-sm font-medium">{slot === 'A' ? 'Suara A (narator / tokoh 1)' : 'Suara B (tokoh 2)'}</div>
+          <div className="text-sm font-medium">{slot === 'A' ? 'Suara A (karakter utama kamu)' : 'Suara B (narator)'}</div>
           <div className="text-xs text-muted-foreground">
-            {slot === 'A' ? 'Narator. Dipakai semua project.' : 'Pembicara kedua untuk project 2 suara (semua jenis konten bisa). Pilih model dan suara yang berbeda dari suara A.'}
+            {slot === 'A' ? 'Suara karakter utama yang kamu buat di Pengaturan > Karakter. Project 1 suara: karakter ini sekaligus menjadi narator.' : 'Narator untuk project 2 suara (jenis Dialog: lawan bicara). Pilih model dan suara yang berbeda dari suara A.'}
           </div>
         </div>
         {slot === 'B' && sameModel && <Badge variant="warning">Model sama dengan suara A</Badge>}

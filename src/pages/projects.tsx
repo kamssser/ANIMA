@@ -77,8 +77,8 @@ export default function ProjectsPage() {
                   {contentType(p.content_type).label} · {visualStyle(p.visual_style).label}
                   {is2D(p.visual_style) && p.format === '16:9' ? ' · 16:9' : ''}
                 </div>
-                <div className="mt-1 line-clamp-1 font-semibold group-hover:text-primary">{p.title}</div>
-                <div className="mt-1 line-clamp-2 min-h-10 text-sm text-muted-foreground">{p.topic || 'Tanpa topik'}</div>
+                <div className="mt-1 line-clamp-1 font-semibold group-hover:text-primary">{p.title.replace(/\*\*|__/g, '')}</div>
+                <div className="mt-1.5 line-clamp-3 min-h-[4.5rem] text-[15px] leading-relaxed text-foreground/80">{p.topic || 'Tanpa topik'}</div>
                 <div className="mt-4 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <Clock className="size-3.5" /> {p.target_seconds} detik
@@ -230,7 +230,7 @@ function NewProjectDialog() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="topic">Topik / ide cerita</Label>
-                  <Textarea id="topic" rows={3} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Ceritakan singkat isinya, sudut pandang, atau hal yang wajib ada..." />
+                  <Textarea id="topic" rows={4} className="text-base leading-relaxed" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Ceritakan singkat isinya, sudut pandang, atau hal yang wajib ada..." />
                 </div>
                 {two && (
                   <div className="grid gap-2">
@@ -249,12 +249,12 @@ function NewProjectDialog() {
                   <div className="flex flex-wrap gap-2">
                     {([1, 2] as const).map((n) => (
                       <Button key={n} type="button" variant={(twoVoices ? 2 : 1) === n ? 'default' : 'outline'} onClick={() => setVoices(n)}>
-                        {n === 1 ? '1 suara (narator)' : '2 suara (A & B bergantian)'}
+                        {n === 1 ? '1 suara (karakter = narator)' : '2 suara (karakter A & narator B)'}
                       </Button>
                     ))}
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    Semua jenis konten bisa 2 suara: A sebagai narator, B sebagai tokoh kedua yang bertanya atau menanggapi. Suara A dan B diatur di Pengaturan &gt; Suara & audio.
+                    Semua jenis konten bisa 2 suara: A = karakter utamamu (dari Pengaturan &gt; Karakter), B = narator. 1 suara: karaktermu sekaligus jadi narator. Suara A dan B diatur di Pengaturan &gt; Suara & audio.
                   </span>
                 </div>
                 <div className="grid gap-2">

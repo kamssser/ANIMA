@@ -135,13 +135,24 @@ function RunningTasks() {
 }
 
 /** Header halaman: tetap terlihat saat konten di-scroll. */
-export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+/** Teks polos untuk judul: buang tanda markdown (** dan __). */
+const plain = (s: string) => s.replace(/\*\*|__/g, '').trim();
+
+export function PageHeader({ title, description, topic, actions }: { title: string; description?: string; topic?: string; actions?: ReactNode }) {
   return (
     <div className="sticky top-0 z-20 border-b bg-background">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-8 py-5">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {/* Judul panjang (mis. naskah ditempel jadi judul) dikecilkan dan dibatasi 2 baris; tanda markdown ** tidak ditampilkan. */}
+          <h1 className={cn('line-clamp-2 max-w-4xl font-bold tracking-tight', plain(title).length > 60 ? 'text-lg leading-snug' : 'text-2xl')} title={plain(title)}>
+            {plain(title)}
+          </h1>
           {description && <p className="mt-1 truncate text-sm text-muted-foreground">{description}</p>}
+          {topic && (
+            <p className="mt-2 line-clamp-2 max-w-4xl text-sm leading-relaxed text-foreground/85" title={plain(topic)}>
+              {plain(topic)}
+            </p>
+          )}
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>

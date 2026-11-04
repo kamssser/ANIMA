@@ -2,6 +2,8 @@ import type {
   ChatMessage,
   SkillCheck,
   SkillEngine,
+  StorageScan,
+  Story,
   BenchResult,
   QaReport,
   Word,
@@ -86,7 +88,7 @@ declare global {
       skillChatLogs(engines: SkillEngine[]): Promise<{ engine: SkillEngine; slug: string; size: number; mtime: string; running: boolean }[]>;
       skillChatLogTail(payload: { engine: SkillEngine; slug: string; kb?: number }): Promise<string>;
       onSkillChatEvent(cb: (e: { engine: SkillEngine; slug: string; type: 'message'; message: ChatMessage } | { engine: SkillEngine; slug: string; type: 'status'; running: boolean } | { engine: SkillEngine; slug: string; type: 'activity'; text: string; at: number }) => void): () => void;
-      onSkillEvent(cb: (e: { engine: SkillEngine; step: string; line?: string }) => void): () => void;
+      onSkillEvent(cb: (e: { engine: SkillEngine | 'reach'; step: string; line?: string }) => void): () => void;
       detectClaude(): Promise<ClaudeDetect>;
       installClaude(payload: {
         session: { access_token: string; refresh_token: string; expires_at: number };
@@ -102,6 +104,20 @@ declare global {
       libraryShowFile(file: string): Promise<boolean>;
       showItem(p: string): Promise<void>;
       openExternal(url: string): Promise<void>;
+      /** Chrome khusus Google Flow (profil HyperForge, port CDP). */
+      flowOpenChrome(): Promise<{ already: boolean }>;
+      flowStatus(): Promise<{ running: boolean; downloads: string; port: number }>;
+      /** Agent Reach (riset internet, read-only). */
+      reachStatus(): Promise<{ uv: string | null; bin: string | null; version: string | null; doctor: string; skill: boolean; url: string }>;
+      reachInstall(): Promise<{ report: string }>;
+      /** Otak custom: daftar model & uji koneksi. */
+      brainModels(p: { baseUrl: string; apiKey: string; auth: 'bearer' | 'x-api-key' }): Promise<{ url: string; models: { id: string; name?: string; context?: number | null }[] }>;
+      brainTest(p: { baseUrl: string; apiKey: string; auth: 'bearer' | 'x-api-key'; model: string }): Promise<{ ok: boolean; ms: number; reply: string }>;
+      /** Penyimpanan: ukuran & pembersihan. */
+      storageScan(): Promise<StorageScan>;
+      storyRead(p: { engine: SkillEngine; slug: string }): Promise<{ exists: boolean; file: string; mtime?: number; data?: Story; error?: string }>;
+      storyWrite(p: { engine: SkillEngine; slug: string; data: Story }): Promise<{ ok: boolean; mtime: number }>;
+      storageClean(p: { kind: 'temp' } | { kind: 'cache'; ids: string[] } | { kind: 'project'; engine: string; slug: string; mode: 'temp' | 'all' } | { kind: 'render'; slug: string }): Promise<{ freed: number }>;
     };
   }
 }

@@ -53,7 +53,8 @@ export function buildPrompt(project: Project) {
       : 'Kembangkan ide dari topik project menjadi cerita yang kuat.',
     `Tulis hook (0-3 detik), script narasi ~${words} kata untuk ${project.target_seconds} detik, dan shot list (${two ? '3-6' : '5-6'} detik per shot). Narasi tampil sebagai teks di layar.`,
   ];
-  if (usesTwoVoices(project)) steps.push("Dua pembicara (guide.twoSpeakers): isi speaker 'A' atau 'B' di SETIAP shot; narration hanya kalimat yang diucapkan.");
+  if (usesTwoVoices(project)) steps.push("Dua pembicara (guide.twoSpeakers): isi speaker 'A' (karakter utama pengguna) atau 'B' (narator; pada jenis Dialog = tokoh kedua) di SETIAP shot; narration hanya kalimat yang diucapkan.");
+  else steps.push('Satu suara (suara A): karakter utama pengguna sekaligus menjadi narator, boleh bercerita sebagai dirinya sendiri.');
   if (two) {
     steps.push(`Style 2D "${st.label}", format ${project.format || '9:16'}: pakai karakter dari guide.characters (karakter utama wajib tampil). Isi world tiap shot: bg, camera, framing, cast, speaker.`);
     if (t.needsSources) steps.push('Untuk tempat/bangunan nyata: anima_find_photos lalu anima_view_photo, dan gambar latar yang bentuk + posisinya mirip foto (isi reference).');
@@ -229,6 +230,176 @@ export function buildAnimantraBrief(project: Project, slug: string, workDir: str
   return lines.filter((l) => l !== '').join('\n') + '\n';
 }
 
+/** Bagian isi yang sama untuk semua brief skill baru (topik, hook, naskah, aturan jenis konten). */
+function isiLines(project: Project) {
+  const t = contentType(project.content_type);
+  return [
+    `- Topik / ide: ${project.topic || project.title}`,
+    project.hook ? `- Hook yang sudah ada: ${project.hook}` : '',
+    project.script.trim() ? `- Naskah yang sudah ada (boleh dipakai sebagai dasar):\n\n${project.script.trim()}\n` : '',
+    `- Jenis konten HyperForge: ${t.label}. Aturan:`,
+    ...typeRules(project).map((r) => `  - ${r}`),
+    ...HOOK_RULES.map((r) => `  - ${r}`),
+    t.needsSources ? '- Wajib fakta bersumber: cek dengan web search, minimal 2 sumber, cantumkan di catatan proyek.' : '',
+    '- Bahasa video: Indonesia (narasi dan teks di layar). Cerita selesai tuntas, ditutup ucapan terima kasih sudah menonton.',
+  ];
+}
+
+const VOICE_TWO = (project: Project, slug: string, dir: string) =>
+  usesTwoVoices(project)
+    ? `- Project ini **dua suara**: A = karakter utama milik pengguna (dibuat di Pengaturan > Karakter) yang berbicara sebagai dirinya, B = narator. Satu file per giliran dengan \`speaker: "A"\`/\`"B"\` (\`${slug}/${dir}/baris_XX.mp3\`), lalu gabungkan berurutan dengan ffmpeg.`
+    : '- Satu suara (suara A): karakter utama milik pengguna sekaligus menjadi narator (bercerita sebagai dirinya).';
+
+/** Brief untuk skill lemo-opuscar (LemoLab). Skill dan pustakanya dipakai utuh; brief menjawab "one round of questions". */
+export function buildLemoBrief(project: Project, slug: string) {
+  const st = visualStyle(project.visual_style);
+  const lines = [
+    `# Brief HyperForge: ${project.title}`,
+    '',
+    'Brief dari aplikasi HyperForge. Jalankan skill lemo-opuscar **persis seperti SKILL.md dan $LIB/AGENTS.md** (setup.sh, treatment, look, produksi, cek diri, serahkan). Brief ini menjawab putaran pertanyaan (Workflow langkah 1); tanyakan hanya yang belum terjawab.',
+    '',
+    '## Gaya & bentuk',
+    `- Gaya pustaka: **${st.skillStyle}** (\`$LIB/styles/${st.skillStyle}/STYLE.md\`), sudah dipilih pengguna di HyperForge. Jangan tawarkan daftar gaya lagi.`,
+    `- Rasio: ${project.format === '16:9' ? '16:9 (1920x1080)' : '9:16 (1080x1920, video tegak Shorts/TikTok/Reels)'}. Durasi: sekitar ${project.target_seconds} detik.`,
+    '- Bahasa film: **Indonesia** (narasi + subtitle). Storyboard: tunjukkan dulu satu lembar frame kunci sebelum produksi penuh.',
+    '- Teks di layar: subtitle narasi wajib terbaca (aturan HyperForge).',
+    '',
+    '## Isi',
+    ...isiLines(project),
+    '',
+    '## Suara narasi: vibi.pro (pilihan pengguna)',
+    `- Pengguna punya suara sendiri lewat **vibi.pro** (pengganti Kokoro/edge-tts di TECHNIQUE.md). Setelah naskah VO jadi: \`anima_vibi_tts\` dengan \`estimate: true\`, sebutkan suara + jumlah karakter, lalu buat \`${slug}/voice/vo.mp3\`. Ubah ke WAV bila pipeline butuh (\`ffmpeg -y -i ${slug}/voice/vo.mp3 -ar 24000 -ac 1 ${slug}/voice/vo.wav\`).`,
+    `- Timing kata: \`anima_vibi_words\` -> \`${slug}/voice/words.json\` (format [{s, e, text}]); dipakai untuk subtitle dan sinkron gambar. Lewati asr_check.py bahasa Inggris.`,
+    VOICE_TWO(project, slug, 'voice'),
+    '- Musik & SFX: dari pustaka (sampler/synth) seperti biasa.',
+    '',
+    '## Folder & hasil',
+    `- Folder proyek: \`${slug}/\` di folder kerja ini (bukan \`films/\`). Video akhir: \`${slug}/${slug}.mp4\` (atau di \`${slug}/out/\`); HyperForge mengambil MP4 dari folder proyek.`,
+    '- Di Windows: python pustaka ada di `$LIB/.venv/bin/python` (sudah disiapkan HyperForge), `sh`/`bash` dari Git for Windows.',
+    THUMB_RULE(slug),
+  ];
+  return lines.filter((l) => l !== '').join('\n') + '\n';
+}
+
+/** Brief untuk skill motionmaxxing (Tejash Makwana). */
+export function buildMotionBrief(project: Project, slug: string) {
+  const st = visualStyle(project.visual_style);
+  const kinetic = st.skillStyle === 'kinetic';
+  const lines = [
+    `# Brief HyperForge: ${project.title}`,
+    '',
+    'Brief dari aplikasi HyperForge. Jalankan skill motionmaxxing **persis seperti SKILL.md** (toolbox & taste, brand, ide, world, build, render, gates G0-G5, NOTE.md). Tanyakan hanya yang belum terjawab di sini.',
+    '',
+    '## Jenis',
+    kinetic
+      ? '- **Kinetic typography**: kata-kata bergerak mengikuti ritme narasi (craft law 11), tetap satu ide dan satu dunia.'
+      : '- **Promo / motion graphic** (peluncuran, fitur, brand sting, iklan sosial) sesuai topik.',
+    `- Rasio: ${project.format === '16:9' ? '16:9 (1920x1080)' : '9:16 (1080x1920)'}. Durasi: sekitar ${project.target_seconds} detik.`,
+    '- Kalau topik menyebut brand/website, tangkap brand-nya (references/brand.md). Kalau tidak ada brand, perlakukan topik/judul sebagai "brand" dan buat identitas orisinal.',
+    '',
+    '## Isi',
+    ...isiLines(project),
+    '',
+    '## Suara: vibi.pro, bukan ElevenLabs langsung',
+    `- Pengguna tidak memberi ELEVENLABS_API_KEY; suaranya lewat **vibi.pro** (alat MCP). Ganti \`voice.py vo\` dengan: \`anima_vibi_tts\` \`estimate: true\` -> sebutkan suara + karakter -> buat \`${slug}/audio/vo.mp3\`. Timing kata: \`anima_vibi_words\` -> \`${slug}/audio/words.json\`. \`voice.py split\` dan \`mix.py\` tetap dipakai seperti biasa.`,
+    VOICE_TWO(project, slug, 'audio'),
+    '- SFX & musik: tanpa key ElevenLabs, buat dari kode/synth atau tanpa musik (sound-sync.md bagian 9). Sebutkan satu baris ke pengguna, lalu lanjut.',
+    '',
+    '## Folder & hasil',
+    `- Folder proyek: \`${slug}/\` (pengganti \`film/\` di SKILL.md). Hasil akhir \`${slug}/final.mp4\` + \`${slug}/NOTE.md\`; HyperForge mengambil MP4 dari folder proyek.`,
+    '- Di Windows `python3` sudah diarahkan ke Python pengguna; skrip .sh dijalankan dengan `bash`. Chrome: env CHROME_PATH.',
+    THUMB_RULE(slug),
+  ];
+  return lines.filter((l) => l !== '').join('\n') + '\n';
+}
+
+/** Brief untuk skill hyperforge-flow (Google Flow Veo + vibi.pro). */
+export function buildFlowBrief(project: Project, slug: string) {
+  const st = visualStyle(project.visual_style);
+  const lines = [
+    `# Brief HyperForge: ${project.title}`,
+    '',
+    'Brief dari aplikasi HyperForge. Jalankan skill hyperforge-flow (SKILL.md): naskah dari Claude, suara dari vibi.pro, Google Flow hanya untuk klip video + SFX, lalu rakit dengan tools/rakit.mjs.',
+    '',
+    '## Gaya & bentuk',
+    `- Gaya visual klip: **${st.skillStyle}** (dipilih di HyperForge). Sebut gaya ini di setiap prompt Flow supaya semua klip seragam.`,
+    st.skillNote ? `- ${st.skillNote}` : '',
+    `- Rasio: ${project.format === '16:9' ? '16:9' : '9:16'}. Durasi video: sekitar ${project.target_seconds} detik (jumlah klip mengikuti narasi, 4-8 detik per shot).`,
+    '- Subtitle per kata wajib (rakit.mjs, `subtitle: true`).',
+    '',
+    '## Isi',
+    ...isiLines(project),
+    '',
+    '## Suara narasi: vibi.pro',
+    `- \`anima_vibi_tts\` estimate dulu (sebutkan suara + karakter), lalu \`${slug}/audio/vo.mp3\`; timing kata \`anima_vibi_words\` -> \`${slug}/audio/words.json\`.`,
+    VOICE_TWO(project, slug, 'audio'),
+    '- Google Flow tidak dipakai untuk suara orang atau musik; hanya video + SFX.',
+    '',
+    '## Hasil',
+    `- Folder proyek: \`${slug}/\`. Video akhir \`${slug}/hasil/${slug}.mp4\`; HyperForge mengambilnya dari \`${slug}/hasil/\`.`,
+    THUMB_RULE(`${slug}/hasil`),
+  ];
+  return lines.filter((l) => l !== '').join('\n') + '\n';
+}
+
+/** Brief untuk skill kamal (HyperForge). */
+export function buildKamalBrief(project: Project, slug: string) {
+  const st = visualStyle(project.visual_style);
+  const lines = [
+    `# Brief HyperForge: ${project.title}`,
+    '',
+    'Brief dari aplikasi HyperForge. Jalankan skill kamal (SKILL.md): naskah -> suara -> storyboard -> render, dengan persetujuan pengguna di setiap tahap. Tanyakan hanya yang belum terjawab di sini.',
+    '',
+    '## Gaya & bentuk',
+    `- Varian: **${st.skillStyle}** (styles/${st.skillStyle}.md, templates/${st.skillStyle}.html), sudah dipilih pengguna. Wajib memakai kit/kamal-kit.js.`,
+    `- Format: ${project.format === '16:9' ? '16:9 (1920x1080; susun ulang komposisi untuk layar lebar)' : '9:16 (1080x1920)'}. Durasi: sekitar ${project.target_seconds} detik.`,
+    '- Nama kanal di layar: tanyakan sekali ke pengguna (boleh kosong).',
+    '',
+    '## Isi',
+    ...isiLines(project),
+    '',
+    '## Suara: vibi.pro',
+    `- \`anima_vibi_tts\` estimate dulu (sebutkan suara + karakter), lalu \`${slug}/audio/vo.mp3\`; timing kata \`anima_vibi_words\` -> \`${slug}/audio/words.json\`.`,
+    VOICE_TWO(project, slug, 'audio'),
+    '',
+    '## Hasil',
+    `- Folder proyek: \`${slug}/\`. Video akhir di \`${slug}/hasil/\` (video_final.mp4); HyperForge mengambilnya dari sana.`,
+    THUMB_RULE(`${slug}/hasil`),
+  ];
+  return lines.filter((l) => l !== '').join('\n') + '\n';
+}
+
+/** Brief untuk skill directing-stickman-videos (kaomei), mode B Autopilot (render lokal). */
+export function buildStickmanBrief(project: Project, slug: string) {
+  const st = visualStyle(project.visual_style);
+  const portrait = project.format !== '16:9';
+  const lines = [
+    `# Brief HyperForge: ${project.title}`,
+    '',
+    `Brief dari aplikasi HyperForge. Jalankan skill directing-stickman-videos **mode B · Autopilot, style ${st.skillStyle}** persis seperti SKILL.md, references/autopilot.md, references/autopilot-runtime.md, references/autopilot-production-qa.md, dan reference style ${st.skillStyle}. Mode, style, rasio, durasi, dan bahasa sudah dijawab di sini; tanyakan hanya yang belum.`,
+    '',
+    '## Pengaturan',
+    `- Mode **B Autopilot**, style **${st.skillStyle}** (\`"style": "${st.skillStyle}"\` di project.json).`,
+    `- Rasio: ${portrait ? '9:16 (width 1080, height 1920; susun komposisi tegak, tinggi desain 1280 x 1920 / 1080)' : '16:9 (1280x720 atau 1920x1080)'}. Durasi: sekitar ${project.target_seconds} detik.`,
+    '- Bahasa narasi & subtitle: **Indonesia** (font bawaan Caveat mendukung huruf Latin).',
+    '',
+    '## Isi',
+    ...isiLines(project),
+    '',
+    '## Suara: vibi.pro (pengganti Gemini TTS)',
+    '- Pengguna tidak memakai Gemini untuk suara. Provider suara = **vibi.pro** (suara pilihan pengguna di HyperForge); catat sebagai provider/voice di project. Jangan meminta API key.',
+    `- \`anima_vibi_tts\` estimate dulu (sebutkan suara + karakter), lalu \`${slug}/narration.mp3\`. Timing kata: \`anima_vibi_words\` -> \`${slug}/words.json\`, lalu perintah \`captions\` skill (\`node <skill>/scripts/autopilot.mjs captions ${slug}/words.json ${slug}/captions.json\`; sesuaikan nama field kata bila perlu). Tidak perlu Whisper.`,
+    VOICE_TWO(project, slug, 'voice'),
+    '- Gambar: B1 memakai aset bawaan (`@b1/...`) dan pose atlas; B3 memakai lapisan vektor (path/rect/ellipse/group). Jangan memakai layanan gambar berbayar (Gemini) tanpa persetujuan pengguna.',
+    '',
+    '## Folder & hasil',
+    `- Folder proyek: \`${slug}/\` di folder kerja ini (di luar folder skill). Skrip dijalankan dengan path skill: \`node <skill>/scripts/autopilot.mjs ...\` dan path absolut ke \`${slug}/project.json\`.`,
+    `- Contoh ±20 detik dulu (preview), minta persetujuan, baru approve + render penuh. Video akhir di \`${slug}/output/\`; HyperForge mengambil MP4 dari sana.`,
+    THUMB_RULE(`${slug}/output`),
+  ];
+  return lines.filter((l) => l !== '').join('\n') + '\n';
+}
+
 /** Brief untuk skill HyperForge Studio (skill buatan HyperForge). */
 export function buildStudioBrief(project: Project, slug: string, characters: { key: string; name: string; nickname: string; is_main: boolean; personality: string; appearance: string; hasSvg: boolean }[]) {
   const t = contentType(project.content_type);
@@ -265,8 +436,8 @@ export function buildStudioBrief(project: Project, slug: string, characters: { k
     '## Suara',
     `- VO dengan \`anima_vibi_tts\` (suara pilihan pengguna di HyperForge): estimate dulu, sebutkan kreditnya, lalu buat ke \`${slug}/audio/vo.mp3\`. Timing kata: \`anima_vibi_words\` -> \`${slug}/audio/words.json\`.`,
     usesTwoVoices(project)
-      ? '- **Dua suara** (dipilih pengguna untuk project ini): A = narator/pembawa utama, B = tokoh kedua. Satu file per giliran dengan `speaker: "A"`/`"B"`, lalu gabungkan. Saat minta persetujuan naskah, tandai tiap kalimat dengan A/B.'
-      : '- Satu suara (narator, suara A).',
+      ? '- **Dua suara** (dipilih pengguna untuk project ini): A = karakter utama pengguna (yang ditandai utama di bawah) berbicara sebagai dirinya, B = narator. Satu file per giliran dengan `speaker: "A"`/`"B"`, lalu gabungkan. Saat minta persetujuan naskah, tandai tiap kalimat dengan A/B.'
+      : '- Satu suara (suara A): karakter utama pengguna sekaligus menjadi narator.',
     '',
     '## Hasil',
     `- Folder proyek: \`${slug}/\`. Video akhir di \`${slug}/hasil/\` (video_final.mp4 + video_final_tanpa_musik.mp4); HyperForge mengambilnya dari sana.`,

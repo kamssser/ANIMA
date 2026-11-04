@@ -40,6 +40,12 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
   dipakai "persis 100%". Untuk memperbarui: salin ulang dari repo aslinya, ganti commit di `animate-skill/SOURCE.md` dan
   `commit` mesin animate di `electron/skills.cjs`.
 
+- Mengubah isi skill/alat yang diambil dari GitHub pada commit tetap (tidak ada di repo, dipasang lewat Siapkan otomatis):
+  `lemo-opuscar` (lemomo-ai/lemo-opuscar, MIT; contoh film CC BY 4.0), `motionmaxxing` (Tejashmakwana/motionmaxxing,
+  Apache-2.0), dan `google-flow-browser-mcp` (TMSSS05, MIT), `directing-stickman-videos` (kaomei/stickman-video-director, MIT),
+  `hand-drawn-video-prompts` (kaomei, MIT). Untuk memperbarui: ganti `commit` di `electron/skills.cjs`.
+  Agent Reach dipasang dengan uv dari rilis GitHub-nya (bukan PyPI; paket PyPI bernama sama bukan proyek itu).
+
 ## Catatan teknis
 
 - Windows PowerShell 5.1: pesan commit multi-baris lewat file (`git commit -F <file>`), bukan here-string.
@@ -50,5 +56,21 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
 - `studio-skill/hyperforge-studio/` = skill buatan HyperForge sendiri (MIT, boleh diedit). Dibuat ORIGINAL: jangan
   memasukkan isi "Guide Studio Animasi AI" (PDF berbayar milik pemilik, "jangan disebarluaskan"; `*.pdf` di-ignore).
   Penanda pemasangan = hash isi skill, jadi perubahan apa pun otomatis terpasang ulang lewat Siapkan otomatis.
+- `flow-skill/hyperforge-flow/` = skill buatan HyperForge (MIT, boleh diedit) untuk style Google Flow: naskah Claude,
+  suara vibi.pro, klip + SFX dari Flow yang dioperasikan Claude lewat Playwright MCP (`@playwright/mcp` versi tetap di `electron/skills.cjs`,
+  tersambung ke Chrome Flow port 9333), `tools/rakit.mjs` merakit MP4.
+- `kamal-skill/kamal/` = skill buatan HyperForge (MIT, boleh diedit) untuk style Kamal (gelap/terang) dari video referensi
+  pemilik. Alat render disalin dari hyperforge-studio; pustaka gaya `kit/kamal-kit.js`; huruf Plus Jakarta Sans (OFL) di
+  `kit/fonts/`. Jangan menyalin nama/logo kanal referensi (Garis Hidup, Dalekta) ke skill.
+- Stickman: mesin `stickman` = skill kaomei/stickman-video-director (MIT, commit tetap `STICK_COMMIT`) mode B Autopilot,
+  suara vibi.pro. Style Google Flow stickman/crayon membaca skill itu dan kaomei/hand-drawn-video-prompts (dipasang oleh
+  Siapkan Google Flow); catatan per style ada di `skillNote` di `shared/visual-styles.json`.
+- Storyboard cerita + teks suara: semua brief skill mendapat aturan `storyRule` (src/components/skill-video.tsx): Claude menulis
+  `<proyek>/cerita.json` lalu menunggu; pengguna mengedit di dialog **Storyboard & naskah** (src/components/story-editor.tsx,
+  IPC story:read/story:write di electron/skills.cjs).
+- Python: `ensurePython` di electron/skills.cjs melewati alias Microsoft Store dan memasang Python 3.12 via winget; paket pip
+  opsional yang gagal hanya peringatan.
+- Otak custom (`electron/brain.cjs`): env ANTHROPIC_* diset di process.env proses utama, jadi semua proses `claude`
+  ikut. Penyimpanan: `electron/storage.cjs`. Riset: `electron/reach.cjs`.
 - Struktur: `electron/` (proses utama, render, update, MCP install; `skills.cjs` = style dari skill animate & bang-motion), `src/` (UI), `mcp/` (server MCP),
   `supabase/schema.sql`, `scripts/release.mjs`, `remotion-template/`, `server/bench.sh`.

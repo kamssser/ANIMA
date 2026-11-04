@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell, nativeImage } = require('ele
 const path = require('node:path');
 const fs = require('node:fs');
 const { spawn, execFile } = require('node:child_process');
+const brain = require('./brain.cjs');
 
 const isDev = !app.isPackaged && process.argv.includes('--dev');
 
@@ -75,6 +76,14 @@ const defaultSettings = () => ({
   pythonPath: 'python',
   runMix: true,
   muxAudio: true,
+  // Otak Claude: 'claude' = login Claude Code bawaan; 'custom' = API kompatibel Anthropic (base URL + key + model).
+  brainMode: 'claude',
+  brainPreset: 'custom',
+  brainBaseUrl: '',
+  brainApiKey: '',
+  brainAuth: 'bearer',
+  brainModel: '',
+  brainSmallModel: '',
 });
 
 // Model bawaan suara B per provider: dibuat beda dari model bawaan suara A.
@@ -995,7 +1004,11 @@ ipcMain.handle('python:install', async () => {
 // ---------- IPC ----------
 
 ipcMain.handle('settings:get', () => readSettings());
-ipcMain.handle('settings:save', (_e, next) => writeSettings(next));
+ipcMain.handle('settings:save', (_e, next) => {
+  const merged = writeSettings(next);
+  brain.applyBrainEnv(merged);
+  return merged;
+});
 
 ipcMain.handle('dialog:pickFolder', async (_e, title) => {
   const r = await dialog.showOpenDialog(win, { title, properties: ['openDirectory', 'createDirectory'] });
@@ -1225,12 +1238,16 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session, style
     'WebSearch',
     'WebFetch',
   ];
+  // Riset Agent Reach (kalau terpasang): subtitle YouTube, Reddit, X, GitHub, dll. (hanya membaca)
+  const reachBin = await require('./reach.cjs').findReach(which);
+  if (reachBin) tools.push('Bash(agent-reach:*)');
+  if (reachBin) prompt += '\n\nRiset tambahan boleh memakai perintah agent-reach (read-only), mis. `agent-reach read <link>` atau `agent-reach youtube search "<topik>"`, bila WebSearch/WebFetch tidak cukup.';
   const args = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--mcp-config', mcpConfig, '--allowedTools', ...tools];
   const say = (line) => win && !win.isDestroyed() && win.webContents.send('claude:event', { projectId, line });
   say('Menyiapkan Claude...');
 
   return await new Promise((resolve, reject) => {
-    const child = spawn(claude, args, { cwd: app.getPath('userData'), windowsHide: true, env: { ...process.env } });
+    const child = spawn(claude, args, { cwd: app.getPath('userData'), windowsHide: true, env: reachBin ? { ...process.env, PATH: `${path.dirname(reachBin)}${path.delimiter}${process.env.PATH}` } : { ...process.env } });
     genChild = child;
     let buf = '';
     let result = null;
@@ -1295,7 +1312,7 @@ ipcMain.handle('claude:generate', async (_e, { projectId, prompt, session, style
         reject(new Error(`Claude selesai tapi tidak menyimpan story. Jawaban Claude: ${String(result.result || '').slice(0, 300)}`));
       } else {
         const msg = result?.result || errTail.join('\n') || `Claude Code keluar dengan kode ${code}`;
-        reject(new Error(/login|auth|credential/i.test(msg) ? 'Claude Code belum login. Buka terminal, jalankan "claude", lalu login.' : String(msg).slice(0, 400)));
+        reject(new Error(/login|auth|credential|401|403/i.test(msg) ? (process.env.ANTHROPIC_BASE_URL ? `Otak custom menolak permintaan (cek API key, base URL, dan model di Pengaturan > Otak AI): ${String(msg).slice(0, 200)}` : 'Claude Code belum login. Buka terminal, jalankan "claude", lalu login.') : String(msg).slice(0, 400)));
       }
     });
   });
@@ -1425,7 +1442,10 @@ async function renderSvgPng(svg, width, height, outFile) {
 // Karakter 2D: digambar Claude sebagai SVG ber-rig (electron/characters.cjs).
 require('./characters.cjs').register({ ipcMain, getWin: () => win, claudeCodePath, cwd: app.getPath('userData'), refDir: refDir(), renderSvgPng });
 // Style dari skill Claude pihak ketiga (animate, bang-motion; utuh): pasang, buka Claude Code interaktif, baca hasil.
-require('./skills.cjs').register({ ipcMain, getWin: () => win, which, claudeCodePath, mcpServerPath, settingsFile });
+const skillChat = require('./skills.cjs').register({ ipcMain, getWin: () => win, which, claudeCodePath, mcpServerPath, settingsFile });
+require('./reach.cjs').register({ ipcMain, getWin: () => win, which });
+require('./brain.cjs').register({ ipcMain });
+require('./storage.cjs').register({ ipcMain, readSettings, userData: app.getPath('userData'), isBusy: (engine, slug) => skillChat.isRunning(engine, slug) });
 // Pustaka Video: semua MP4 jadi (render + skill), gambar mini, buka folder.
 require('./library.cjs').register({ ipcMain, readSettings, ffmpeg, cacheDir: app.getPath('userData') });
 
@@ -1447,6 +1467,7 @@ if (!app.requestSingleInstanceLock()) {
     }
   });
   app.whenReady().then(() => {
+    brain.applyBrainEnv(readSettings());
     createWindow();
     setupAutoUpdate();
   });

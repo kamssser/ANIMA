@@ -96,7 +96,11 @@ export function buildComic2D(project: Project, shots: Shot[], characters: Charac
       cast = pick.map((c, i) => ({ char: c.key, x: pick.length === 1 ? 0.5 : 0.28 + (0.44 * i) / (pick.length - 1), flip: i > 0 && i === pick.length - 1 }));
     }
     cast.forEach((m) => used.add(m.char));
-    const speaker = st.speaker ?? (s.speaker === 'B' ? cast[1]?.char : s.speaker === 'A' ? cast[0]?.char : undefined);
+    // Siapa yang mulutnya bergerak: A = karakter utama pengguna (1 suara: dia juga naratornya); B = narator (di luar
+    // layar), kecuali jenis Dialog: B = tokoh kedua.
+    const mainIn = cast.find((m) => m.char === main?.key)?.char ?? cast[0]?.char;
+    const other = cast.find((m) => m.char !== mainIn)?.char;
+    const speaker = st.speaker ?? (s.speaker === 'B' ? (project.content_type === 'dialog' ? other : undefined) : mainIn);
     return { durationInFrames: s.duration_frames, bg: st.bg ?? '', camera: st.camera, framing: st.framing, transition: st.transition, cast, speaker, text: s.narration_text, props };
   });
   const chars: Comic2DRequest['characters'] = {};

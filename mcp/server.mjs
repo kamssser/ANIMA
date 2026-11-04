@@ -18,7 +18,7 @@ const { sanitizeSvg, checkBackgroundSvg, checkPropSvg, extractSvg } = createRequ
 
 const SESSION_FILE = process.env.ANIMA_SESSION_FILE;
 // Sesi skill animate / bang-motion (dibuka dari HyperForge) tidak butuh login Supabase: hanya alat suara vibi.
-if ((!SESSION_FILE || !fs.existsSync(SESSION_FILE)) && !process.env.ANIMA_ANIMATE_DIR && !process.env.ANIMA_BANG_DIR && !process.env.ANIMA_STUDIO_DIR) {
+if ((!SESSION_FILE || !fs.existsSync(SESSION_FILE)) && !process.env.ANIMA_ANIMATE_DIR && !process.env.ANIMA_BANG_DIR && !process.env.ANIMA_STUDIO_DIR && !process.env.ANIMA_WORK_DIR && !process.env.ANIMA_ANIMANTRA_DIR) {
   console.error('ANIMA MCP: sesi tidak ditemukan. Buka ANIMA Studio > Pengaturan > Integrasi Claude > Sambungkan.');
   process.exit(1);
 }
@@ -70,7 +70,7 @@ const shotSchema = z.object({
     .describe(
       'Style 3D: setting/props/cahaya bebas. Style 2D WAJIB: { bg: "<id latar>", camera: "static|zoom-in|zoom-out|pan-left|pan-right|shake|push-speaker", framing: "wide|medium|close", transition: "cut|fade|slide|zoom|flash|whip", cast: [{ char: "<key karakter>", x: 0..1, flip?: bool, expr?: "normal|senang|sedih|marah|kaget", pose?: "idle|point|wave|explain|shrug|cheer|think", enter?: "none|left|right|bottom|pop", toX?: 0..1 }], speaker: "<key karakter yang bicara>", props: [{ prop: "<id benda>", x: 0..1, y: 0..1, size: 0.05..1.2, anim?: "none|float|bob|pop|drop|slide-left|slide-right|across-left|across-right|spin|pulse|shake", delay?: detik, layer?: "back|front" }] }. cast boleh [] untuk shot sisipan (close-up benda/peta) asal ada props.',
     ),
-  speaker: z.enum(['A', 'B', '']).default('').describe("Untuk project 2 suara (guide.twoSpeakers): 'A' atau 'B' (siapa yang bicara di shot ini)"),
+  speaker: z.enum(['A', 'B', '']).default('').describe("Untuk project 2 suara (guide.twoSpeakers): 'A' = karakter utama pengguna, 'B' = narator (jenis Dialog: tokoh kedua). Siapa yang bicara di shot ini"),
 });
 
 // Aturan per jenis konten (sama dengan yang dipakai aplikasi).
@@ -478,7 +478,7 @@ server.tool(
 );
 
 /** Folder kerja sesi skill yang boleh ditulisi alat suara. */
-const voBase = () => process.env.ANIMA_STUDIO_DIR || process.env.ANIMA_BANG_DIR || process.env.ANIMA_ANIMANTRA_DIR || null;
+const voBase = () => process.env.ANIMA_STUDIO_DIR || process.env.ANIMA_BANG_DIR || process.env.ANIMA_ANIMANTRA_DIR || process.env.ANIMA_WORK_DIR || null;
 
 server.tool(
   'anima_vibi_words',

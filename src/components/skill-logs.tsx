@@ -7,8 +7,8 @@ import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from
 import type { SkillEngine } from '@/lib/types';
 import { cn, formatDate } from '@/lib/utils';
 
-const ENGINES: SkillEngine[] = ['studio', 'animate', 'bang-motion', 'animantra'];
-const ENGINE_LABEL: Record<SkillEngine, string> = { studio: 'HyperForge Studio', animate: 'Animate', 'bang-motion': 'Bang Motion', animantra: 'Animantra' };
+const ENGINES: SkillEngine[] = ['studio', 'animate', 'bang-motion', 'animantra', 'lemo', 'motionmaxxing', 'flow', 'kamal', 'stickman'];
+const ENGINE_LABEL: Record<SkillEngine, string> = { studio: 'HyperForge Studio', animate: 'Animate', 'bang-motion': 'Bang Motion', animantra: 'Animantra', lemo: 'Lemo-Opuscar', motionmaxxing: 'Motionmaxxing', flow: 'Google Flow', kamal: 'Kamal', stickman: 'Stickman' };
 
 /** Isi log satu sesi, diperbarui tiap 2 detik selama terbuka. */
 export function LogView({ engine, slug, className }: { engine: SkillEngine; slug: string; className?: string }) {

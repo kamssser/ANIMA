@@ -6,6 +6,28 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.17.0 - 2026-11-04
+
+**Baru**
+- **Storyboard cerita & teks suara yang bisa diedit sebelum render**: untuk semua style yang dikerjakan bersama Claude, setelah naskah jadi Claude menyusun storyboard per adegan (visual, teks di layar, suara A/B, dan kalimat narasi) lalu menunggu. Buka tombol **Storyboard & naskah** di atas obrolan: ubah kalimat, ganti visual, tambah/hapus/urutkan adegan, lalu klik **Simpan & lanjutkan dengan Claude**. Claude memakai teks suaramu persis kata per kata untuk suara dan video.
+- **Google Flow (Veo)** sebagai style baru: klip video AI beserta efek suaranya dibuat di Google Flow, sedangkan naskah tetap ditulis Claude dan suara narasi tetap dari vibi.pro. Claude sendiri yang mengetik prompt, menekan **Generate**, dan mengunduh tiap shot di jendela Chrome Flow (memakai kredit Flow-mu, kamu setujui sekali di awal; tampilan Flow berbahasa apa pun bisa), lalu klip dirakit otomatis menjadi MP4 dengan subtitle. Pilihan gaya: sinematik realistis, animasi 3D kartun, dan anime. Supaya tokoh dan gaya tidak berganti-ganti antar klip, Claude membuat gambar referensi tokoh dulu (kamu setujui), lalu memakainya di setiap klip dan memeriksa tiap klip sebelum lanjut. Chrome Flow memakai profil terpisah, jadi akun Chrome utamamu tidak tersentuh. Siapkan di **Pengaturan > Skill video > Google Flow**, lalu klik **Buka Google Flow di Chrome** dan login sekali.
+- **Style Kamal** (2 varian, dirender dari kode): **Kamal gelap** = panggung gelap minimalis dengan tokoh garis, satu lampu sorot, dan benda penting yang menyala kuning, cocok untuk cerita pendek bermakna; **Kamal terang** = tampilan editorial krem dengan judul tebal, kata kunci di kotak merah marun, kartu angka yang berhitung, dan diagram cabang, cocok untuk penjelasan produk dan data. Naskah Claude, suara vibi.pro.
+- **Style Stickman** (dari stickman-video-director): **Stickman sketsa minimal** dan **Stickman TV retro**, video stickman bernarasi dengan subtitle yang dirender langsung di laptop. Claude membuat contoh sekitar 20 detik untuk kamu setujui dulu.
+- **Style Google Flow baru**: **stickman klasik**, **stickman cozy**, **stickman sejarah** (gaya Director dari stickman-video-director) dan **gambar tangan crayon** (dari hand-drawn-video-prompts). Claude memakai aturan tokoh dan prompt dari skill tersebut, lalu membuat klipnya di Google Flow.
+- **66 style Lemo-Opuscar**: cat air, ukiyo-e, wayang bayangan, papan tulis kapur, cetak cukil kayu, anime 80-an, peta jalur kereta, bongkar produk, dan banyak lagi. Claude menyutradarai, menggambar, memberi musik, dan mengemas film dengan kode; suara tetap vibi.pro.
+- **Motionmaxxing**: style motion graphic promo dan kinetic typography kelas motion designer, lengkap dengan pemeriksaan hasil render.
+- **Otak AI custom** (**Pengaturan > Otak AI**): selain login Claude bawaan, kamu bisa memakai API sendiri. Pilih penyedia (OpenRouter, DeepSeek, Z.ai, Kimi, Anthropic, server lokal) atau isi base URL sendiri, masukkan API key, klik **Ambil daftar model**, pilih modelnya, lalu **Uji koneksi**. Berlaku untuk semua pekerjaan Claude di HyperForge.
+- **Riset internet dengan Agent Reach** (**Pengaturan > Riset internet**): sekali klik pasang, Claude bisa membaca subtitle YouTube, Reddit, X, GitHub, dan web untuk riset bahan video. Hanya membaca, tidak pernah memposting.
+- **Penyimpanan** (**Pengaturan > Penyimpanan**): lihat berapa besar hasil generate dan cache HyperForge, lalu bersihkan. Ada tombol **Bersihkan file sementara** (frame render yang bisa dibuat ulang, video jadi tetap aman), **Bersihkan cache**, dan hapus per proyek dari yang paling besar.
+
+**Perubahan**
+- **Peran suara**: suara A sekarang selalu suara **karakter utamamu** (yang kamu buat di Pengaturan > Karakter). Project 2 suara: karaktermu bicara sebagai dirinya di suara A, narator di suara B (jenis Dialog: B = lawan bicara). Project 1 suara: karaktermu sekaligus menjadi narator di suara A. Di video 2D, mulut karakter utama yang bergerak saat suara A berbicara.
+
+**Perbaikan**
+- **"Gagal menyiapkan Bang Motion: gagal memasang opencv/Pillow, Python was not found"**: HyperForge sekarang mengenali Python palsu bawaan Windows (alias Microsoft Store) dan memasang Python 3.12 otomatis kalau belum ada (tanpa admin). Paket opsional (opencv/Pillow, faster-whisper) yang gagal dipasang tidak lagi menggagalkan seluruh persiapan; style tetap bisa dipakai.
+- Judul project yang sangat panjang (misalnya naskah ditempel ke kolom judul) tidak lagi memenuhi layar: di bagian atas halaman dibuat lebih kecil, maksimal 2 baris, dan tanda ** tidak ikut tampil.
+- Tulisan **Topik / ide cerita** sekarang lebih besar dan tidak terpotong: tampil penuh di bawah judul project, di kotak isian, dan di kartu daftar project.
+
 ## 0.16.0 - 2026-11-03
 
 **Baru**

@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- Templat Kamal TERANG. Salin ke <proyek>/index.html lalu ganti isinya mengikuti naskah + words.json.
+     Aturan: judul 2 baris (baris 2 kata kunci di kotak marun), satu diagram/angka per bagian, kartu berbayang keras. -->
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<title>Kamal Terang</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script>
+<script src="/kit/kamal-kit.js"></script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const W = 1080, H = 1920, FPS = 30, DUR = 10;
+const KANAL = 'Kamal';                // nama kanal pengguna (kosongkan '' bila tidak ada)
+const cv = document.getElementById('c');
+cv.width = W; cv.height = H;
+const ctx = cv.getContext('2d');
+const P = K.TERANG;
+
+const CARD_W = 296, CARD_H = 330, GAP = 24, X0 = (W - (CARD_W * 3 + GAP * 2)) / 2;
+const NAMA = ['Tim 1', 'Tim 2', 'Tim 3'];
+
+function kartu(i, x, y, nilai, sc, merah) {
+  K.card(ctx, x, y, CARD_W, CARD_H, {
+    scale: sc, stroke: merah ? P.maroon : P.ink, border: merah ? 6 : 4.5,
+    fn: (c) => {
+      K.chatIcon(c, x + 70, y + 58, 17);
+      K.text(c, NAMA[i], x + 98, y + 58, { size: 34, weight: 800, align: 'left' });
+      K.text(c, String(nilai), x + CARD_W / 2, y + 180, { size: 150, weight: 800, color: merah ? P.maroon : P.ink, spacing: -0.06 });
+      K.text(c, 'tugas', x + CARD_W / 2, y + 285, { size: 32, weight: 700, color: P.sub });
+    },
+  });
+}
+
+HF.setup({
+  width: W, height: H, fps: FPS, duration: DUR,
+  async init() { await K.loadFonts(); },
+  draw(t) {
+    K.paper(ctx, W, H);
+    K.brand(ctx, KANAL, 80, 132, K.pop(t, 0));
+
+    // Bagian 1 (0 - 4.6): semua menumpuk di satu orang
+    K.headline(ctx, t, [
+      { text: 'Tiga orang.', t0: 0.3, t1: 0.9 },
+      { text: 'Tugasnya numpuk di satu.', t0: 1.1, t1: 1.8, box: true },
+    ], { y: 330, out: 4.5 });
+    // Bagian 2 (4.8 - 10): dibagi rata
+    K.headline(ctx, t, [
+      { text: 'Satu alur,', t0: 4.9, t1: 5.4 },
+      { text: 'dibagi rata.', t0: 5.6, t1: 6.1, box: true },
+    ], { y: 330 });
+
+    const down = HF.ease.inOut(HF.prog(t, 4.6, 5.3));
+    const cy = HF.lerp(600, 860, down);
+    const pile = HF.clamp(HF.prog(t, 1.3, 3.6)) * 26 * (1 - HF.ease.inOut(HF.prog(t, 6.2, 6.8)));
+    K.pile(ctx, t, { n: pile, x: X0 + CARD_W / 2, floorY: cy - 8, w: 220, size: 34 });
+
+    const v1 = t < 6.2 ? K.count(t, 1.3, 3.6, 0, 41) : K.count(t, 6.2, 7.2, 41, 17);
+    const v2 = t < 6.2 ? K.count(t, 1.3, 3.6, 0, 6) : K.count(t, 6.2, 7.2, 6, 17);
+    const v3 = t < 6.2 ? K.count(t, 1.3, 3.6, 0, 3) : K.count(t, 6.2, 7.2, 3, 16);
+    const merah = t > 2.6 && t < 6.6;
+    kartu(0, X0, cy, v1, K.pop(t, 0.5), merah);
+    kartu(1, X0 + CARD_W + GAP, cy, v2, K.pop(t, 0.62), false);
+    kartu(2, X0 + (CARD_W + GAP) * 2, cy, v3, K.pop(t, 0.74), false);
+
+    // Diagram cabang: satu pembagi ke tiga kartu
+    const treeU = HF.ease.inOut(HF.prog(t, 5.6, 6.3));
+    const tops = [0, 1, 2].map((i) => ({ x: X0 + CARD_W / 2 + i * (CARD_W + GAP), y: cy }));
+    K.tree(ctx, { x: W / 2, y: 690 }, tops, treeU, { midY: 800 });
+    K.pill(ctx, 'Pembagi otomatis', W / 2, 660, { size: 40, scale: K.pop(t, 5.3), icon: K.dotIcon('↻') });
+    // pil pilihan: "prioritas" bergeser keluar (blur gerak), "merata" aktif
+    const slide = HF.ease.inOut(HF.prog(t, 6.6, 7.0));
+    K.pill(ctx, 'prioritas', W / 2 - 230 - slide * 30, 760, { size: 30, scale: K.pop(t, 6.0) * (1 - slide * 0.15), blur: Math.sin(slide * Math.PI) * 6, variant: 'putih' });
+    K.pill(ctx, 'merata', W / 2, 760, { size: 30, scale: K.pop(t, 6.4), variant: 'marun' });
+
+    K.note(ctx, 'Bisa diatur sesuai kebutuhan tim.', X0, cy + CARD_H + 70, HF.prog(t, 7.4, 7.8));
+    K.chip(ctx, 'Ilustrasi · data contoh', X0, cy + CARD_H + 130, HF.prog(t, 7.6, 8.0));
+  },
+});
+</script>
+</body>
+</html>

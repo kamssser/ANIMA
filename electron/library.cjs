@@ -11,7 +11,7 @@ function projectDirs(root) {
   try {
     return fs
       .readdirSync(root, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && slugOk(d.name) && !/^(briefs|node_modules|tools|pieces)$/.test(d.name))
+      .filter((d) => d.isDirectory() && slugOk(d.name) && !/^(briefs|node_modules|tools|pieces|mcp|pwmcp|pw-out|chrome-home|unduhan|scratch)$/.test(d.name))
       .map((d) => d.name);
   } catch {
     return [];

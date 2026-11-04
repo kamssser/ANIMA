@@ -41,7 +41,7 @@ hitam, **kacamata bulat**, kemeja biru muda berkerah, celana biru gelap). Panggi
 ekspresi, bicara, lihat, hadap, rim })`: hanya pose, ekspresi, arah, dan gerak yang boleh berubah. **Jangan** mengganti
 warna, rambut, pakaian, atau kacamatanya, jangan membuat "versi lain" Raka, dan jangan menawarkan desain pembawa baru di
 langkah karakter. Langkah 2 (karakter) untuk gaya ini cukup: tunjukkan lembar ekspresi/pose Raka + tokoh cerita.
-- Raka muncul di pembuka, di momen penting, dan di penutup. Kalau project 2 suara, Raka = suara A (narator).
+- Raka muncul di pembuka, di momen penting, dan di penutup. Raka = suara A (1 suara: Raka sekaligus narator; 2 suara: Raka berbicara sebagai dirinya, narator = suara B).
 - **Tokoh cerita** (penambang, pedagang, tokoh sejarah, suara B) boleh berbeda per video, dibuat sebagai preset
   `XD.tokoh` di `karakter/karakter.js` (`const PENAMBANG = { id: 2, ... }`), lalu dipanggil `{ ...PENAMBANG, t, pose,
   ekspresi }`. Tokoh cerita yang muncul lagi di video lain (seri) disimpan sekali dan dipakai ulang tanpa diubah.

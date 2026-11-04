@@ -8,10 +8,10 @@
     "Tulis isi hook (kalimat pembuka) juga di field 'hook' saat menyimpan."
   ],
   "twoVoiceRules": [
-    "Project ini memakai DUA suara: A = narator/pembawa utama, B = tokoh kedua (penanya penasaran, saksi, atau tokoh cerita) dengan gaya bicara yang jelas berbeda.",
-    "B muncul di momen yang menghidupkan: bertanya seperti penonton, menyanggah, bereaksi kaget, atau memerankan tokoh. Minimal sepertiga giliran milik B, dan tidak lebih dari 3 giliran A berturut-turut.",
+    "Project ini memakai DUA suara: A = karakter utama milik pengguna (tokoh yang dibuat di Pengaturan > Karakter, ditandai utama) yang tampil dan berbicara sebagai dirinya sendiri; B = narator (pencerita) yang membawakan alur, fakta, dan perpindahan adegan. Gaya bicara keduanya jelas berbeda.",
+    "A muncul di momen yang menghidupkan: bicara langsung sebagai tokoh, bertanya seperti penonton, menyanggah, atau bereaksi kaget. Minimal sepertiga giliran milik A, dan tidak lebih dari 3 giliran B (narator) berturut-turut.",
     "Setiap shot = satu giliran bicara; isi field 'speaker' dengan 'A' atau 'B' dan 'narration' dengan kalimatnya saja (tanpa nama pembicara).",
-    "Fakta dan angka tetap disampaikan dengan akurat; B tidak boleh mengarang fakta."
+    "Fakta dan angka disampaikan akurat (terutama oleh narator B); karakter A tidak boleh mengarang fakta."
   ],
   "types": [
     {
@@ -84,7 +84,7 @@
       "needsSources": false,
       "twoVoices": true,
       "rules": [
-        "Percakapan antara 2 tokoh: pembicara A dan pembicara B, dengan karakter dan gaya bicara yang berbeda jelas.",
+        "Percakapan antara 2 tokoh: pembicara A = karakter utama milik pengguna, pembicara B = tokoh kedua (lawan bicara), dengan karakter dan gaya bicara yang berbeda jelas.",
         "Setiap shot = satu giliran bicara; isi field 'speaker' dengan 'A' atau 'B' dan 'narration' dengan kalimatnya saja (tanpa nama tokoh).",
         "Saling bersahutan cepat, ada ketegangan atau humor, dan punchline di akhir.",
         "Sebut nama dan sifat tokoh A dan B di script bagian atas."
@@ -97,8 +97,8 @@
       "needsSources": false,
       "twoVoices": true,
       "rules": [
-        "Gaya sinematik: narator (pembicara A) dan karakter utama (pembicara B) bergantian.",
-        "Isi field 'speaker' setiap shot dengan 'A' (narator) atau 'B' (karakter).",
+        "Gaya sinematik: karakter utama milik pengguna (pembicara A) dan narator (pembicara B) bergantian.",
+        "Isi field 'speaker' setiap shot dengan 'A' (karakter utama) atau 'B' (narator).",
         "Gunakan kamera yang dramatis (dolly, crane, close-up) dan bangun ketegangan menuju klimaks.",
         "Bangun menuju klimaks, lalu selesaikan ceritanya dengan tuntas (tanpa cliffhanger) dan menjawab hook."
       ]

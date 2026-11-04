@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Progress } from '@/components/ui/misc';
 import { createJob, updateJob } from '@/lib/api';
-import { buildAnimantraBrief, buildAnimateBrief, buildBangBrief, buildStudioBrief } from '@/lib/content';
+import { usesTwoVoices, buildAnimantraBrief, buildAnimateBrief, buildBangBrief, buildFlowBrief, buildKamalBrief, buildLemoBrief, buildMotionBrief, buildStickmanBrief, buildStudioBrief } from '@/lib/content';
 import { listCharacters } from '@/lib/api';
 import { visualStyle } from '@/lib/styles';
 import { cleanErr, runTask, setValue, usePersisted, useTask, useTaskFinished } from '@/lib/tasks';
@@ -40,10 +40,61 @@ export const ENGINE_INFO: Record<SkillEngine, { title: string; by: string; flow:
     flow: 'Claude mengerjakan persis seperti skill Animantra: riset fakta, naskah (ditunjukkan lalu lanjut kecuali kamu minta ubah), suara narasi, model 3D, lembar cuplikan dan gerbang mutu, lalu render, cover, versi kecil, dan caption.',
     samplesTitle: 'Patokan mutu gaya bedah',
   },
+  lemo: {
+    title: 'Lemo-Opuscar',
+    by: 'LemoLab',
+    flow: 'Claude menulis treatment, menunjukkan frame gaya untuk kamu setujui, lalu menyutradarai, menggambar, memberi musik, dan mengemas film dengan kode dari pustaka 66 gaya.',
+    samplesTitle: '66 gaya film',
+  },
+  motionmaxxing: {
+    title: 'Motionmaxxing',
+    by: 'Tejash Makwana',
+    flow: 'Claude mencari satu ide khas brand/topik, membangun dunianya, menganimasikan dengan gerak terukur, lalu memeriksa render dengan skrip (gate G0-G5) dan menulis NOTE.md.',
+    samplesTitle: 'Promo & kinetic type',
+  },
+  flow: {
+    title: 'Google Flow',
+    by: 'google-flow-browser-mcp (TMSSS05) + HyperForge',
+    flow: 'Claude menulis naskah dan daftar shot, suara dibuat vibi.pro, lalu Claude sendiri mengetik prompt, menekan Generate, dan mengunduh tiap shot di Google Flow (memakai kredit Flow-mu, kamu setujui sekali di awal), dan klip + SFX dirakit jadi MP4 bersubtitle.',
+    samplesTitle: 'Gaya klip',
+  },
+  kamal: {
+    title: 'Kamal',
+    by: 'HyperForge',
+    flow: 'Claude menulis naskah dan judul layar, suara dibuat vibi.pro, lalu menunjukkan storyboard (lembar frame) untuk kamu setujui sebelum merender video gaya Kamal (gelap atau terang) dari kode.',
+    samplesTitle: 'Varian',
+  },
+  stickman: {
+    title: 'Stickman',
+    by: 'kaomei (stickman-video-director)',
+    flow: 'Claude menulis naskah, suara dibuat vibi.pro, lalu menyusun adegan stickman dan merender contoh sekitar 20 detik untuk kamu setujui sebelum video penuh dirender di laptop (Autopilot).',
+    samplesTitle: 'Gaya',
+  },
 };
+
+/** Aturan storyboard cerita + teks suara yang bisa diedit pengguna di HyperForge sebelum suara & render. */
+function storyRule(engine: SkillEngine, slug: string, two: boolean) {
+  const dir = engine === 'animate' ? `pieces/${slug}` : slug;
+  return [
+    '',
+    '## Storyboard cerita & teks suara (WAJIB, bisa diedit pengguna)',
+    `- Setelah naskah/rencana adegan jadi dan SEBELUM membuat suara atau merender, tulis \`${dir}/cerita.json\` (Bahasa Indonesia):`,
+    '  `{ "judul": "...", "status": "menunggu_edit", "adegan": [{ "no": 1, "visual": "apa yang terlihat: tokoh, aksi, benda, kamera", "teks_layar": "judul/kata kunci di layar atau kosong", "suara": "A", "narasi": "kalimat persis yang diucapkan" }] }`',
+    two ? '  `suara`: "A" = karakter utama pengguna, "B" = narator (jenis Dialog: tokoh kedua).' : '  `suara` selalu "A" (karakter utama pengguna sekaligus narator).',
+    '- Lalu beri tahu pengguna: storyboard & teks suara bisa diedit di HyperForge (tombol **Storyboard & naskah** di atas obrolan), dan TUNGGU. Jangan lanjut ke suara/render sebelum pengguna menyetujui.',
+    '- Setiap kali pengguna menyetujui atau menyuruh lanjut: BACA ULANG cerita.json (pengguna mungkin mengubah, menambah, menghapus, atau mengurutkan ulang adegan). Pakai `narasi` PERSIS kata per kata untuk suara (dan naskah/subtitle), `visual` + `teks_layar` untuk adegan/storyboard/render. Setelah itu ubah `status` menjadi "disetujui" (isi lain dibiarkan).',
+    '- Kalau pengguna mengedit cerita.json setelah suara dibuat, buat ulang suara HANYA untuk adegan yang narasinya berubah, lalu sesuaikan timing.',
+    '- File format skill sendiri (naskah.md, storyboard.json, script.json, shots.json, dst.) tetap dibuat seperti biasa, isinya mengikuti cerita.json.',
+  ].join('\n');
+}
 
 /** Brief + file pendukung untuk sesi skill sebuah project (dipakai panel obrolan dan jendela terminal). */
 export async function buildSkillBrief(engine: SkillEngine, fresh: Project, slug: string) {
+  const r = await buildSkillBriefBase(engine, fresh, slug);
+  return { ...r, brief: r.brief.trimEnd() + '\n' + storyRule(engine, slug, usesTwoVoices(fresh)) + '\n' };
+}
+
+async function buildSkillBriefBase(engine: SkillEngine, fresh: Project, slug: string) {
   const files: Record<string, string> = {};
   if (engine === 'studio') {
     // Karakter HyperForge ikut sebagai desain sumber (SVG rig dari Pengaturan > Karakter).
@@ -57,6 +108,11 @@ export async function buildSkillBrief(engine: SkillEngine, fresh: Project, slug:
     return { brief, files };
   }
   if (engine === 'animantra') return { brief: buildAnimantraBrief(fresh, slug, (await window.anima.skillCheck('animantra')).workDir), files };
+  if (engine === 'lemo') return { brief: buildLemoBrief(fresh, slug), files };
+  if (engine === 'motionmaxxing') return { brief: buildMotionBrief(fresh, slug), files };
+  if (engine === 'flow') return { brief: buildFlowBrief(fresh, slug), files };
+  if (engine === 'kamal') return { brief: buildKamalBrief(fresh, slug), files };
+  if (engine === 'stickman') return { brief: buildStickmanBrief(fresh, slug), files };
   return { brief: engine === 'bang-motion' ? buildBangBrief(fresh, slug) : buildAnimateBrief(fresh, slug), files };
 }
 
@@ -100,7 +156,12 @@ export function SkillSettings() {
       <EngineSettings engine="animate" />
       <EngineSettings engine="bang-motion" />
       <EngineSettings engine="studio" />
+      <EngineSettings engine="kamal" />
+      <EngineSettings engine="stickman" />
       <EngineSettings engine="animantra" />
+      <EngineSettings engine="lemo" />
+      <EngineSettings engine="motionmaxxing" />
+      <EngineSettings engine="flow" />
     </>
   );
 }
@@ -163,6 +224,7 @@ function EngineSettings({ engine }: { engine: SkillEngine }) {
             </label>
           )}
         </div>
+        {engine === 'flow' && <FlowChrome />}
         {busy && task && (
           <div className="grid gap-1 rounded-md border p-3 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{task.step}...</span>
@@ -198,11 +260,46 @@ function EngineSettings({ engine }: { engine: SkillEngine }) {
             <button className="text-primary hover:underline" onClick={() => window.anima.openExternal(c.url)}>
               {c.url.replace('https://', '')} <ExternalLink className="inline size-3" />
             </button>{' '}
-            (lisensi MIT, commit {c.commit.slice(0, 7)}), tidak diubah.
+            (lisensi {c.license ?? 'MIT'}{engine === 'flow' || engine === 'studio' || engine === 'kamal' ? '' : `, commit ${c.commit.slice(0, 7)}`}), tidak diubah.
           </p>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/** Tombol buka Chrome khusus Google Flow (login sekali dengan akun Google yang punya akses Flow). */
+export function FlowChrome() {
+  const [st, setSt] = useState<{ running: boolean; downloads: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = () => window.anima.flowStatus().then(setSt).catch(() => {});
+  useEffect(() => {
+    load();
+  }, []);
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-dashed p-3 text-sm">
+      <Button
+        variant="outline"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          try {
+            const r = await window.anima.flowOpenChrome();
+            toast.success(r.already ? 'Chrome Google Flow sudah terbuka' : 'Chrome Google Flow dibuka', { description: 'Login sekali dengan akun Google yang punya akses Flow. Jendela ini dipakai Claude saat membuat klip.' });
+          } catch (e) {
+            toast.error('Gagal membuka Chrome', { description: cleanErr(e) });
+          } finally {
+            setBusy(false);
+            load();
+          }
+        }}
+      >
+        {busy ? <Loader2 className="animate-spin" /> : <ExternalLink />} Buka Google Flow di Chrome
+      </Button>
+      <span className="text-xs text-muted-foreground">
+        {st?.running ? 'Chrome Flow sedang terbuka.' : 'Chrome Flow belum terbuka.'} Profil Chrome terpisah (akun utamamu tidak tersentuh). Unduhan klip: <span className="font-mono">{st?.downloads ?? '...'}</span>
+      </span>
+    </div>
   );
 }
 
@@ -259,6 +356,7 @@ export function SkillPanel({ project, beforeRun }: { project: Project; beforeRun
             lalu klik Siapkan otomatis.
           </div>
         )}
+        {engine === 'flow' && c?.ready && <FlowChrome />}
         <Button
           onClick={async () => {
             await beforeRun();

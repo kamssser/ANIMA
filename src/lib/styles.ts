@@ -43,7 +43,21 @@ export type VisualStyleId =
   | 'av-toplist'
   | 'av-kalau'
   | 'av-evolusi'
-  | 'av-kuis';
+  | 'av-kuis'
+  | 'mm-promo'
+  | 'mm-kinetic'
+  | 'flow-sinematik'
+  | 'flow-kartun-3d'
+  | 'flow-anime'
+  | 'flow-stickman-klasik'
+  | 'flow-stickman-cozy'
+  | 'flow-stickman-sejarah'
+  | 'flow-crayon'
+  | 'kamal-gelap'
+  | 'kamal-terang'
+  | 'stickman-sketsa'
+  | 'stickman-tv-retro'
+  | `lemo-${string}`;
 
 export interface VisualStyle {
   id: VisualStyleId;
@@ -51,7 +65,9 @@ export interface VisualStyle {
   /** skill = dibuat skill Claude pihak ketiga (animate / bang-motion) di Claude Code, render sendiri */
   kind: '3d' | '2d' | 'skill';
   /** mesin skill untuk kind skill */
-  engine?: 'animate' | 'bang-motion' | 'studio' | 'animantra';
+  engine?: 'animate' | 'bang-motion' | 'studio' | 'animantra' | 'lemo' | 'motionmaxxing' | 'flow' | 'kamal' | 'stickman';
+  /** catatan tambahan untuk brief (mis. skill prompt yang dipakai style Google Flow) */
+  skillNote?: string;
   /** nama style di skill (animate: cut-paper ... custom; bang-motion: kartun-kolase ... opener) */
   skillStyle?: string;
   description: string;
@@ -76,13 +92,18 @@ const IMAGES = import.meta.glob('../assets/styles/*.jpg', { eager: true, import:
 /** Gambar contoh style (src/assets/styles/<id>.jpg). */
 export const styleImage = (id: string | null | undefined) => IMAGES[`../assets/styles/${styleId(id)}.jpg`];
 
-export type StyleGroup = 'cepat' | '3d' | 'animate' | 'bang-motion' | 'studio' | 'animantra';
+export type StyleGroup = 'cepat' | '3d' | 'animate' | 'bang-motion' | 'studio' | 'animantra' | 'lemo' | 'motionmaxxing' | 'flow' | 'kamal' | 'stickman';
 export const STYLE_GROUPS: { id: StyleGroup; label: string; hint: string }[] = [
   { id: 'cepat', label: '2D cepat', hint: 'Generate & render langsung di aplikasi, beberapa menit per video' },
+  { id: 'kamal', label: 'Kamal', hint: 'Skill Kamal (HyperForge): panggung gelap tokoh garis + lampu sorot, atau editorial krem dengan kartu & angka; dirender dari kode' },
+  { id: 'stickman', label: 'Stickman', hint: 'Skill stickman-video-director (kaomei): video stickman dirender di laptop, suara vibi.pro' },
   { id: 'studio', label: 'HyperForge Studio', hint: 'Bersama Claude di tab Claude: gaya, karakter, naskah, suara, storyboard' },
   { id: 'animate', label: 'Animate', hint: 'Skill animate (cth9191): kanvas bergaya, story/look/storyboard disetujui dulu' },
   { id: 'bang-motion', label: 'Bang Motion', hint: 'Skill bang-motion (Bang Tutorial): motion graphic & explainer seperti video' },
   { id: 'animantra', label: 'Animantra', hint: 'Skill Animantra: Vector (paket milikmu): video 9:16 bedah 3D flat-toon, 11 format, dikerjakan Claude persis seperti skillnya' },
+  { id: 'lemo', label: 'Lemo-Opuscar', hint: 'Skill lemo-opuscar (LemoLab): 66 gaya film dari kode (lukisan, cetak, kartun, data, 3D), disutradarai Claude dari naskah sampai mix' },
+  { id: 'motionmaxxing', label: 'Motionmaxxing', hint: 'Skill motionmaxxing (Tejash Makwana): motion graphic promo & kinetic type kelas motion designer, dengan pemeriksaan render' },
+  { id: 'flow', label: 'Google Flow', hint: 'Klip video AI Google Flow (Veo) + SFX dari Flow, termasuk stickman & crayon; naskah dari Claude, suara dari vibi.pro. Butuh akun Google dengan akses Flow' },
   { id: '3d', label: 'Kartun 3D', hint: 'Dunia 3D skill cartoon-3d-short, render paling lama' },
 ];
 export const styleGroup = (s: VisualStyle): StyleGroup => (s.kind === '3d' ? '3d' : s.kind === '2d' ? 'cepat' : (s.engine ?? 'animate'));

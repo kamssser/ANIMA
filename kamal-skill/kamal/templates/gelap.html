@@ -1,0 +1,103 @@
+<!doctype html>
+<!-- Templat Kamal GELAP. Salin ke <proyek>/index.html lalu ganti adegannya mengikuti naskah + words.json.
+     Aturan: semua gambar fungsi murni dari t; tokoh dari K.figure; benda penting menyala kuning (K.glow); satu lampu sorot. -->
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<title>Kamal Gelap</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="/kit/studio-kit.js"></script>
+<script src="/kit/kamal-kit.js"></script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const W = 1080, H = 1920, FPS = 30, DUR = 9.5;
+const FLOOR = 1300;                 // garis lantai
+const KANAL = 'KAMAL';              // nama kanal pengguna (kosongkan '' bila tidak ada)
+const cv = document.getElementById('c');
+cv.width = W; cv.height = H;
+const ctx = cv.getContext('2d');
+const P = K.GELAP;
+
+// Benda "hasil kerja": kotak menyala yang dibangun di meja lalu diambil bos.
+function hasil(c, x, y, s, glow) {
+  const g = glow;
+  const draw = (cc) => {
+    cc.fillStyle = K.mixColor('#6a6d75', P.glow, g);
+    cc.strokeStyle = P.ink; cc.lineWidth = 5;
+    cc.beginPath(); cc.roundRect(x - 70 * s, y - 70 * s, 140 * s, 70 * s, 8); cc.fill(); cc.stroke();
+    cc.beginPath(); cc.moveTo(x - 70 * s, y - 46 * s); cc.lineTo(x + 70 * s, y - 46 * s); cc.stroke();
+    K.star(cc, x, y - 24 * s, 16 * s, 7 * s); cc.fillStyle = K.mixColor('#4b4e55', '#fff6d8', g); cc.fill();
+  };
+  if (g > 0.02) K.glow(c, P.glowSoft, 26 * g, draw); else draw(c);
+}
+
+HF.setup({
+  width: W, height: H, fps: FPS, duration: DUR,
+  async init() { await K.loadFonts(); },
+  draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    K.stage(ctx, W, H, FLOOR);
+    const cam = 1 + 0.035 * HF.ease.inOut(HF.prog(t, 0, DUR));     // dorong pelan sepanjang video
+    const sh = K.shake(t, 6.0, 8);
+    K.camera(ctx, cam, W / 2, FLOOR - 200, () => {
+      ctx.save(); ctx.translate(sh.x, sh.y);
+      // lampu sorot menyala saat bos mengambil hasil
+      const spot = HF.ease.out(HF.prog(t, 3.6, 4.2));
+      K.spotlight(ctx, 760, FLOOR, { on: spot });
+      K.label(ctx, 'Kantor', W / 2, 350, { alpha: 1 - HF.prog(t, 5.6, 6.0) });
+      K.clock(ctx, 230, 745, 50, t, 0.35);
+
+      // posisi & pose
+      const bossWalk = HF.ease.inOut(HF.prog(t, 2.9, 3.6));
+      const bossX = HF.lerp(800, 760, bossWalk);
+      const lift = HF.ease.back(HF.prog(t, 3.6, 4.1));
+      const crush = HF.ease.out(HF.prog(t, 6.0, 6.5));
+      let bossPose = t < 2.9 ? K.POSE.berdiri : t < 3.6 ? K.walk(t, 1.4) : K.mix(K.POSE.berdiri, K.POSE.angkat, lift);
+      if (t >= 6.0) bossPose = K.mix(K.POSE.angkat, K.POSE.tertekan, crush);
+      const heroGo = HF.ease.inOut(HF.prog(t, 4.6, 5.8));
+      const heroX = HF.lerp(330, 190, heroGo);
+      const work = 0.5 + 0.5 * Math.sin(t * 7);
+      let heroPose = t < 2.9 ? K.mix(K.POSE.kerja, { ...K.POSE.kerja, aF: [78, 20] }, work) : K.POSE.berdiri;
+      if (t >= 4.6 && t < 5.8) heroPose = K.walk(t, 1.5);
+      if (t >= 5.8) heroPose = K.POSE.bawa;
+      const heroFace = t >= 4.6 && t < 5.8 ? -1 : 1;
+      const glowHasil = HF.clamp(HF.prog(t, 0.3, 2.6)) * (1 - HF.prog(t, 6.0, 6.6));
+      const grow = HF.ease.out(HF.prog(t, 0.3, 2.6));
+
+      K.withReflection(ctx, FLOOR, (c) => {
+        const top = K.desk(c, 520, FLOOR, 330, 150);
+        if (t < 3.8) hasil(c, 520, top, 0.4 + 0.6 * grow, glowHasil);
+        // tas "kemampuan": di lantai dulu, lalu dibawa tokoh utama (menyala)
+        const bagGlow = HF.ease.out(HF.prog(t, 4.3, 4.9));
+        if (t < 4.6) K.briefcase(c, 130, FLOOR, 1, bagGlow);
+        K.figure(c, {
+          x: heroX, y: FLOOR, face: heroFace, pose: heroPose,
+          extra: t >= 4.6 ? (cc, j) => K.briefcase(cc, j.handF.x + 8 * heroFace, j.handF.y + 70, 1, bagGlow) : null,
+        });
+        K.figure(c, {
+          x: bossX, y: FLOOR, face: -1, pose: bossPose, color: P.other,
+          extra: (cc, j) => {
+            K.medal(cc, j.shoulder.x + 6, j.shoulder.y + 58, 13);
+            if (t >= 3.8) hasil(cc, (j.handF.x + j.handB.x) / 2, Math.min(j.handF.y, j.handB.y) + 8, 1, glowHasil);
+          },
+        });
+      });
+      K.label(ctx, 'Bos', 800, 935, { alpha: 1 - HF.prog(t, 3.0, 3.4) });
+      K.label(ctx, 'Hasilnya', 760, 760, { alpha: HF.prog(t, 4.0, 4.3) * (1 - HF.prog(t, 5.8, 6.1)), color: P.key });
+      K.label(ctx, 'Kemampuan', 190, 1360, { alpha: HF.prog(t, 5.0, 5.4), size: 22 });
+      K.burst(ctx, 690, 880, t, 4.1, { side: -1 });
+      ctx.restore();
+    });
+
+    K.caption(ctx, t, [
+      { t0: 6.4, text: 'Hasil kerja bisa direbut.' },
+      { t0: 7.3, text: '*Kemampuanmu* tetap milikmu.' },
+    ], { y: 430 });
+    K.watermark(ctx, KANAL, FLOOR + 140);
+  },
+});
+</script>
+</body>
+</html>

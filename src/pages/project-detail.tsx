@@ -62,7 +62,8 @@ export default function ProjectDetailPage() {
     <>
       <PageHeader
         title={project.title}
-        description={`${contentType(project.content_type).label} · ${visualStyle(project.visual_style).label}${is2D(project.visual_style) || isSkill(project.visual_style) ? ` ${project.format || '9:16'}` : ''} · ${project.topic || 'Tanpa topik'}`}
+        description={`${contentType(project.content_type).label} · ${visualStyle(project.visual_style).label}${is2D(project.visual_style) || isSkill(project.visual_style) ? ` ${project.format || '9:16'}` : ''}`}
+        topic={project.topic || 'Tanpa topik'}
         actions={
           <>
             <ProjectBadge status={project.status} />
@@ -302,8 +303,8 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="topic">Topik / ide cerita</Label>
-            <Textarea id="topic" value={draft.topic} onChange={(e) => setDraft({ ...draft, topic: e.target.value })} />
+            <Label htmlFor="topic" className="text-base">Topik / ide cerita</Label>
+            <Textarea id="topic" className="min-h-28 text-base leading-relaxed md:text-base" value={draft.topic} onChange={(e) => setDraft({ ...draft, topic: e.target.value })} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="hook" className="flex items-center gap-2">
@@ -383,8 +384,8 @@ function BriefTab({ project, onSaved, onGenerated }: { project: Project; onSaved
                   value={usesTwoVoices(draft) ? '2' : '1'}
                   onChange={(e) => setDraft({ ...draft, assets: { ...draft.assets, voices: Number(e.target.value) as 1 | 2 } })}
                 >
-                  <option value="1">1 suara (narator)</option>
-                  <option value="2">2 suara (A & B bergantian)</option>
+                  <option value="1">1 suara (karakter = narator)</option>
+                  <option value="2">2 suara (karakter A & narator B)</option>
                 </NativeSelect>
                 <span className="text-xs text-muted-foreground">Suara A dan B diatur di Pengaturan &gt; Suara & audio.</span>
               </div>

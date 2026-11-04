@@ -415,6 +415,721 @@
       "skillStyle": "kuis",
       "description": "Seri pendek pemancing komentar (lubang kecil di bawah gembok buat apa?). 9:16, 20-30 detik, gaya bedah 3D. Render berat. Skill Animantra: Vector (paket milikmu).",
       "draw": []
+    },
+    {
+      "id": "mm-promo",
+      "label": "Motionmaxxing: promo produk & brand",
+      "kind": "skill",
+      "engine": "motionmaxxing",
+      "skillStyle": "promo",
+      "description": "Motion graphic promo seperti buatan motion designer senior: satu ide khas brand, dunia dengan cahaya & tekstur, gerak hasil ukur dari 53 karya profesional, dan pemeriksaan render dengan skrip (look.py, lint.mjs). Cocok untuk peluncuran produk, fitur baru, iklan sosial, profil brand. Skill motionmaxxing (Tejash Makwana, Apache-2.0).",
+      "draw": []
+    },
+    {
+      "id": "mm-kinetic",
+      "label": "Motionmaxxing: kinetic typography",
+      "kind": "skill",
+      "engine": "motionmaxxing",
+      "skillStyle": "kinetic",
+      "description": "Tipografi bergerak mengikuti ritme narasi: kata datang dengan gerak terukur, potongan di tengah gerakan, tanpa gaya slide. Cocok untuk kutipan, pengumuman, pembuka, dan ajakan (CTA). Skill motionmaxxing (Tejash Makwana, Apache-2.0).",
+      "draw": []
+    },
+    {
+      "id": "flow-sinematik",
+      "label": "Google Flow: sinematik realistis",
+      "kind": "skill",
+      "engine": "flow",
+      "skillStyle": "sinematik",
+      "description": "Klip video AI Google Flow (Veo) bergaya film live-action realistis, lengkap dengan efek suara lingkungan dari Flow. Naskah ditulis Claude, suara narasi dari vibi.pro, lalu dirakit dengan subtitle. Butuh akun Google dengan akses Flow (memakai kredit Flow milikmu).",
+      "draw": []
+    },
+    {
+      "id": "flow-kartun-3d",
+      "label": "Google Flow: animasi 3D kartun",
+      "kind": "skill",
+      "engine": "flow",
+      "skillStyle": "animasi 3D kartun",
+      "description": "Klip video AI Google Flow (Veo) bergaya film animasi 3D kartun, dengan efek suara dari Flow. Naskah dari Claude, suara narasi dari vibi.pro, dirakit dengan subtitle. Butuh akun Google dengan akses Flow (memakai kredit Flow milikmu).",
+      "draw": []
+    },
+    {
+      "id": "flow-anime",
+      "label": "Google Flow: anime",
+      "kind": "skill",
+      "engine": "flow",
+      "skillStyle": "anime",
+      "description": "Klip video AI Google Flow (Veo) bergaya anime 2D, dengan efek suara dari Flow. Naskah dari Claude, suara narasi dari vibi.pro, dirakit dengan subtitle. Butuh akun Google dengan akses Flow (memakai kredit Flow milikmu).",
+      "draw": []
+    },
+    {
+      "id": "flow-stickman-klasik",
+      "label": "Google Flow: stickman klasik",
+      "kind": "skill",
+      "engine": "flow",
+      "skillStyle": "stickman klasik (garis putih di latar hitam)",
+      "skillNote": "Pakai skill **directing-stickman-videos** (terpasang di ~/.claude/skills/directing-stickman-videos, dibaca saja) mode **A · Director, Style 1 Classic Minimalist tema gelap**: baca references/style-catalog.md bagian Style 1 dan salin **anchor tokoh Classic Dark persis kata per kata** di setiap prompt klip, maksimal tiga warna aksen. Abaikan bagian suara Gemini/voice-continuity dan Phase B 10 detik: narasi tetap vibi.pro dan klip mengikuti shot hyperforge-flow (model Omni Flash bila tersedia, kalau tidak Veo Fast).",
+      "description": "Video stickman garis putih minimalis di latar hitam (gaya Classic dari stickman-video-director), klip dibuat Google Flow lalu dirakit dengan suara vibi.pro dan subtitle. Butuh akun Google dengan akses Flow (memakai kredit Flow milikmu).",
+      "draw": []
+    },
+    {
+      "id": "flow-stickman-cozy",
+      "label": "Google Flow: stickman cozy",
+      "kind": "skill",
+      "engine": "flow",
+      "skillStyle": "stickman cozy storytelling (kartun 2D berwarna)",
+      "skillNote": "Pakai skill **directing-stickman-videos** (terpasang, dibaca saja) mode **A · Director, Style 4 Cozy Storytelling**: baca references/style-catalog.md dan references/cozy-storytelling.md; bekukan anchor tiap tokoh dan salin persis di setiap klip tempat tokoh itu muncul; tiap klip boleh lokasi berbeda. Narasi tetap vibi.pro (abaikan voice-continuity), klip per shot hyperforge-flow.",
+      "description": "Cerita hangat dengan tokoh stickman kepala putih di lingkungan kartun 2D berwarna (gaya Cozy Storytelling dari stickman-video-director), klip dari Google Flow, suara vibi.pro. Butuh akun Google dengan akses Flow.",
+      "draw": []
+    },
+    {
+      "id": "flow-stickman-sejarah",
+      "label": "Google Flow: stickman sejarah",
+      "kind": "skill",
+      "engine": "flow",
+      "skillStyle": "stickman kartun sejarah (cel-shaded, kostum zaman)",
+      "skillNote": "Pakai skill **directing-stickman-videos** (terpasang, dibaca saja) mode **A · Director, Style 5 Historical Cartoon**: baca references/style-catalog.md dan references/historical-cartoon.md; buat kartu tokoh + paket zaman, salin tata gambar dan deskripsi tokoh persis di setiap prompt. Narasi tetap vibi.pro, klip per shot hyperforge-flow.",
+      "description": "Penjelasan sejarah dengan tokoh stickman kepala putih berkostum zaman di latar sejarah cel-shaded (gaya Historical Cartoon dari stickman-video-director), klip dari Google Flow, suara vibi.pro. Butuh akun Google dengan akses Flow.",
+      "draw": []
+    },
+    {
+      "id": "flow-crayon",
+      "label": "Google Flow: gambar tangan crayon",
+      "kind": "skill",
+      "engine": "flow",
+      "skillStyle": "gambar tangan crayon Q-version di kertas putih hangat",
+      "skillNote": "Pakai skill **hand-drawn-video-prompts** (terpasang di ~/.claude/skills/hand-drawn-video-prompts, dibaca saja): aturan visual (kanvas putih hangat #F8F6EF, garis hitam tebal tangan, kuning bunga matahari / biru kobalt / merah tomat, tokoh Q-version wajar), satu metafora per shot, prompt gambar + image-to-video lengkap per shot. Alur di Flow: buat **gambar** tiap shot dulu (Nano Banana), lalu jadikan video 4-6 detik (Frames to video: kertas kosong -> gambar jadi, kamera diam, gerak potongan kertas). Kata kunci di gambar dalam **Bahasa Indonesia** (2-4 kata), angka/nama penting lewat subtitle. Narasi vibi.pro, rakit dengan rakit.mjs.",
+      "description": "Ilustrasi gambar tangan crayon gaya Q-version di kertas putih hangat dengan tiga warna (kuning, biru, merah), digerakkan seperti potongan kertas (dari hand-drawn-video-prompts). Gambar + klip dari Google Flow, suara vibi.pro, subtitle. Butuh akun Google dengan akses Flow.",
+      "draw": []
+    },
+    {
+      "id": "kamal-gelap",
+      "label": "Kamal: gelap",
+      "kind": "skill",
+      "engine": "kamal",
+      "skillStyle": "gelap",
+      "description": "Panggung gelap minimalis: tokoh garis abu & krem, satu lampu sorot, benda penting menyala kuning, judul atas dengan kata kunci kuning. Cocok untuk cerita pendek bermakna dan pelajaran kerja/hidup. Dirender dari kode, suara vibi.pro. Render ringan.",
+      "draw": []
+    },
+    {
+      "id": "kamal-terang",
+      "label": "Kamal: terang",
+      "kind": "skill",
+      "engine": "kamal",
+      "skillStyle": "terang",
+      "description": "Editorial krem: judul hitam tebal dengan kata kunci di kotak marun, kartu berbayang keras, angka berhitung, diagram cabang. Cocok untuk penjelasan produk, data, dan alur. Dirender dari kode, suara vibi.pro. Render ringan.",
+      "draw": []
+    },
+    {
+      "id": "stickman-sketsa",
+      "label": "Stickman: sketsa minimal",
+      "kind": "skill",
+      "engine": "stickman",
+      "skillStyle": "B1",
+      "description": "Video stickman gambar tangan minimal di kertas bergaris kotak dengan ikon crayon dan teks tulisan tangan (Autopilot B1 dari stickman-video-director), dirender di laptop. Suara vibi.pro, subtitle otomatis. Render ringan.",
+      "draw": []
+    },
+    {
+      "id": "stickman-tv-retro",
+      "label": "Stickman: TV retro",
+      "kind": "skill",
+      "engine": "stickman",
+      "skillStyle": "B3",
+      "description": "Video stickman bergaya TV retro: latar gelap, gambar putih/abu berlapis, efek layar TV halus, teks putih kapital (Autopilot B3 dari stickman-video-director), dirender di laptop. Suara vibi.pro. Render ringan.",
+      "draw": []
+    },
+    {
+      "id": "lemo-archive-lighttable",
+      "label": "Lemo: Meja arsip",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "archive-lighttable",
+      "description": "Film bukti (data/citra nyata). Cocok untuk sejarah brand, cerita arsip, museum. Gaya \"Archive Light Table\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-art-deco",
+      "label": "Lemo: Art Deco",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "art-deco",
+      "description": "Grafis & tipografi. Cocok untuk acara mewah, undangan, perhotelan. Gaya \"Art Deco\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-ascii-crt",
+      "label": "Lemo: Terminal ASCII / CRT",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "ascii-crt",
+      "description": "Grafis & tipografi. Cocok untuk teknologi, developer, fiksi ilmiah. Gaya \"ASCII / CRT Terminal\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-backrooms",
+      "label": "Lemo: Rekaman liminal (backrooms)",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "backrooms",
+      "description": "Sinema & era. Cocok untuk horor, misteri, teaser game. Gaya \"Liminal Found Footage\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-blueprint",
+      "label": "Lemo: Cetak biru",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "blueprint",
+      "description": "Grafis & tipografi. Cocok untuk teknik, peluncuran perangkat, penjelasan teknologi. Gaya \"Blueprint\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-brick-toy",
+      "label": "Lemo: Mainan balok",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "brick-toy",
+      "description": "Material & 3D. Cocok untuk mainan & anak, rakitan produk, luar angkasa. Gaya \"Brick Toy\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-briefing-board",
+      "label": "Lemo: Papan briefing teknik",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "briefing-board",
+      "description": "Film bukti (data/citra nyata). Cocok untuk teknik, perbandingan opsi, briefing. Gaya \"Engineering Briefing Board\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-caption-news",
+      "label": "Lemo: Berita caption",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "caption-news",
+      "description": "Editan & dokumenter (butuh bahan asli: footage/arsip). Cocok untuk berita sosial media, penjelasan laporan, data singkat. Gaya \"Caption News\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-cel-anime-80s",
+      "label": "Lemo: Anime cel 80-an",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "cel-anime-80s",
+      "description": "Kartun & anime. Cocok untuk video musik, trailer game, nostalgia. Gaya \"80s Cel Anime\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-chalkboard",
+      "label": "Lemo: Papan tulis kapur",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "chalkboard",
+      "description": "Gambar tangan & lukisan. Cocok untuk asal-usul kata, mitos vs fakta, pelajaran. Gaya \"Chalkboard\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-circuit-board",
+      "label": "Lemo: Papan sirkuit",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "circuit-board",
+      "description": "Informasi & presentasi. Cocok untuk energi, rantai pasok, perangkat. Gaya \"Circuit Board\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-city-symphony",
+      "label": "Lemo: Simfoni time-lapse",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "city-symphony",
+      "description": "Editan & dokumenter (butuh bahan asli: footage/arsip). Cocok untuk film kota, montase musik, pembuka. Gaya \"Time-lapse Symphony\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-countdown",
+      "label": "Lemo: Hitung mundur layar terbagi",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "countdown",
+      "description": "Editan & dokumenter (butuh bahan asli: footage/arsip). Cocok untuk peluncuran, hitung mundur, acara langsung. Gaya \"Live Countdown Split-screen\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-crayon-book",
+      "label": "Lemo: Buku krayon anak",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "crayon-book",
+      "description": "Gambar tangan & lukisan. Cocok untuk buku cerita, dongeng sebelum tidur, belajar anak. Gaya \"Crayon Picture Book\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-dark-keynote",
+      "label": "Lemo: Keynote teknologi gelap",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "dark-keynote",
+      "description": "Informasi & presentasi. Cocok untuk peluncuran produk, SaaS, keynote. Gaya \"Dark Tech Keynote\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-data-physical",
+      "label": "Lemo: Data jadi benda",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "data-physical",
+      "description": "Film bukti (data/citra nyata). Cocok untuk laporan tahunan, investor, data energi. Gaya \"Data Physicalization\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-dataviz",
+      "label": "Lemo: Cerita data",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "dataviz",
+      "description": "Informasi & presentasi. Cocok untuk jurnalisme data, laporan, iklim & sains. Gaya \"Data Storytelling\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-desktop-flythrough",
+      "label": "Lemo: Terbang di desktop",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "desktop-flythrough",
+      "description": "Material & 3D. Cocok untuk penjelasan aplikasi, alur kerja, produk. Gaya \"Desktop Flythrough\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-engraving",
+      "label": "Lemo: Ukiran pelat tembaga",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "engraving",
+      "description": "Cetak & grafis. Cocok untuk label museum, penjelasan sains, warisan brand. Gaya \"Copperplate Engraving\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-game-show",
+      "label": "Lemo: Kuis TV datar",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "game-show",
+      "description": "Gaya game. Cocok untuk linimasa teknologi, kilas balik tahun, variety show. Gaya \"Game Show Flat\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-glass-product",
+      "label": "Lemo: Render produk kaca",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "glass-product",
+      "description": "Material & 3D. Cocok untuk peluncuran produk, gawai, kecantikan. Gaya \"Glass Product Render\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-halftone-dossier",
+      "label": "Lemo: Dosir halftone",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "halftone-dossier",
+      "description": "Cetak & grafis. Cocok untuk humor, konten hewan peliharaan, video pendek. Gaya \"Halftone Dossier\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-hd-2d",
+      "label": "Lemo: HD-2D",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "hd-2d",
+      "description": "Gaya game. Cocok untuk trailer game, fantasi, film cerita. Gaya \"HD-2D\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-hologram-hud",
+      "label": "Lemo: HUD hologram sci-fi",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "hologram-hud",
+      "description": "Informasi & presentasi. Cocok untuk penjelasan spesifikasi, peluncuran, pameran. Gaya \"Sci-fi Hologram HUD\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-impasto",
+      "label": "Lemo: Lukisan cat minyak tebal",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "impasto",
+      "description": "Gambar tangan & lukisan. Cocok untuk video musik, seni & budaya, iklan emosional. Gaya \"Impasto Oil Painting\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-ink-wash",
+      "label": "Lemo: Lukisan tinta Tiongkok",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "ink-wash",
+      "description": "Gambar tangan & lukisan. Cocok untuk wuxia, brand budaya, puisi. Gaya \"Chinese Ink Wash\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-iso-infographic",
+      "label": "Lemo: Infografis isometrik",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "iso-infographic",
+      "description": "Informasi & presentasi. Cocok untuk penjelasan proses, rantai pasok, laporan tahunan. Gaya \"Isometric Infographic\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-isometric-picture-book",
+      "label": "Lemo: Buku gambar isometrik",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "isometric-picture-book",
+      "description": "Informasi & presentasi. Cocok untuk aturan sehari-hari, antrean, perbandingan. Gaya \"Isometric Picture Book\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-kino-montage",
+      "label": "Lemo: Montase konstruktivis",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "kino-montage",
+      "description": "Editan & dokumenter (butuh bahan asli: footage/arsip). Cocok untuk sejarah industri, tonggak sejarah, kerja bersama. Gaya \"Constructivist Montage\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-lidar-survey",
+      "label": "Lemo: Survei LiDAR",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "lidar-survey",
+      "description": "Film bukti (data/citra nyata). Cocok untuk warisan budaya, lingkungan, survei lokasi. Gaya \"LiDAR Survey\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-living-screencast",
+      "label": "Lemo: Screencast hidup",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "living-screencast",
+      "description": "Informasi & presentasi. Cocok untuk tutorial produk, fitur baru, onboarding. Gaya \"Living Screencast\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-lowpoly-island",
+      "label": "Lemo: Pulau low-poly isometrik",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "lowpoly-island",
+      "description": "Material & 3D. Cocok untuk trailer game, membangun dunia, konten santai. Gaya \"Low-poly Isometric Island\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-memphis-diorama",
+      "label": "Lemo: Diorama Memphis",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "memphis-diorama",
+      "description": "Material & 3D. Cocok untuk hero web, loop ambient, musim. Gaya \"Memphis Diorama\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-microgame",
+      "label": "Lemo: Kilat mini-game",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "microgame",
+      "description": "Gaya game. Cocok untuk trailer game, onboarding, video pendek. Gaya \"Microgame Frenzy\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-microscope",
+      "label": "Lemo: Cerita mikroskop",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "microscope",
+      "description": "Film bukti (data/citra nyata). Cocok untuk biomedis, ilmu material, sains perawatan kulit. Gaya \"Microscope Story\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-midcentury-toon",
+      "label": "Lemo: Kartun 50-an",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "midcentury-toon",
+      "description": "Kartun & anime. Cocok untuk panduan pemasangan, pusat bantuan, cara-cara. Gaya \"Mid-century Cartoon\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-news-package",
+      "label": "Lemo: Paket berita TV",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "news-package",
+      "description": "Editan & dokumenter (butuh bahan asli: footage/arsip). Cocok untuk rangkuman berita, buletin, update pasar. Gaya \"Broadcast News Package\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-newsreel",
+      "label": "Lemo: Newsreel 1920-an",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "newsreel",
+      "description": "Editan & dokumenter (butuh bahan asli: footage/arsip). Cocok untuk sejarah, tren & era, hari jadi. Gaya \"1920s Newsreel\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-one-line",
+      "label": "Lemo: Gambar satu garis",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "one-line",
+      "description": "Gambar tangan & lukisan. Cocok untuk cerita brand, momen hidup, iklan minimalis. Gaya \"One-line Drawing\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-paper-lantern",
+      "label": "Lemo: Kotak lampu kertas",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "paper-lantern",
+      "description": "Tradisi Asia Timur. Cocok untuk perjalanan, perpisahan & hari jadi, cerita tempat. Gaya \"Paper-cut Lightbox\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-paper-popup",
+      "label": "Lemo: Buku pop-up kertas",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "paper-popup",
+      "description": "Material & 3D. Cocok untuk buku anak, trailer game, film cerita. Gaya \"Paper Pop-up Book\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-papercut-red",
+      "label": "Lemo: Guntingan kertas merah",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "papercut-red",
+      "description": "Tradisi Asia Timur. Cocok untuk Imlek, ucapan hari raya, cerita rakyat. Gaya \"Red Paper-cut\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-pictogram-motion",
+      "label": "Lemo: Gerak piktogram",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "pictogram-motion",
+      "description": "Grafis & tipografi. Cocok untuk layanan publik & kota, identitas acara, penjelasan lewat simbol. Gaya \"Pictogram Motion\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-pixel-rpg",
+      "label": "Lemo: RPG piksel 16-bit",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "pixel-rpg",
+      "description": "Gaya game. Cocok untuk trailer game, rekap, nostalgia. Gaya \"16-bit Pixel RPG\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-printed-long-take",
+      "label": "Lemo: Long take cetak",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "printed-long-take",
+      "description": "Cetak & grafis. Cocok untuk perjalanan, satwa liar, lanskap. Gaya \"Printed Long Take\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-risograph",
+      "label": "Lemo: Cetak risograph",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "risograph",
+      "description": "Cetak & grafis. Cocok untuk brand indie, zine, gaya hidup. Gaya \"Risograph Print\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-rubber-hose",
+      "label": "Lemo: Kartun rubber hose 1930-an",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "rubber-hose",
+      "description": "Kartun & anime. Cocok untuk makanan & minuman, iklan retro, anak-anak. Gaya \"1930s Rubber Hose Cartoon\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-satellite-briefing",
+      "label": "Lemo: Briefing satelit",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "satellite-briefing",
+      "description": "Film bukti (data/citra nyata). Cocok untuk iklim, penjelasan berita, geografi. Gaya \"Satellite Briefing\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-scifi-toon",
+      "label": "Lemo: Kartun sitkom sci-fi",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "scifi-toon",
+      "description": "Kartun & anime. Cocok untuk komedi, brand teknologi, video pendek. Gaya \"Sci-Fi Sitcom Toon\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-shadow-puppet",
+      "label": "Lemo: Wayang bayangan",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "shadow-puppet",
+      "description": "Tradisi Asia Timur. Cocok untuk mitos & cerita rakyat, warisan budaya, festival. Gaya \"Shadow Puppetry\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-silent-film",
+      "label": "Lemo: Film bisu 1920-an",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "silent-film",
+      "description": "Sinema & era. Cocok untuk komedi, brand retro, cerita tanpa kata. Gaya \"1920s Silent Film\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-silkscreen-poster",
+      "label": "Lemo: Poster wisata sablon",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "silkscreen-poster",
+      "description": "Cetak & grafis. Cocok untuk panduan destinasi, pariwisata, poster acara. Gaya \"Silkscreen Travel Poster\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-spy-titles",
+      "label": "Lemo: Pembuka film mata-mata 60-an",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "spy-titles",
+      "description": "Grafis & tipografi. Cocok untuk title sequence, pembuka acara, trailer. Gaya \"60s Spy Title Sequence\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-stained-glass",
+      "label": "Lemo: Kaca patri",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "stained-glass",
+      "description": "Grafis & tipografi. Cocok untuk legenda, warisan budaya, cerita hari raya. Gaya \"Stained Glass\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-swiss-motion",
+      "label": "Lemo: Motion grafis Swiss",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "swiss-motion",
+      "description": "Grafis & tipografi. Cocok untuk identitas brand, acara, edukasi desain. Gaya \"Swiss Motion Graphics\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-teardown",
+      "label": "Lemo: Bongkar produk (exploded)",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "teardown",
+      "description": "Film bukti (data/citra nyata). Cocok untuk peluncuran perangkat, halaman produk, penjelasan spesifikasi. Gaya \"Exploded Teardown\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-telestrator",
+      "label": "Lemo: Telestrator olahraga",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "telestrator",
+      "description": "Editan & dokumenter (butuh bahan asli: footage/arsip). Cocok untuk analisis olahraga, rekap pertandingan, kepelatihan. Gaya \"Sports Telestrator\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-tilt-shift",
+      "label": "Lemo: Miniatur tilt-shift",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "tilt-shift",
+      "description": "Material & 3D. Cocok untuk promosi kota, properti, transportasi. Gaya \"Tilt-Shift Miniature\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-transit-map",
+      "label": "Lemo: Peta jalur kereta",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "transit-map",
+      "description": "Informasi & presentasi. Cocok untuk transportasi, pertumbuhan dari waktu ke waktu, jaringan. Gaya \"Transit Map\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-ukiyoe",
+      "label": "Lemo: Ukiyo-e",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "ukiyoe",
+      "description": "Tradisi Asia Timur. Cocok untuk perjalanan, budaya Jepang, puisi. Gaya \"Ukiyo-e\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-urban-sketch",
+      "label": "Lemo: Sketsa kota (pena & cat air)",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "urban-sketch",
+      "description": "Gambar tangan & lukisan. Cocok untuk kota & perjalanan, arsitektur, brand gaya hidup. Gaya \"Urban Sketch · Pen & Wash\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-visual-investigation",
+      "label": "Lemo: Investigasi visual",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "visual-investigation",
+      "description": "Editan & dokumenter (butuh bahan asli: footage/arsip). Cocok untuk rekonstruksi kejadian, cek fakta, laporan insiden. Gaya \"Visual Investigation\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-watercolor",
+      "label": "Lemo: Kuas cat air",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "watercolor",
+      "description": "Gambar tangan & lukisan. Cocok untuk dokumenter alam, perjalanan, penjelasan sains. Gaya \"Watercolor Brush\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-white-model",
+      "label": "Lemo: Proyeksi di maket putih",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "white-model",
+      "description": "Film bukti (data/citra nyata). Cocok untuk tata kota, pameran, data kota. Gaya \"Projection on White Model\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-whiteboard",
+      "label": "Lemo: Penjelasan papan tulis",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "whiteboard",
+      "description": "Gambar tangan & lukisan. Cocok untuk penjelasan, kursus online, sains. Gaya \"Whiteboard Explainer\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
+    },
+    {
+      "id": "lemo-woodcut",
+      "label": "Lemo: Cetak cukil kayu",
+      "kind": "skill",
+      "engine": "lemo",
+      "skillStyle": "woodcut",
+      "description": "Cetak & grafis. Cocok untuk cerita rakyat, brand kerajinan, trailer buku. Gaya \"Woodcut Print\" dari pustaka Lemo-Opuscar (LemoLab): Claude menyutradarai, menggambar, memberi musik, dan mengemas filmnya dengan kode. Gambar contoh © LemoLab (CC BY 4.0).",
+      "draw": []
     }
   ],
   "rig": [

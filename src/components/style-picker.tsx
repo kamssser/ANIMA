@@ -59,7 +59,7 @@ export function StylePicker({ value, onChange }: { value: string; onChange: (id:
                   </span>
                 )}
               </div>
-              <span className="px-2 py-1.5 text-xs leading-tight font-medium">{s.label.replace(/^(Animate|Bang Motion|Studio|Animantra): /, '')}</span>
+              <span className="px-2 py-1.5 text-xs leading-tight font-medium">{s.label.replace(/^(Animate|Bang Motion|Studio|Animantra|Lemo|Motionmaxxing|Google Flow|Kamal|Stickman): /, '')}</span>
             </button>
           );
         })}

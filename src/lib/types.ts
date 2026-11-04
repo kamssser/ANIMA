@@ -131,6 +131,14 @@ export interface Settings {
   renderQuality: 'full' | 'draft';
   gl: 'angle' | 'swiftshader';
   benchFrame: number;
+  /** Otak Claude untuk semua sesi: login Claude Code bawaan atau API custom (kompatibel Anthropic). */
+  brainMode: 'claude' | 'custom';
+  brainPreset: string;
+  brainBaseUrl: string;
+  brainApiKey: string;
+  brainAuth: 'bearer' | 'x-api-key';
+  brainModel: string;
+  brainSmallModel: string;
 }
 
 export interface UpdateState {
@@ -285,7 +293,7 @@ export interface RenderProps {
 }
 
 /** Mesin style dari skill Claude pihak ketiga. */
-export type SkillEngine = 'animate' | 'bang-motion' | 'studio' | 'animantra';
+export type SkillEngine = 'animate' | 'bang-motion' | 'studio' | 'animantra' | 'lemo' | 'motionmaxxing' | 'flow' | 'kamal' | 'stickman';
 
 /** Kebutuhan satu mesin skill (Pengaturan > Skill video). */
 export interface SkillCheck {
@@ -296,6 +304,34 @@ export interface SkillCheck {
   commit: string;
   url: string;
   optionalLabel: string;
+  license?: string;
+}
+
+/** Pengaturan > Penyimpanan (electron/storage.cjs). */
+/** Storyboard cerita + teks suara di <proyek>/cerita.json (ditulis Claude, diedit pengguna sebelum render). */
+export interface StoryScene {
+  no?: number;
+  /** apa yang terlihat di layar */
+  visual: string;
+  /** teks/judul di layar (boleh kosong) */
+  teks_layar: string;
+  /** 'A' = karakter utama pengguna, 'B' = narator (project 2 suara) */
+  suara: 'A' | 'B';
+  /** kalimat persis yang diucapkan */
+  narasi: string;
+}
+export interface Story {
+  judul?: string;
+  status?: 'menunggu_edit' | 'disetujui' | string;
+  adegan: StoryScene[];
+  diedit_pengguna?: string;
+  [k: string]: unknown;
+}
+
+export interface StorageScan {
+  projects: { kind: 'skill' | 'render'; engine: string; slug: string; dir: string; bytes: number; tempBytes: number; videos: number; mtime: string; busy: boolean }[];
+  caches: { id: string; label: string; hint?: string; path: string; bytes: number; files: number }[];
+  total: number;
 }
 
 /** Satu pesan di panel obrolan skill (lihat electron/skillchat.cjs). */

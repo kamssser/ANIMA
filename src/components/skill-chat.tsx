@@ -1,6 +1,6 @@
 // Panel obrolan Claude untuk project bergaya skill (Animate, Bang Motion, HyperForge Studio), di dalam aplikasi.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, ChevronDown, ChevronRight, FolderOpen, Loader2, Play, ScrollText, RotateCcw, Send, Sparkles, Square, Terminal, User, Wrench } from 'lucide-react';
+import { Bot, ChevronDown, ChevronRight, ClipboardList, FolderOpen, Loader2, Play, ScrollText, RotateCcw, Send, Sparkles, Square, Terminal, User, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -13,6 +13,8 @@ import type { ChatMessage, Project, SkillEngine } from '@/lib/types';
 import { cn, slugify } from '@/lib/utils';
 import { ENGINE_INFO, buildSkillBrief } from '@/components/skill-video';
 import { LogView } from '@/components/skill-logs';
+import { StoryEditor } from '@/components/story-editor';
+import { usesTwoVoices } from '@/lib/content';
 
 const imgCache = new Map<string, string>();
 const fmtDur = (ms: number) => {
@@ -131,6 +133,16 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
   const [text, setText] = useState('');
   const [big, setBig] = useState<string | null>(null);
   const [showLog, setShowLog] = useState(false);
+  const [showStory, setShowStory] = useState(false);
+  // Storyboard (cerita.json) ada & menunggu diedit? Dicek ulang setiap Claude selesai bekerja.
+  const [story, setStory] = useState<{ exists: boolean; waiting: boolean; mtime?: number }>({ exists: false, waiting: false });
+  useEffect(() => {
+    if (chat.running) return;
+    window.anima
+      .storyRead({ engine, slug })
+      .then((r) => setStory({ exists: r.exists && !r.error, waiting: Boolean(r.data && r.data.status !== 'disetujui'), mtime: r.mtime }))
+      .catch(() => setStory({ exists: false, waiting: false }));
+  }, [engine, slug, chat.running, chat.messages.length, showStory]);
   // detik berjalan sejak aktivitas terakhir (supaya jelas Claude masih bekerja, bukan macet)
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -231,6 +243,9 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
           </Badge>
         )}
         <span className="ml-auto flex gap-1">
+          <Button size="sm" variant={story.waiting ? 'default' : 'ghost'} onClick={() => setShowStory(true)} title="Edit storyboard cerita dan teks suara sebelum dirender">
+            <ClipboardList /> Storyboard & naskah
+          </Button>
           {chat.hasSession && (
             <Button size="sm" variant="ghost" onClick={() => setShowLog(true)} title="Log lengkap: perintah, hasil, error">
               <ScrollText /> Lihat log
@@ -337,6 +352,15 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
                 </div>
               ),
             )}
+            {!busy && story.waiting && (
+              <div className="ml-10 flex flex-wrap items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                <ClipboardList className="size-4 text-primary" />
+                <span>Storyboard cerita & teks suara siap. Periksa dan edit dulu sebelum suara dibuat dan video dirender.</span>
+                <Button size="sm" className="ml-auto" onClick={() => setShowStory(true)}>
+                  Buka storyboard
+                </Button>
+              </div>
+            )}
             {busy && (
               <div className="flex flex-wrap items-center gap-2 pl-10 text-xs text-muted-foreground">
                 <Loader2 className="size-3.5 animate-spin text-primary" />
@@ -374,6 +398,15 @@ export function SkillChat({ project, beforeRun }: { project: Project; beforeRun:
           </Button>
         </div>
       )}
+
+      <Dialog open={showStory} onOpenChange={setShowStory}>
+        <DialogContent className="sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Storyboard cerita & teks suara · {project.title}</DialogTitle>
+          </DialogHeader>
+          {showStory && <StoryEditor engine={engine} slug={slug} twoVoices={usesTwoVoices(project)} busy={busy} onSend={(t) => send(t)} onClose={() => setShowStory(false)} />}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showLog} onOpenChange={setShowLog}>
         <DialogContent className="sm:max-w-5xl">

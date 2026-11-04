@@ -224,7 +224,7 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
         if (state.stopped) push({ role: 'system', text: 'Dihentikan.' });
         else if (result?.is_error || (!result && code !== 0)) {
           const msg = String(result?.result || errTail.join('\n') || `Claude Code keluar dengan kode ${code}`);
-          push({ role: 'system', error: true, text: /login|auth|credential/i.test(msg) ? 'Claude Code belum login. Buka terminal, jalankan "claude", lalu login.' : msg.slice(0, 600) });
+          push({ role: 'system', error: true, text: /login|auth|credential|401|403/i.test(msg) ? (process.env.ANTHROPIC_BASE_URL ? `Otak custom menolak permintaan (cek API key, base URL, dan model di Pengaturan > Otak AI): ${msg.slice(0, 200)}` : 'Claude Code belum login. Buka terminal, jalankan "claude", lalu login.') : msg.slice(0, 600) });
         }
         emit({ engine, slug, type: 'status', running: false });
         resolve({ ok: !state.stopped && !result?.is_error });
@@ -309,6 +309,8 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
     const p = path.resolve(e.work, String(file));
     return p.startsWith(path.resolve(e.work) + path.sep) && fs.existsSync(p) ? p : null;
   });
+
+  return { isRunning: (engine, slug) => running.has(`${engine}:${slug}`) };
 }
 
 module.exports = { register, parseAssistant, copyStyleRefs };

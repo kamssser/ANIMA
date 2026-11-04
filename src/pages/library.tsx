@@ -19,6 +19,11 @@ const SOURCES: Record<string, string> = {
   animate: 'Animate',
   'bang-motion': 'Bang Motion',
   animantra: 'Animantra',
+  lemo: 'Lemo-Opuscar',
+  motionmaxxing: 'Motionmaxxing',
+  flow: 'Google Flow',
+  kamal: 'Kamal',
+  stickman: 'Stickman',
 };
 
 /** Gambar mini dibuat sekali lalu diingat selama aplikasi terbuka. */
