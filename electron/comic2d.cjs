@@ -4,10 +4,11 @@
 // - props lapisan teks untuk video 3D
 const fs = require('node:fs');
 const path = require('node:path');
+const { appFile } = require('./paths.cjs');
 const { sanitizeSvg } = require('./svg.cjs');
 
 const FPS = 30;
-const templateAnima = () => path.join(__dirname, '..', 'remotion-template', 'src', 'anima');
+const templateAnima = () => appFile('remotion-template', 'src', 'anima');
 
 /** Ganti src/anima/ di proyek pengguna dengan versi aplikasi ini (folder ini tidak untuk diedit manual). */
 function syncAnima(projectPath) {

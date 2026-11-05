@@ -1,0 +1,28 @@
+# Pemeriksaan setiap push / pull request: build (tsc + vite) dan tes harus lolos sebelum dirilis lewat update otomatis.
+name: Build & tes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Windows: sama dengan target aplikasi (tes enkripsi API key memakai Windows DPAPI).
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      # Tidak perlu binary Electron untuk build tampilan + tes.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: npm test

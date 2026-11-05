@@ -13,8 +13,10 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { createRequire } from 'node:module';
+import { shotSchema, shotListSchema, shotRows, totalSeconds, patchRow, speakerProblem, check2dShots } from './shots.mjs';
 
 const { sanitizeSvg, checkBackgroundSvg, checkPropSvg, extractSvg } = createRequire(import.meta.url)('../electron/svg.cjs');
+const { revealSettings } = createRequire(import.meta.url)('../shared/secret.cjs');
 
 const SESSION_FILE = process.env.ANIMA_SESSION_FILE;
 // Sesi skill animate / bang-motion (dibuka dari HyperForge) tidak butuh login Supabase: hanya alat suara vibi.
@@ -58,20 +60,6 @@ async function auth() {
 // Balasan dibuat sependek mungkin supaya hemat token.
 const ok = (obj) => ({ content: [{ type: 'text', text: typeof obj === 'string' ? obj : JSON.stringify(obj) }] });
 const fail = (msg) => ({ content: [{ type: 'text', text: msg }], isError: true });
-
-const shotSchema = z.object({
-  durationSeconds: z.number().min(0.5).max(60).describe('Durasi shot dalam detik (30 fps)'),
-  camera: z.string().describe('Gerak/sudut kamera, mis. "dolly in", "close-up"'),
-  characters: z.array(z.string()).default([]),
-  narration: z.string().default('').describe('Kalimat narasi pada shot ini'),
-  world: z
-    .record(z.string(), z.unknown())
-    .default({})
-    .describe(
-      'Style 3D: setting/props/cahaya bebas. Style 2D WAJIB: { bg: "<id latar>", camera: "static|zoom-in|zoom-out|pan-left|pan-right|shake|push-speaker", framing: "wide|medium|close", transition: "cut|fade|slide|zoom|flash|whip", cast: [{ char: "<key karakter>", x: 0..1, flip?: bool, expr?: "normal|senang|sedih|marah|kaget", pose?: "idle|point|wave|explain|shrug|cheer|think", enter?: "none|left|right|bottom|pop", toX?: 0..1 }], speaker: "<key karakter yang bicara>", props: [{ prop: "<id benda>", x: 0..1, y: 0..1, size: 0.05..1.2, anim?: "none|float|bob|pop|drop|slide-left|slide-right|across-left|across-right|spin|pulse|shake", delay?: detik, layer?: "back|front" }] }. cast boleh [] untuk shot sisipan (close-up benda/peta) asal ada props.',
-    ),
-  speaker: z.enum(['A', 'B', '']).default('').describe("Untuk project 2 suara (guide.twoSpeakers): 'A' = karakter utama pengguna, 'B' = narator (jenis Dialog: tokoh kedua). Siapa yang bicara di shot ini"),
-});
 
 // Aturan per jenis konten (sama dengan yang dipakai aplikasi).
 const CONTENT = JSON.parse(fs.readFileSync(new URL('../shared/content-types.json', import.meta.url), 'utf8'));
@@ -186,7 +174,7 @@ server.tool(
       .array(z.object({ title: z.string(), url: z.string() }))
       .default([])
       .describe('Sumber yang dibaca (wajib untuk sejarah & fakta)'),
-    shots: z.array(shotSchema).min(1).max(120),
+    shots: shotListSchema,
   },
   async ({ id, hook, script, sources, shots }) => {
     try {
@@ -200,58 +188,24 @@ server.tool(
         const propIds = Object.keys(p.assets?.props ?? {});
         const { data: chars } = await db.from('characters').select('key');
         const keys = (chars || []).map((c) => c.key);
-        let withProps = 0;
-        for (const [i, sh] of shots.entries()) {
-          const w = sh.world || {};
-          if (!w.bg || !bgs.includes(w.bg)) return fail(`Shot ${i + 1}: world.bg "${w.bg ?? ''}" belum digambar. Latar yang ada: ${bgs.join(', ') || '(belum ada)'}. Gambar dulu dengan anima_save_background.`);
-          const cast = Array.isArray(w.cast) ? w.cast : [];
-          const props = Array.isArray(w.props) ? w.props : [];
-          const badProp = props.find((x) => !propIds.includes(x?.prop));
-          if (badProp) return fail(`Shot ${i + 1}: benda "${badProp?.prop}" belum digambar. Benda yang ada: ${propIds.join(', ') || '(belum ada)'}. Gambar dulu dengan anima_save_prop.`);
-          if (props.length) withProps++;
-          if (!cast.length && !props.length) return fail(`Shot ${i + 1}: cast dan props kosong. Isi karakter dari daftar (${keys.join(', ')}) atau jadikan shot sisipan dengan props.`);
-          const bad = cast.find((m) => !keys.includes(m?.char));
-          if (bad) return fail(`Shot ${i + 1}: karakter "${bad?.char}" tidak ada. Pakai key: ${keys.join(', ')}.`);
-        }
-        if (shots.length >= 4 && withProps < Math.ceil(shots.length / 3)) {
-          return fail(`Baru ${withProps} dari ${shots.length} shot yang punya benda cerita (props). Minimal ${Math.ceil(shots.length / 3)}: gambar benda/kendaraan/dokumen/angka yang disebut narasi dengan anima_save_prop, taruh di shot yang menyebutnya (atau buat shot sisipan), lalu simpan ulang.`);
-        }
-        // Hindari monoton: latar + karakter + pose sama tiga shot berturut-turut tanpa benda.
-        const sig = (k) => {
-          const w = shots[k].world || {};
-          return `${w.bg}|${(w.cast || []).map((m) => `${m.char}:${m.pose || 'idle'}`).join(',')}|${(w.props || []).length}`;
-        };
-        for (let i = 2; i < shots.length; i++) {
-          if (sig(i) === sig(i - 1) && sig(i) === sig(i - 2) && !(shots[i].world?.props || []).length) {
-            return fail(`Shot ${i - 1}-${i + 1} sama persis (latar, karakter, pose, tanpa benda). Variasikan: ganti pose/framing, tambahkan benda yang disebut narasi, atau pindah latar.`);
-          }
-        }
+        const bad2d = check2dShots(shots, { bgs, propIds, keys });
+        if (bad2d) return fail(bad2d);
       }
       if (t.needsSources && sources.filter((s) => /^https?:\/\//.test(s.url)).length < 2) {
         return fail(`Jenis "${t.label}" wajib minimal 2 sumber (judul + URL) yang benar-benar dibaca. Riset dulu lalu simpan ulang.`);
       }
       if (twoVoicesOf(p, t)) {
-        const bad = shots.findIndex((s) => s.speaker !== 'A' && s.speaker !== 'B');
-        if (bad >= 0) return fail(`Project ini memakai 2 suara: wajib isi speaker 'A' atau 'B' di setiap shot (shot ${bad + 1} kosong).`);
-        if (!shots.some((s) => s.speaker === 'B')) return fail(`Project ini memakai 2 suara: belum ada shot dengan speaker 'B'.`);
+        const badSpk = speakerProblem(shots);
+        if (badSpk) return fail(badSpk);
       }
       const up = await db.from('projects').update({ script, hook, sources, status: 'ready' }).eq('id', id);
       if (up.error) return fail(up.error.message);
       const del = await db.from('shots').delete().eq('project_id', id);
       if (del.error) return fail(del.error.message);
-      const rows = shots.map((s, i) => ({
-        project_id: id,
-        idx: i + 1,
-        duration_frames: Math.round(s.durationSeconds * 30),
-        camera: s.camera,
-        characters: s.characters,
-        narration_text: s.narration,
-        world: s.world,
-        speaker: s.speaker,
-      }));
+      const rows = shotRows(id, shots);
       const ins = await db.from('shots').insert(rows);
       if (ins.error) return fail(ins.error.message);
-      const total = rows.reduce((n, r) => n + r.duration_frames, 0) / 30;
+      const total = totalSeconds(rows);
       return ok(`tersimpan: ${rows.length} shot, ${total.toFixed(1)} dtk`);
     } catch (e) {
       return fail(e.message);
@@ -270,13 +224,7 @@ server.tool(
   async ({ id, idx, patch }) => {
     try {
       await auth();
-      const row = {};
-      if (patch.durationSeconds !== undefined) row.duration_frames = Math.round(patch.durationSeconds * 30);
-      if (patch.camera !== undefined) row.camera = patch.camera;
-      if (patch.characters !== undefined) row.characters = patch.characters;
-      if (patch.narration !== undefined) row.narration_text = patch.narration;
-      if (patch.world !== undefined) row.world = patch.world;
-      if (patch.speaker !== undefined) row.speaker = patch.speaker;
+      const row = patchRow(patch);
       const { data, error } = await db.from('shots').update(row).eq('project_id', id).eq('idx', idx).select('idx');
       if (error) return fail(error.message);
       if (!data?.length) return fail(`shot ${idx} tidak ada`);
@@ -376,7 +324,8 @@ const VIBI = 'https://api.vibi.pro';
 function hyperforgeSettings() {
   const f = process.env.ANIMA_SETTINGS_FILE;
   if (!f || !fs.existsSync(f)) throw new Error('Pengaturan HyperForge tidak ditemukan (buka sesi ini dari tombol "Buka di Claude Code" di HyperForge).');
-  return JSON.parse(fs.readFileSync(f, 'utf8'));
+  // API key tersimpan terenkripsi (shared/secret.cjs); dibuka di sini hanya untuk memanggil vibi.pro.
+  return revealSettings(path.dirname(f), JSON.parse(fs.readFileSync(f, 'utf8')));
 }
 async function vibiCall(s, p, init = {}) {
   if (!s.vibiApiKey) throw new Error('API key vibi.pro belum diisi di HyperForge > Pengaturan > Suara & audio.');

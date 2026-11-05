@@ -142,6 +142,10 @@ export interface Settings {
   brainAuth: 'bearer' | 'x-api-key';
   brainModel: string;
   brainSmallModel: string;
+  /** Sesi produksi skill boleh membaca web (WebSearch/WebFetch/Agent Reach). Bawaan mati demi keamanan. */
+  skillWebResearch: boolean;
+  /** Pengguna sudah menyetujui risiko otomatisasi Google Flow. */
+  flowRiskAccepted: boolean;
 }
 
 export interface UpdateState {

@@ -12,6 +12,7 @@ const SYSTEM = [
   'Kamu berjalan di dalam aplikasi HyperForge (panel obrolan), bukan di terminal. Pengguna tidak melihat terminal, output perintah, atau isi file; dia hanya melihat teks balasanmu dan gambar yang kamu tunjukkan.',
   'Alat AskUserQuestion TIDAK tersedia. Setiap kali skill memintamu bertanya atau meminta persetujuan: tulis penjelasan singkat, lalu SATU blok kode berbahasa "pilihan" berisi JSON {"pertanyaan": "...", "pilihan": ["opsi 1 (disarankan)", "opsi 2", ...], "multi": false} (multi true kalau boleh pilih lebih dari satu), lalu AKHIRI giliranmu dan tunggu jawaban. Pengguna juga bisa mengetik jawaban sendiri.',
   'Untuk menunjukkan gambar (lembar kontak, contoh frame, storyboard, lembar karakter, galeri gaya): tulis blok kode berbahasa "gambar" berisi path file (satu path per baris, relatif ke folder kerja atau absolut). Untuk video: blok berbahasa "video" berisi path file. Tunjukkan gambar setiap kali meminta persetujuan visual.',
+  'Demi keamanan, izin perintah dibatasi (node, python, ffmpeg, dan skrip milik skill). Kalau sebuah perintah ditolak izin, cari cara lain dengan alat yang diizinkan; jangan meminta pengguna mematikan pembatasan.',
   'Jangan meminta pengguna membuka terminal atau menjalankan perintah; jalankan sendiri. Jangan menampilkan isi file panjang atau kode di balasan kecuali diminta. SELALU Bahasa Indonesia untuk semua teks yang kamu tulis ke pengguna, termasuk kalimat pendek di sela pekerjaan. Ringkas.',
 ].join('\n');
 
@@ -89,14 +90,18 @@ function toolLine(c) {
   return { text: `Memakai ${n}` };
 }
 
-function register({ ipcMain, getWin, engineOf, prepareSession }) {
+function register({ ipcMain, getWin, engineOf, slugOk, prepareSession }) {
   /** key "engine:slug" -> { child, stopped } */
   const running = new Map();
-  const files = (e, slug) => ({
-    hist: path.join(e.work, 'briefs', `${slug}.chat.json`),
-    sess: path.join(e.work, 'briefs', `${slug}.session`),
-    log: path.join(e.work, 'briefs', `${slug}.log`),
-  });
+  /** File riwayat/sesi/log satu proyek. Slug dari tampilan divalidasi dulu (sama seperti storage.cjs), jadi tidak bisa keluar dari folder briefs. */
+  const files = (e, slug) => {
+    if (!slugOk(slug)) throw new Error('Nama proyek tidak valid');
+    return {
+      hist: path.join(e.work, 'briefs', `${slug}.chat.json`),
+      sess: path.join(e.work, 'briefs', `${slug}.session`),
+      log: path.join(e.work, 'briefs', `${slug}.log`),
+    };
+  };
   /** Log lengkap sesi (perintah, hasil, error) untuk Pengaturan > Log. Dipotong kalau > 4 MB. */
   const logTo = (file) => (kind, text) => {
     try {
@@ -156,9 +161,11 @@ function register({ ipcMain, getWin, engineOf, prepareSession }) {
     };
     push({ role: 'user', text: sid ? prompt : text || `Mulai project "${title}" dengan skill ${e.name}.` });
 
-    const args = ['-p', '--output-format', 'stream-json', '--verbose', '--mcp-config', prep.mcpFile, '--append-system-prompt', SYSTEM, '--disallowedTools', 'AskUserQuestion', ...(sid ? ['--resume', sid] : []), '--allowedTools', ...prep.allowed];
-    const env = { ...process.env, PATH: prep.pathPrefix ? `${prep.pathPrefix}${path.delimiter}${process.env.PATH}` : process.env.PATH, ...(prep.npmRoot ? { NODE_PATH: prep.npmRoot } : {}) };
     const isCmd = /\.cmd$/i.test(prep.claude);
+    // Lewat cmd.exe (claude.cmd), aturan izin bertanda kutip rawan pecah: dilewati (perintah itu lalu ditolak, bukan diizinkan).
+    const allowed = isCmd ? prep.allowed.filter((a) => !a.includes('"')) : prep.allowed;
+    const args = ['-p', '--output-format', 'stream-json', '--verbose', '--mcp-config', prep.mcpFile, '--append-system-prompt', SYSTEM, '--disallowedTools', 'AskUserQuestion', ...prep.denied, ...(sid ? ['--resume', sid] : []), '--allowedTools', ...allowed];
+    const env = { ...process.env, PATH: prep.pathPrefix ? `${prep.pathPrefix}${path.delimiter}${process.env.PATH}` : process.env.PATH, ...(prep.npmRoot ? { NODE_PATH: prep.npmRoot } : {}) };
     const child = spawn(isCmd ? `"${prep.claude}"` : prep.claude, isCmd ? args.map((a) => (/[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args, { cwd: e.work, env, windowsHide: true, shell: isCmd });
     const state = { child, stopped: false };
     running.set(key, state);

@@ -1,15 +1,16 @@
 // Pengaturan > Riset internet: Agent Reach (Panniantong/agent-reach, MIT). Claude memakainya untuk riset bahan video
 // (subtitle YouTube, Reddit, X, GitHub, web) bila WebSearch/WebFetch tidak cukup. Hanya membaca.
 import { useEffect, useState } from 'react';
-import { CheckCircle2, ExternalLink, Loader2, Wand2, XCircle } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Loader2, ShieldAlert, Wand2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Progress } from '@/components/ui/misc';
 import { cleanErr, runTask, useTask, useTaskFinished } from '@/lib/tasks';
+import type { Settings } from '@/lib/types';
 
 type Status = Awaited<ReturnType<typeof window.anima.reachStatus>>;
 
-export function ReachSettings() {
+export function ReachSettings({ s, setS }: { s: Settings; setS: (s: Settings) => void }) {
   const [st, setSt] = useState<Status | null>(null);
   const [report, setReport] = useState('');
   const key = 'skill-setup:reach';
@@ -40,14 +41,41 @@ export function ReachSettings() {
     : [];
 
   return (
+    <>
+    <Card>
+      <CardHeader>
+        <CardTitle>Riset internet di sesi skill</CardTitle>
+        <CardDescription>
+          Sesi skill (tab Claude) boleh menjalankan perintah di laptop ini untuk merender video. Kalau sesi yang sama juga membaca web, teks jahat di sebuah halaman bisa menyuruh Claude
+          menjalankan perintah berbahaya (prompt injection). Karena itu riset internet secara bawaan hanya dikerjakan di tahap <b>Generate dengan Claude</b>, yang tidak boleh menjalankan
+          perintah.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3">
+        <label className="flex items-center gap-3 text-sm">
+          <input type="checkbox" className="size-4 accent-primary" checked={Boolean(s.skillWebResearch)} onChange={(e) => setS({ ...s, skillWebResearch: e.target.checked })} />
+          Izinkan sesi skill membaca web (WebSearch, WebFetch, Agent Reach)
+        </label>
+        {s.skillWebResearch && (
+          <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-xs">
+            <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning" />
+            <span>
+              Hati-hati: dengan ini menyala, Claude membaca halaman web sambil boleh menjalankan perintah (node, python, ffmpeg) tanpa bertanya. Nyalakan hanya saat perlu, beri topik dari
+              sumber yang kamu percaya, dan matikan lagi setelah selesai.
+            </span>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">Klik Simpan di atas setelah mengubah. Berlaku untuk sesi skill berikutnya.</p>
+      </CardContent>
+    </Card>
     <Card>
       <CardHeader>
         <CardTitle>
           Riset internet: Agent Reach <span className="text-sm font-normal text-muted-foreground">oleh Panniantong</span>
         </CardTitle>
         <CardDescription>
-          Memberi Claude akses baca ke platform yang sulit dijangkau WebSearch: subtitle YouTube, Reddit, X/Twitter, GitHub, Bilibili, dan halaman web. Setelah terpasang, semua sesi Claude
-          dari HyperForge (Generate dengan Claude dan tab Claude) boleh memakainya untuk riset bahan video. Hanya membaca, tidak pernah memposting atau login atas namamu.
+          Memberi Claude akses baca ke platform yang sulit dijangkau WebSearch: subtitle YouTube, Reddit, X/Twitter, GitHub, Bilibili, dan halaman web. Setelah terpasang, Generate dengan Claude boleh
+          memakainya untuk riset bahan video (tab Claude hanya kalau riset internet di sesi skill dinyalakan di atas). Hanya membaca, tidak pernah memposting atau login atas namamu.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -92,5 +120,6 @@ export function ReachSettings() {
         </p>
       </CardContent>
     </Card>
+    </>
   );
 }

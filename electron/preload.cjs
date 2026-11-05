@@ -99,6 +99,7 @@ contextBridge.exposeInMainWorld('anima', {
   showItem: (p) => ipcRenderer.invoke('shell:showItem', p),
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
   flowOpenChrome: () => ipcRenderer.invoke('flow:openChrome'),
+  flowCloseChrome: () => ipcRenderer.invoke('flow:closeChrome'),
   flowStatus: () => ipcRenderer.invoke('flow:status'),
   reachStatus: () => ipcRenderer.invoke('reach:status'),
   reachInstall: () => ipcRenderer.invoke('reach:install'),

@@ -76,7 +76,9 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
   if (!s) return <Skeleton className="m-8 h-40" />;
 
   async function save() {
-    const next = await window.anima.saveSettings(s!);
+    // Persetujuan risiko Google Flow diatur langsung di panel Flow; jangan ditimpa nilai lama halaman ini.
+    const { flowRiskAccepted: _flow, ...rest } = s!;
+    const next = await window.anima.saveSettings(rest);
     onSaved(next);
     setSys(await window.anima.systemInfo());
     toast.success('Pengaturan tersimpan');
@@ -120,7 +122,7 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
 
           {section === 'brain' && <BrainSettings s={s} setS={setS} />}
 
-          {section === 'reach' && <ReachSettings />}
+          {section === 'reach' && <ReachSettings s={s} setS={setS} />}
 
           {section === 'storage' && <StorageSettings />}
 

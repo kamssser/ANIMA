@@ -3,8 +3,9 @@
 // saat dibutuhkan (tidak ikut installer), lalu dilihat Claude saat menggambar dan saat memeriksa hasil.
 const fs = require('node:fs');
 const path = require('node:path');
+const { appFile } = require('./paths.cjs');
 
-const STYLES = () => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'shared', 'visual-styles.json'), 'utf8'));
+const STYLES = () => JSON.parse(fs.readFileSync(appFile('shared', 'visual-styles.json'), 'utf8'));
 const SHEETS_PER_VIDEO = 3;
 
 function styleDef(id) {

@@ -9,8 +9,6 @@ import { wireTaskEvents } from '@/lib/tasks';
 import { wireSkillChat } from '@/lib/skillchat';
 import type { Settings } from '@/lib/types';
 import { Layout } from '@/components/layout';
-import { SetupPage } from '@/pages/setup';
-import { LoginPage } from '@/pages/login';
 import { Skeleton } from '@/components/ui/misc';
 
 // Tiap halaman dimuat saat dibuka saja, supaya start aplikasi ringan.
@@ -20,6 +18,9 @@ const ProjectDetailPage = lazy(() => import('@/pages/project-detail'));
 const RendersPage = lazy(() => import('@/pages/renders'));
 const LibraryPage = lazy(() => import('@/pages/library'));
 const SettingsPage = lazy(() => import('@/pages/settings'));
+// Hanya tampil sebelum masuk: tidak perlu ikut bundle utama.
+const SetupPage = lazy(() => import('@/pages/setup').then((m) => ({ default: m.SetupPage })));
+const LoginPage = lazy(() => import('@/pages/login').then((m) => ({ default: m.LoginPage })));
 
 export function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -56,7 +57,9 @@ export function App() {
   if (!configured) {
     return (
       <>
-        <SetupPage onSaved={setSettings} />
+        <Suspense fallback={null}>
+          <SetupPage onSaved={setSettings} />
+        </Suspense>
         {toaster}
       </>
     );
@@ -65,7 +68,9 @@ export function App() {
   if (!session) {
     return (
       <>
-        <LoginPage onResetConfig={() => window.anima.saveSettings({ supabaseUrl: '', supabaseAnonKey: '' }).then(setSettings)} />
+        <Suspense fallback={null}>
+          <LoginPage onResetConfig={() => window.anima.saveSettings({ supabaseUrl: '', supabaseAnonKey: '' }).then(setSettings)} />
+        </Suspense>
         {toaster}
       </>
     );

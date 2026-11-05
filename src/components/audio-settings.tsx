@@ -209,6 +209,7 @@ export function VoiceSettings({ s, setS }: Props) {
               Ambil key <ExternalLink />
             </Button>
           </div>
+          <span className="text-xs text-muted-foreground">Disimpan terenkripsi (Windows DPAPI) hanya di laptop ini, tidak diunggah.</span>
         </div>
         <div className="grid gap-2">
           <Label>Provider (untuk suara A dan B)</Label>

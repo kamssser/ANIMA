@@ -4,11 +4,12 @@
 // lalu memeriksa hasil render gambarnya terhadap referensi dan memperbaiki sekali.
 const fs = require('node:fs');
 const path = require('node:path');
+const { appFile } = require('./paths.cjs');
 const { spawn, execFile } = require('node:child_process');
 const { extractSvg, sanitizeSvg, checkCharacterSvg } = require('./svg.cjs');
 const { ensureStyleReferences } = require('./references.cjs');
 
-const STYLES = () => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'shared', 'visual-styles.json'), 'utf8'));
+const STYLES = () => JSON.parse(fs.readFileSync(appFile('shared', 'visual-styles.json'), 'utf8'));
 
 function characterPrompt(c, refs = []) {
   const all = STYLES();

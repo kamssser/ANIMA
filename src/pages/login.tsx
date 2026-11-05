@@ -10,6 +10,8 @@ export function LoginPage({ onResetConfig }: { onResetConfig: () => void }) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Kode undangan dari pemilik (wajib kalau pemilik sudah membuat kode di Supabase; lihat supabase/migrations/005).
+  const [invite, setInvite] = useState('');
   const [busy, setBusy] = useState(false);
 
   async function submit(e: FormEvent) {
@@ -20,8 +22,12 @@ export function LoginPage({ onResetConfig }: { onResetConfig: () => void }) {
         const { error } = await sb().auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
-        const { data, error } = await sb().auth.signUp({ email, password });
-        if (error) throw error;
+        const { data, error } = await sb().auth.signUp({ email, password, options: { data: { invite_code: invite.trim() } } });
+        if (error) {
+          // Penolakan dari pemicu database tampil sebagai "Database error saving new user".
+          if (/database error/i.test(error.message)) throw new Error('Kode undangan salah atau sudah habis. Minta kode ke pemilik HyperForge.');
+          throw error;
+        }
         if (!data.session) {
           toast.success('Akun dibuat. Cek email untuk konfirmasi, lalu login.');
           setMode('login');
@@ -51,6 +57,12 @@ export function LoginPage({ onResetConfig }: { onResetConfig: () => void }) {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
+            {mode === 'signup' && (
+              <div className="grid gap-2">
+                <Label htmlFor="invite">Kode undangan</Label>
+                <Input id="invite" value={invite} onChange={(e) => setInvite(e.target.value)} placeholder="dari pemilik HyperForge" autoComplete="off" />
+              </div>
+            )}
             <Button type="submit" size="lg" disabled={busy}>
               {busy ? 'Memproses...' : mode === 'login' ? 'Masuk' : 'Daftar'}
             </Button>

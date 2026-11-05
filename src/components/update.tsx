@@ -131,7 +131,7 @@ export function UpdateDialog() {
           )}
         </DialogFooter>
         {u.state === 'ready' && (
-          <p className="text-xs text-muted-foreground">Kalau memilih "nanti", update otomatis terpasang saat aplikasi ditutup.</p>
+          <p className="text-xs text-muted-foreground">Kalau memilih "nanti", update tetap tersimpan dan bisa dipasang kapan saja dari banner di atas atau Pengaturan &gt; Tampilan &amp; update.</p>
         )}
       </DialogContent>
     </Dialog>

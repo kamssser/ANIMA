@@ -132,7 +132,7 @@ export function BrainSettings({ s, setS }: { s: Settings; setS: (s: Settings) =>
                   {show ? <EyeOff /> : <Eye />}
                 </Button>
               </div>
-              <span className="text-xs text-muted-foreground">Disimpan hanya di laptop ini (settings.json), tidak diunggah.</span>
+              <span className="text-xs text-muted-foreground">Disimpan terenkripsi (Windows DPAPI) hanya di laptop ini, tidak diunggah.</span>
             </div>
 
             <div className="grid gap-2">

@@ -104,9 +104,10 @@ declare global {
       libraryShowFile(file: string): Promise<boolean>;
       showItem(p: string): Promise<void>;
       openExternal(url: string): Promise<void>;
-      /** Chrome khusus Google Flow (profil HyperForge, port CDP). */
-      flowOpenChrome(): Promise<{ already: boolean }>;
-      flowStatus(): Promise<{ running: boolean; downloads: string; port: number }>;
+      /** Chrome khusus Google Flow (profil HyperForge, port CDP acak). Butuh persetujuan risiko (flowRiskAccepted). */
+      flowOpenChrome(): Promise<{ already: boolean; port: number }>;
+      flowCloseChrome(): Promise<{ closed: boolean }>;
+      flowStatus(): Promise<{ running: boolean; downloads: string; port: number; accepted: boolean; risk: string }>;
       /** Agent Reach (riset internet, read-only). */
       reachStatus(): Promise<{ uv: string | null; bin: string | null; version: string | null; doctor: string; skill: boolean; url: string }>;
       reachInstall(): Promise<{ report: string }>;

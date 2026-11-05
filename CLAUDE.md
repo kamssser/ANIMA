@@ -13,7 +13,8 @@ Setiap kali mengubah aplikasi lalu merilis versi baru:
    (di bawah pembuka). Bahasa Indonesia sederhana untuk pengguna, kelompokkan ke **Baru** / **Perbaikan** /
    **Perubahan**. Jangan menulis detail teknis internal. `scripts/release.mjs` menolak rilis kalau bagian
    untuk versi itu belum ada; catatan ini dipakai sebagai catatan rilis GitHub dan tampil di dialog update aplikasi.
-3. `npm run build` harus lolos (tsc + vite) dan cek tampilan yang diubah sebelum rilis.
+3. `npm run build` dan `npm test` harus lolos (GitHub Actions `.github/workflows/build.yml` juga menjalankannya di
+   setiap push) dan cek tampilan yang diubah sebelum rilis.
 4. Commit (pesan commit dari file, lihat catatan PowerShell di bawah) lalu `git push origin main`.
 5. `npm run release` (butuh env `GH_TOKEN`). Skrip membuat tag `v<versi>`, release GitHub berisi catatan
    dari CHANGELOG, lalu mengunggah installer, `.blockmap`, dan `latest.yml`.
@@ -27,6 +28,10 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
 
 - Commit rahasia: `GH_TOKEN`, API key vibi.pro, secret key Supabase. `app-defaults.json` hanya boleh berisi
   URL + **publishable** key Supabase (ikut ke installer).
+- Memberi sesi skill izin perintah luas lagi (`Bash(bash:*)`, `Bash(sh:*)`, `Bash(curl:*)`, `Bash(npm:*)`): pakai
+  `scriptRules()` untuk satu skrip tertentu. Sesi skill tidak membaca web kecuali `skillWebResearch` menyala (cegah
+  prompt injection); riset ada di tahap Generate (tanpa Bash bebas). `tests/security.test.cjs` menjaga ini.
+- Menyimpan API key baru sebagai teks biasa: tambahkan namanya ke `SECRET_KEYS` di `shared/secret.cjs` (DPAPI).
 - Upgrade `@react-three/postprocessing` di `remotion-template/` melewati 3.0.4 tanpa uji: 3.2.x membuat frame
   render kosong di Remotion (lihat `remotion-template/README.md`).
 - Mengganti `app.setPath('userData', ...ANIMA Studio)` di `electron/main.cjs`: data pengguna lama ada di sana.
@@ -58,7 +63,7 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
   Penanda pemasangan = hash isi skill, jadi perubahan apa pun otomatis terpasang ulang lewat Siapkan otomatis.
 - `flow-skill/hyperforge-flow/` = skill buatan HyperForge (MIT, boleh diedit) untuk style Google Flow: naskah Claude,
   suara vibi.pro, klip + SFX dari Flow yang dioperasikan Claude lewat Playwright MCP (`@playwright/mcp` versi tetap di `electron/skills.cjs`,
-  tersambung ke Chrome Flow port 9333), `tools/rakit.mjs` merakit MP4.
+  tersambung ke Chrome Flow lewat port CDP acak di `electron/flow-chrome.cjs`; butuh persetujuan risiko `flowRiskAccepted`), `tools/rakit.mjs` merakit MP4.
 - Explainer Datar v2: tokoh tetap **Tora** (`XD.tora`, `XD.TORA`; `XD.pembawa` kini menggambar Tora), pendamping `XD.chibi`, `XD.lapisan` (blur/tepi cahaya), `XD.kamera`, `XD.grade`, kartu istilah/lokasi, `XD.bicara` di `studio-skill/hyperforge-studio/kit/explainer-datar.js`; aturan di `styles/explainer-datar.md`. Gaya diambil dari referensi pemilik (kanal edukasi), jangan menyalin nama/logo kanal referensi.
 - `edu-skill/edu-motion-studio/` = skill milik pemilik (boleh dibagikan), dipasang bersama HyperForge Studio (`EDU_SKILL`), dipakai Explainer Datar; aturan HyperForge menang.
 - `kamal-skill/kamal/` = skill buatan HyperForge (MIT, boleh diedit) untuk style Kamal (gelap/terang) dari video referensi
@@ -75,5 +80,12 @@ Memperbaiki/menambah catatan rilis yang sudah terbit tanpa build ulang: `node sc
   opsional yang gagal hanya peringatan.
 - Otak custom (`electron/brain.cjs`): env ANTHROPIC_* diset di process.env proses utama, jadi semua proses `claude`
   ikut. Penyimpanan: `electron/storage.cjs`. Riset: `electron/reach.cjs`.
-- Struktur: `electron/` (proses utama, render, update, MCP install; `skills.cjs` = style dari skill animate & bang-motion), `src/` (UI), `mcp/` (server MCP),
-  `supabase/schema.sql`, `scripts/release.mjs`, `remotion-template/`, `server/bench.sh`.
+- Struktur: `electron/` (`main.cjs` = jendela, render, MCP install, generate; `settings.cjs` pengaturan; `voice.cjs` suara
+  vibi.pro; `updater.cjs` update otomatis; `skills.cjs` = mesin style skill + izin perintah; `flow-chrome.cjs` Chrome
+  Google Flow; `paths.cjs`), `src/` (UI), `mcp/` (`server.mjs` + `shots.mjs` validasi shot), `shared/` (`secret.cjs`
+  enkripsi API key), `supabase/schema.sql` + `migrations/`, `scripts/`, `tests/` (`npm test`), `remotion-template/`, `server/bench.sh`.
+- Installer memakai **asar**. Berkas yang dibaca proses luar (server MCP, skill, template Remotion, `shared/`) dikeluarkan
+  lewat `asarUnpack` dan dirujuk dengan `appFile()` dari `electron/paths.cjs` (jangan `path.join(__dirname, '..')`).
+  Setelah mengubah import npm di `mcp/`, jalankan `node scripts/mcp-deps.mjs --write` (tes gagal kalau lupa). Paket yang
+  hanya dipakai tampilan masuk `devDependencies` (sudah dibundel Vite, tidak ikut installer).
+- Pendaftaran akun bisa dibatasi kode undangan (`supabase/migrations/005_kode_undangan.sql`, tabel `invite_codes`).

@@ -303,19 +303,38 @@ function EngineSettings({ engine }: { engine: SkillEngine }) {
   );
 }
 
-/** Tombol buka Chrome khusus Google Flow (login sekali dengan akun Google yang punya akses Flow). */
+/**
+ * Chrome khusus Google Flow (login sekali dengan akun Google yang punya akses Flow). Fitur ini pilihan sadar:
+ * pengguna harus menyetujui risiko akun dulu, dan Chrome bisa ditutup kapan saja (port kendalinya ikut tertutup).
+ */
 export function FlowChrome() {
-  const [st, setSt] = useState<{ running: boolean; downloads: string } | null>(null);
+  const [st, setSt] = useState<Awaited<ReturnType<typeof window.anima.flowStatus>> | null>(null);
   const [busy, setBusy] = useState(false);
   const load = () => window.anima.flowStatus().then(setSt).catch(() => {});
   useEffect(() => {
     load();
   }, []);
+  async function setAccepted(v: boolean) {
+    await window.anima.saveSettings({ flowRiskAccepted: v });
+    if (!v && st?.running) await window.anima.flowCloseChrome();
+    load();
+  }
+  if (st && !st.accepted)
+    return (
+      <div className="grid gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
+        <span className="font-medium">Sebelum memakai Google Flow</span>
+        <span className="text-xs text-muted-foreground">{st.risk}</span>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" className="size-4 accent-primary" onChange={(e) => e.target.checked && setAccepted(true)} />
+          Saya paham risikonya dan tetap ingin memakai Google Flow otomatis
+        </label>
+      </div>
+    );
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-md border border-dashed p-3 text-sm">
       <Button
         variant="outline"
-        disabled={busy}
+        disabled={busy || !st}
         onClick={async () => {
           setBusy(true);
           try {
@@ -331,8 +350,33 @@ export function FlowChrome() {
       >
         {busy ? <Loader2 className="animate-spin" /> : <ExternalLink />} Buka Google Flow di Chrome
       </Button>
+      {/* Selalu tersedia: juga menutup jendela Chrome Flow lama yang terbuka tanpa sambungan HyperForge. */}
+      {st && (
+        <Button
+          variant="outline"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await window.anima.flowCloseChrome();
+              toast.success('Chrome Google Flow ditutup');
+            } catch (e) {
+              toast.error('Gagal menutup Chrome', { description: cleanErr(e) });
+            } finally {
+              setBusy(false);
+              load();
+            }
+          }}
+        >
+          <XCircle /> Tutup Chrome Flow
+        </Button>
+      )}
       <span className="text-xs text-muted-foreground">
-        {st?.running ? 'Chrome Flow sedang terbuka.' : 'Chrome Flow belum terbuka.'} Profil Chrome terpisah (akun utamamu tidak tersentuh). Unduhan klip: <span className="font-mono">{st?.downloads ?? '...'}</span>
+        {st?.running ? 'Chrome Flow sedang terbuka; tutup setelah selesai membuat klip.' : 'Chrome Flow belum terbuka.'} Profil Chrome terpisah (akun utamamu tidak tersentuh), port kendali acak,
+        otomatis ditutup saat HyperForge ditutup. Unduhan klip: <span className="font-mono">{st?.downloads ?? '...'}</span>.{' '}
+        <button className="text-primary hover:underline" onClick={() => setAccepted(false)}>
+          Cabut persetujuan risiko
+        </button>
       </span>
     </div>
   );

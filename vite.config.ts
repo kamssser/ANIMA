@@ -27,5 +27,17 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     chunkSizeWarningLimit: 600,
+    // Pustaka besar dipisah dari kode aplikasi: bundle utama kecil, dan update aplikasi tidak mengubah file vendor.
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            { name: 'vendor-react', test: /node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom)[\\/]/, priority: 3 },
+            { name: 'vendor-supabase', test: /node_modules[\\/](@supabase|iceberg-js|tslib)[\\/]/, priority: 2 },
+            { name: 'vendor-ui', test: /node_modules[\\/](@radix-ui|radix-ui|sonner|lucide-react|tailwind-merge|clsx|class-variance-authority|react-remove-scroll[\w-]*)[\\/]/, priority: 1 },
+          ],
+        },
+      },
+    },
   },
 });

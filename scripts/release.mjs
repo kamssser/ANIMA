@@ -13,10 +13,22 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const OWNER = 'kamssser';
-const REPO = 'ANIMA';
 const root = path.resolve(import.meta.dirname, '..');
-const { version, productName } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+const { version, productName, build } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+// Tujuan rilis = build.publish di package.json (dibaca juga oleh update otomatis aplikasi). Harus sama dengan remote
+// git origin: kalau repo diganti nama tapi package.json lupa diubah, update otomatis teman akan berhenti.
+const { owner: OWNER, repo: REPO } = build.publish[0];
+let origin = '';
+try {
+  origin = execFileSync('git', ['remote', 'get-url', 'origin'], { cwd: root, encoding: 'utf8' }).trim();
+} catch {
+  /* bukan repo git / tanpa origin: lewati pemeriksaan */
+}
+const m = origin.match(/github\.com[:/]([^/]+)\/([^/]+?)(\.git)?$/i);
+if (m && (m[1].toLowerCase() !== OWNER.toLowerCase() || m[2].toLowerCase() !== REPO.toLowerCase())) {
+  console.error(`build.publish di package.json (${OWNER}/${REPO}) berbeda dengan remote origin (${m[1]}/${m[2]}). Samakan dulu supaya update otomatis tetap jalan.`);
+  process.exit(1);
+}
 const tag = `v${version}`;
 const token = process.env.GH_TOKEN;
 if (!token) {
@@ -32,6 +44,22 @@ const api = async (url, init = {}) => {
   if (!res.ok && res.status !== 404) throw new Error(`${init.method || 'GET'} ${url} -> ${res.status} ${await res.text()}`);
   return res.status === 404 || res.status === 204 ? null : res.json();
 };
+
+// Keamanan rilis: installer belum ditandatangani, jadi siapa pun yang memegang token ini bisa mengirim update ke
+// semua pengguna. Ingatkan kalau token tidak punya masa berlaku atau akun belum memakai 2FA.
+async function checkToken() {
+  try {
+    const res = await fetch('https://api.github.com/user', { headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'hyperforge-release' } });
+    const exp = res.headers.get('github-authentication-token-expiration');
+    if (!exp) console.warn('PERINGATAN: GH_TOKEN tidak punya masa berlaku. Buat fine-grained token khusus repo ini dengan masa berlaku pendek (mis. 30 hari).');
+    else console.log(`GH_TOKEN berlaku sampai ${exp}`);
+    const me = res.ok ? await res.json() : null;
+    if (me && me.two_factor_authentication === false) console.warn('PERINGATAN: akun GitHub belum memakai 2FA. Aktifkan di github.com/settings/security.');
+  } catch {
+    /* offline: rilis gagal juga nanti dengan pesan yang jelas */
+  }
+}
+if (!process.argv.includes('--notes-only')) await checkToken();
 
 // Catatan update per versi dari CHANGELOG.md (aturan: setiap rilis WAJIB punya catatan).
 function changelogSections() {

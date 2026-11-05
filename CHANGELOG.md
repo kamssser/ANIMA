@@ -6,6 +6,27 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.20.0 - 2026-11-06
+
+Versi ini fokus ke keamanan laptop dan akun kamu.
+
+**Baru**
+
+- **Riset internet lebih aman.** Saat membuat video, Claude tidak lagi membaca web sambil menjalankan perintah di laptopmu. Riset tetap jalan di tahap "Generate dengan Claude". Kalau perlu, riset di tab Claude bisa dinyalakan di Pengaturan > Riset internet (ada peringatannya).
+- **Google Flow sekarang pilihan sadar.** Sebelum dipakai, kamu diminta menyetujui risikonya (akun Google bisa dibatasi karena otomatisasi). Ada tombol **Tutup Chrome Flow**, dan Chrome Flow otomatis ditutup saat HyperForge ditutup.
+- **Kode undangan** saat mendaftar akun. Pemilik bisa membatasi siapa saja yang boleh mendaftar.
+
+**Perbaikan**
+
+- API key vibi.pro dan Otak AI kini disimpan terenkripsi, hanya bisa dibuka akun Windows-mu. Key lama dienkripsi otomatis.
+- Izin perintah Claude dipersempit: Claude hanya boleh menjalankan alat render dan skrip milik skill.
+- Update tidak lagi terpasang diam-diam saat aplikasi ditutup. Kamu yang memilih kapan menekan **Restart & update**.
+- Aplikasi terbuka lebih cepat dan installer lebih ringan.
+
+**Perubahan**
+
+- Jendela Chrome Google Flow memakai jalur kendali baru setiap dibuka. Kalau Chrome Flow lama masih terbuka, tutup dulu lalu buka lagi dari HyperForge.
+
 ## 0.19.0 - 2026-11-04
 
 **Baru**

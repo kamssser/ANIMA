@@ -13,6 +13,7 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { appFile } = require('./paths.cjs');
 const { spawn, execFile } = require('node:child_process');
 
 const crypto = require('node:crypto');
@@ -39,6 +40,20 @@ function dirHash(dir) {
 }
 const HOME = os.homedir();
 const SKILLS_DIR = path.join(HOME, '.claude', 'skills');
+
+/**
+ * Izin Bash untuk SATU skrip tertentu, pengganti izin luas Bash(bash:*) / Bash(sh:*). Claude bisa menulis path
+ * skrip dalam beberapa bentuk (C:\..., C:/..., /c/... Git Bash, ~/...), dengan atau tanpa tanda kutip; semua diizinkan.
+ */
+function scriptRules(cmd, file) {
+  const fwd = file.split(path.sep).join('/');
+  const forms = new Set([file, fwd, fwd.replace(/^([A-Za-z]):/, (_m, d) => `/${d.toLowerCase()}`)]);
+  const rel = path.relative(HOME, file);
+  if (!rel.startsWith('..')) forms.add(`~/${rel.split(path.sep).join('/')}`);
+  return [...forms].flatMap((f) => [`Bash(${cmd} ${f}:*)`, `Bash(${cmd} "${f}":*)`]);
+}
+/** Alat riset web yang hanya boleh dipakai sesi produksi kalau pengguna menyalakan "riset internet di sesi skill". */
+const WEB_TOOLS = ['WebSearch', 'WebFetch', 'Bash(agent-reach:*)'];
 
 function run(cmd, args, opts = {}) {
   return new Promise((resolve) => {
@@ -198,7 +213,7 @@ const ENGINES = {
     id: 'animate',
     name: 'animate',
     commit: '7e5eb56feb2dd573f890e1b7b34748af43d58263',
-    src: path.join(__dirname, '..', 'animate-skill', 'animate'),
+    src: appFile('animate-skill', 'animate'),
     dst: path.join(SKILLS_DIR, 'animate'),
     marker: path.join(SKILLS_DIR, '.hyperforge-animate.json'),
     work: path.join(HOME, 'anima-animate'),
@@ -248,7 +263,7 @@ const ENGINES = {
     id: 'bang-motion',
     name: 'bang-motion',
     commit: 'c1aa65e921c970d858705fcb4a53a8294d1a4131',
-    src: path.join(__dirname, '..', 'bang-motion-skill', 'bang-motion'),
+    src: appFile('bang-motion-skill', 'bang-motion'),
     dst: path.join(SKILLS_DIR, 'bang-motion'),
     marker: path.join(SKILLS_DIR, '.hyperforge-bang-motion.json'),
     work: path.join(HOME, 'anima-bangmotion'),
@@ -304,7 +319,7 @@ const ENGINES = {
 ENGINES.studio = {
   id: 'studio',
   name: 'hyperforge-studio',
-  src: path.join(__dirname, '..', 'studio-skill', 'hyperforge-studio'),
+  src: appFile('studio-skill', 'hyperforge-studio'),
   dst: path.join(SKILLS_DIR, 'hyperforge-studio'),
   marker: path.join(SKILLS_DIR, '.hyperforge-studio.json'),
   work: path.join(HOME, 'anima-studio'),
@@ -346,7 +361,7 @@ ENGINES.studio.commit = dirHash(ENGINES.studio.src);
 // Dipasang bersama HyperForge Studio; dipakai penuh oleh style Explainer Datar (aturan HyperForge di brief menang).
 const EDU_SKILL = {
   name: 'edu-motion-studio',
-  src: path.join(__dirname, '..', 'edu-skill', 'edu-motion-studio'),
+  src: appFile('edu-skill', 'edu-motion-studio'),
   dst: path.join(SKILLS_DIR, 'edu-motion-studio'),
   marker: path.join(SKILLS_DIR, '.hyperforge-edu-motion-studio.json'),
 };
@@ -399,7 +414,8 @@ ENGINES.animantra = {
   url: '',
   // Suara: vibi.pro milik pengguna lewat MCP HyperForge (pengganti gen_vo.mjs; hasilnya vo/take.wav untuk skill).
   voiceTools: ['mcp__anima__anima_vibi_tts'],
-  extraTools: ['Bash(cd:*)', 'Bash(curl:*)'],
+  // curl hanya ke Animantra Studio lokal (pendengar chat-stream skill), bukan ke internet.
+  extraTools: ['Bash(cd:*)', 'Bash(curl -sN http://127.0.0.1:4580/:*)'],
   /** Gambar patokan mutu dari skill yang terpasang (dibaca saat aplikasi berjalan, tidak ikut repo). */
   samplesRoot: AV_DST,
   samples: {
@@ -543,14 +559,6 @@ async function gitInstallSkill(e, which, say) {
   fs.writeFileSync(e.marker, JSON.stringify({ commit: e.commit, installedAt: new Date().toISOString(), by: 'HyperForge', repo: e.git.repo }, null, 1));
 }
 
-const chromeExe = () =>
-  isWin
-    ? [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA]
-        .filter(Boolean)
-        .map((d) => path.join(d, 'Google', 'Chrome', 'Application', 'chrome.exe'))
-        .find((p) => fs.existsSync(p)) || null
-    : ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/opt/google/chrome/chrome', '/usr/bin/google-chrome'].find((p) => fs.existsSync(p)) || null;
-
 // Lemo-Opuscar (LemoLab, MIT): skill kecil yang mengunduh pustaka 66 style ke ~/lemo-opuscar.
 const LEMO_LIB = path.join(HOME, 'lemo-opuscar');
 /** Path untuk skrip sh (Git Bash): C:\Users\x -> /c/Users/x. */
@@ -567,7 +575,17 @@ ENGINES.lemo = {
   url: 'https://github.com/lemomo-ai/lemo-opuscar',
   license: 'MIT, contoh film CC BY 4.0',
   voiceTools: ['mcp__anima__anima_vibi_tts', 'mcp__anima__anima_vibi_words'],
-  extraTools: ['Bash(sh:*)', 'Bash(cd:*)', 'Bash(bash:*)'],
+  // Hanya skrip milik skill/pustaka + build.sh proyek, bukan sh/bash bebas.
+  extraTools: [
+    'Bash(cd:*)',
+    ...['sh', 'bash'].flatMap((c) => [
+      ...scriptRules(c, path.join(SKILLS_DIR, 'lemo-opuscar', 'scripts', 'setup.sh')),
+      ...scriptRules(c, path.join(LEMO_LIB, 'tools', 'fetch.sh')),
+      ...scriptRules(c, path.join(LEMO_LIB, 'tools', 'web_cuts.sh')),
+      `Bash(${c} build.sh:*)`,
+      `Bash(${c} ./build.sh:*)`,
+    ]),
+  ],
   samples: {},
   pathDirs: shimDirs,
   async deps({ which }) {
@@ -632,7 +650,15 @@ ENGINES.motionmaxxing = {
   url: 'https://github.com/Tejashmakwana/motionmaxxing',
   license: 'Apache-2.0',
   voiceTools: ['mcp__anima__anima_vibi_tts', 'mcp__anima__anima_vibi_words'],
-  extraTools: ['Bash(bash:*)', 'Bash(sh:*)', 'Bash(python3:*)', 'Bash(cd:*)'],
+  // Hanya skrip pemeriksa milik skill (providers.sh, install.sh), bukan bash/sh bebas.
+  extraTools: [
+    'Bash(python3:*)',
+    'Bash(cd:*)',
+    ...scriptRules('bash', path.join(SKILLS_DIR, 'motionmaxxing', 'scripts', 'providers.sh')),
+    ...scriptRules('bash', path.join(SKILLS_DIR, 'motionmaxxing', 'install.sh')),
+    'Bash(bash "$SKILL/scripts/providers.sh":*)',
+    'Bash(bash scripts/providers.sh:*)',
+  ],
   samples: {},
   pathDirs: shimDirs,
   async deps({ which }) {
@@ -659,87 +685,15 @@ ENGINES.motionmaxxing = {
 };
 
 // Google Flow (Veo) lewat google-flow-browser-mcp (TMSSS05, MIT): video + SFX dari Flow, naskah dari Claude,
-// suara dari vibi.pro. Chrome khusus (profil terpisah, port CDP sendiri) supaya akun Google pengguna tetap aman.
-const FLOW_WORK = path.join(HOME, 'anima-flow');
-const FLOW_MCP = path.join(FLOW_WORK, 'mcp');
-const FLOW_HOME = path.join(FLOW_WORK, 'chrome-home');
-const FLOW_UDD = path.join(FLOW_HOME, '.config', 'google-chrome');
-const FLOW_DL = path.join(FLOW_WORK, 'unduhan');
-const FLOW_PORT = 9333;
-const FLOW_URL = 'https://labs.google/fx/tools/flow';
+// suara dari vibi.pro. Chrome khusus (profil terpisah, port CDP acak): electron/flow-chrome.cjs.
+const flowChrome = require('./flow-chrome.cjs');
+const { FLOW_WORK, FLOW_MCP, FLOW_HOME, FLOW_UDD, FLOW_DL, FLOW_URL, chromeExe } = flowChrome;
 const FLOW_COMMIT = '0c8e80ae4acb4475f8d7ba3b8c4e3b92c6b64b6a';
 // Playwright MCP (Microsoft, Apache-2.0): Claude membaca & mengklik halaman Flow sendiri lewat CDP, apa pun bahasa UI-nya.
 const FLOW_PW = path.join(FLOW_WORK, 'pwmcp');
 const FLOW_PW_VER = '0.0.83';
 const FLOW_PW_CLI = path.join(FLOW_PW, 'node_modules', '@playwright', 'mcp', 'cli.js');
 const FLOW_PW_OUT = path.join(FLOW_WORK, 'pw-out');
-
-async function flowChromeUp() {
-  try {
-    const r = await fetch(`http://127.0.0.1:${FLOW_PORT}/json/version`, { signal: AbortSignal.timeout(1500) });
-    return r.ok;
-  } catch {
-    return false;
-  }
-}
-/** Buka Chrome khusus Google Flow (profil sendiri + port CDP). Unduhan masuk ~/anima-flow/unduhan. */
-/** Chrome Flow sudah jalan: tampilkan tab Flow yang ada (atau buka tab baru di jendela yang sama). */
-async function focusFlowChrome(url) {
-  const base = `http://127.0.0.1:${FLOW_PORT}`;
-  try {
-    const tabs = await (await fetch(`${base}/json/list`, { signal: AbortSignal.timeout(2000) })).json();
-    const tab = tabs.find((t) => t.type === 'page' && /labs\.google|flow\.google|accounts\.google/.test(t.url));
-    if (tab) await fetch(`${base}/json/activate/${tab.id}`, { signal: AbortSignal.timeout(2000) });
-    else await fetch(`${base}/json/new?${url}`, { method: 'PUT', signal: AbortSignal.timeout(4000) });
-  } catch {
-    /* tetap anggap terbuka */
-  }
-}
-
-/** Ada Chrome berprofil Flow yang jalan TANPA port kendali (mis. dibuka ulang dari taskbar)? */
-function flowChromeWithoutPort() {
-  if (process.platform !== 'win32') return Promise.resolve(false);
-  return new Promise((res) => {
-    const ps = spawn('powershell', ['-NoProfile', '-Command', "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | ForEach-Object { $_.CommandLine }"], { windowsHide: true });
-    let out = '';
-    ps.stdout.on('data', (b) => (out += b));
-    ps.on('close', () => res(out.toLowerCase().includes(FLOW_UDD.toLowerCase())));
-    ps.on('error', () => res(false));
-  });
-}
-
-async function launchFlowChrome(url = FLOW_URL) {
-  if (await flowChromeUp()) {
-    await focusFlowChrome(url);
-    return { already: true };
-  }
-  if (await flowChromeWithoutPort())
-    throw new Error('Jendela Chrome Google Flow terbuka tanpa sambungan HyperForge (mungkin dibuka ulang dari taskbar). Tutup semua jendela Chrome Google Flow itu, lalu klik tombol ini lagi.');
-  const exe = chromeExe();
-  if (!exe) throw new Error('Google Chrome belum terpasang. Install Chrome dulu.');
-  const prof = path.join(FLOW_UDD, 'Profile 3');
-  fs.mkdirSync(prof, { recursive: true });
-  fs.mkdirSync(FLOW_DL, { recursive: true });
-  const prefFile = path.join(prof, 'Preferences');
-  let pref = {};
-  try {
-    pref = JSON.parse(fs.readFileSync(prefFile, 'utf8'));
-  } catch {
-    /* profil baru */
-  }
-  pref.download = { ...(pref.download || {}), default_directory: FLOW_DL, prompt_for_download: false, directory_upgrade: true };
-  pref.savefile = { ...(pref.savefile || {}), default_directory: FLOW_DL };
-  fs.writeFileSync(prefFile, JSON.stringify(pref));
-  spawn(exe, [`--user-data-dir=${FLOW_UDD}`, '--profile-directory=Profile 3', `--remote-debugging-port=${FLOW_PORT}`, '--no-first-run', '--no-default-browser-check', url], {
-    detached: true,
-    stdio: 'ignore',
-  }).unref();
-  for (let i = 0; i < 20; i++) {
-    await new Promise((r) => setTimeout(r, 500));
-    if (await flowChromeUp()) return { already: false };
-  }
-  throw new Error('Chrome Google Flow tidak merespons. Tutup semua jendela Chrome Google Flow lalu coba lagi.');
-}
 
 // Skill prompt tambahan untuk style Google Flow (dipasang persis dari GitHub, commit tetap; dibaca Claude, tidak diubah).
 const STICK_COMMIT = '8ced4737b8d2aa7e8e371a493e6b6add9885c0da';
@@ -784,7 +738,7 @@ function ensureVoiceSkill(which, say) {
 ENGINES.flow = {
   id: 'flow',
   name: 'hyperforge-flow',
-  src: path.join(__dirname, '..', 'flow-skill', 'hyperforge-flow'),
+  src: appFile('flow-skill', 'hyperforge-flow'),
   dst: path.join(SKILLS_DIR, 'hyperforge-flow'),
   marker: path.join(SKILLS_DIR, '.hyperforge-flow.json'),
   work: FLOW_WORK,
@@ -799,7 +753,7 @@ ENGINES.flow = {
       { id: 'chrome', label: 'Google Chrome', ok: Boolean(chromeExe()), detail: 'dipakai lewat profil khusus HyperForge' },
       { id: 'mcp', label: 'google-flow-browser-mcp', ok: fs.existsSync(path.join(FLOW_MCP, 'node_modules', 'playwright', 'package.json')), detail: `commit ${FLOW_COMMIT.slice(0, 7)} di ${FLOW_MCP}` },
       { id: 'pwmcp', label: 'Playwright MCP (Claude mengoperasikan Flow)', ok: fs.existsSync(FLOW_PW_CLI), detail: `@playwright/mcp ${FLOW_PW_VER} di ${FLOW_PW}` },
-      { id: 'config', label: 'Konfigurasi Flow', ok: fs.existsSync(path.join(FLOW_MCP, 'config', 'flow.config.json')), detail: `Chrome port ${FLOW_PORT}, unduhan ke ${FLOW_DL}` },
+      { id: 'config', label: 'Konfigurasi Flow', ok: fs.existsSync(path.join(FLOW_MCP, 'config', 'flow.config.json')), detail: `Chrome port acak (127.0.0.1), unduhan ke ${FLOW_DL}` },
       { id: 'stick', label: 'Skill directing-stickman-videos (style Stickman Flow)', ok: skillState(STICK_SKILL).installed, detail: `kaomei/stickman-video-director commit ${STICK_COMMIT.slice(0, 7)}` },
       { id: 'hand', label: 'Skill hand-drawn-video-prompts (style Crayon Flow)', ok: skillState(HAND_SKILL).installed, detail: `kaomei/hand-drawn-video-prompts commit ${HAND_SKILL.commit.slice(0, 7)}` },
       { id: 'login', label: 'Login Google di Chrome Flow', ok: fs.existsSync(path.join(FLOW_UDD, 'Profile 3', 'Cookies')) || fs.existsSync(path.join(FLOW_UDD, 'Profile 3', 'Network', 'Cookies')), optional: true, detail: 'klik "Buka Google Flow", login sekali dengan akun Google yang punya langganan Flow' },
@@ -816,7 +770,7 @@ ENGINES.flow = {
     const r = await run(npm, ['i', '--omit=dev', '--no-audit', '--no-fund'], { cwd: FLOW_MCP, env: { ...process.env, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }, onLine: (l) => say('Memasang paket google-flow-browser-mcp (Playwright)', l.trim().slice(-160)) });
     if (!r.ok) throw new Error(`Gagal npm install google-flow-browser-mcp:\n${tail(r.out)}`);
     const ex = JSON.parse(fs.readFileSync(path.join(FLOW_MCP, 'config', 'flow.config.example.json'), 'utf8'));
-    const cfg = { ...ex, flowHome: FLOW_MCP, flowUrl: FLOW_URL, expectedAccount: '', chromeProfile: 'Profile 3', chromeUserDataDir: FLOW_UDD, cdpPort: FLOW_PORT, headless: false, locale: 'en' };
+    const cfg = { ...ex, flowHome: FLOW_MCP, flowUrl: FLOW_URL, expectedAccount: '', chromeProfile: 'Profile 3', chromeUserDataDir: FLOW_UDD, cdpPort: flowChrome.currentPort() || 9333, headless: false, locale: 'en' };
     fs.writeFileSync(path.join(FLOW_MCP, 'config', 'flow.config.json'), JSON.stringify(cfg, null, 2));
     fs.mkdirSync(path.join(FLOW_UDD, 'Profile 3'), { recursive: true });
     fs.mkdirSync(FLOW_DL, { recursive: true });
@@ -832,11 +786,11 @@ ${tail(r2.out)}`);
   /** Server MCP tambahan untuk sesi: alat flow_* (HOME diarahkan ke profil Chrome khusus). */
   extraMcp: (node) => ({
     flow: { type: 'stdio', command: node, args: [path.join(FLOW_MCP, 'src', 'index.js')], env: { HOME: FLOW_HOME, USERPROFILE: process.env.USERPROFILE || HOME } },
-    ...(fs.existsSync(FLOW_PW_CLI) ? { browser: { type: 'stdio', command: node, args: [FLOW_PW_CLI, '--cdp-endpoint', `http://127.0.0.1:${FLOW_PORT}`, '--output-dir', FLOW_PW_OUT] } } : {}),
+    ...(fs.existsSync(FLOW_PW_CLI) ? { browser: { type: 'stdio', command: node, args: [FLOW_PW_CLI, '--cdp-endpoint', `http://127.0.0.1:${flowChrome.currentPort()}`, '--output-dir', FLOW_PW_OUT] } } : {}),
   }),
   /** Chrome Flow harus sudah jalan (port CDP) sebelum Claude memanggil flow_connect. */
-  async beforeSession() {
-    await launchFlowChrome();
+  async beforeSession({ readSettings }) {
+    await flowChrome.launchChrome({ accepted: Boolean(readSettings().flowRiskAccepted) });
   },
   prompt: (slug, title) => `/hyperforge-flow Kerjakan brief HyperForge di briefs/${slug}.md untuk project: ${title}. Folder proyek: ${slug}/.`,
   videoDir: (slug) => path.join(FLOW_WORK, slug),
@@ -852,7 +806,7 @@ ENGINES.flow.commit = dirHash(ENGINES.flow.src);
 ENGINES.kamal = {
   id: 'kamal',
   name: 'kamal',
-  src: path.join(__dirname, '..', 'kamal-skill', 'kamal'),
+  src: appFile('kamal-skill', 'kamal'),
   dst: path.join(SKILLS_DIR, 'kamal'),
   marker: path.join(SKILLS_DIR, '.hyperforge-kamal.json'),
   work: path.join(HOME, 'anima-kamal'),
@@ -893,7 +847,8 @@ ENGINES.stickman = {
   url: 'https://github.com/kaomei/stickman-video-director',
   license: 'MIT',
   voiceTools: ['mcp__anima__anima_vibi_tts', 'mcp__anima__anima_vibi_words'],
-  extraTools: ['Bash(cd:*)', 'Bash(npm:*)'],
+  // npm ci saja (paket terkunci di package-lock skill), bukan npm bebas.
+  extraTools: ['Bash(cd:*)', 'Bash(npm ci:*)'],
   samples: {},
   async deps() {
     return [{ id: 'canvas', label: 'Paket render (@napi-rs/canvas)', ok: fs.existsSync(path.join(STICK_SKILL.dst, 'node_modules', '@napi-rs', 'canvas', 'package.json')), detail: `npm ci di ${STICK_SKILL.dst}` }];
@@ -950,7 +905,13 @@ const engineOf = (id) => {
  * Siapkan sesi skill untuk satu project: cek kebutuhan, tulis brief + file pendukung + konfigurasi MCP.
  * Dipakai jendela terminal (skill:open) dan panel obrolan di aplikasi (skillchat.cjs).
  */
-async function prepareSession(e, { slug, title, brief, files }, { which, claudeCodePath, mcpServerPath, settingsFile, check }) {
+const NO_WEB_NOTE = [
+  '## Riset internet',
+  '- Sesi ini TIDAK membaca web (WebSearch/WebFetch/agent-reach dimatikan demi keamanan). Pakai fakta di brief ini dan pengetahuanmu sendiri; kalau ada fakta yang ragu, tulis lebih umum atau tandai untuk dicek pengguna.',
+  '- Pengguna bisa menyalakan riset web di HyperForge > Pengaturan > Riset internet.',
+].join('\n');
+
+async function prepareSession(e, { slug, title, brief, files }, { which, claudeCodePath, mcpServerPath, settingsFile, readSettings, check }) {
   if (!slugOk(slug)) throw new Error('Judul project tidak bisa dijadikan nama folder. Ganti judulnya.');
   const st = await check(e.id);
   const missing = st.items.filter((i) => !i.ok && !i.optional).map((i) => i.label);
@@ -969,14 +930,19 @@ async function prepareSession(e, { slug, title, brief, files }, { which, claudeC
     fs.writeFileSync(f, String(content));
   }
   // MCP HyperForge hanya untuk suara vibi.pro: membaca kunci vibi dari pengaturan aplikasi.
-  // Riset Agent Reach (opsional): kalau terpasang, sesi boleh memakainya dan brief menyebutnya.
-  const reachBin = await reach.findReach(which);
+  // Keamanan (prompt injection): sesi produksi boleh menjalankan perintah, jadi secara bawaan TIDAK membaca web.
+  // Riset internet dikerjakan di tahap "Generate dengan Claude" (tanpa perintah). Pengguna bisa menyalakannya di
+  // Pengaturan > Riset internet; Agent Reach ikut hanya kalau riset web dinyalakan.
+  const web = Boolean(readSettings().skillWebResearch);
+  const reachBin = web ? await reach.findReach(which) : null;
   if (brief && reachBin && !/## Riset \(Agent Reach\)/.test(brief)) fs.appendFileSync(briefFile, `\n${reach.BRIEF_NOTE}\n`);
+  if (brief && !web) fs.appendFileSync(briefFile, `\n${NO_WEB_NOTE}\n`);
+  // Chrome Flow (port acak) harus sudah jalan sebelum konfigurasi MCP-nya ditulis.
+  if (e.beforeSession) await e.beforeSession({ readSettings });
   const node = await which('node');
   const mcpFile = path.join(e.work, 'briefs', '.hyperforge-mcp.json');
   const servers = { anima: { type: 'stdio', command: node, args: [mcpServerPath()], env: { ANIMA_SETTINGS_FILE: settingsFile(), ...e.env(e.work) } }, ...(e.extraMcp ? e.extraMcp(node) : {}) };
   fs.writeFileSync(mcpFile, JSON.stringify({ mcpServers: servers }, null, 1));
-  if (e.beforeSession) await e.beforeSession();
   const claude = await claudeCodePath();
   const ff = (e.ffmpegPath && e.ffmpegPath()) || (await findFullFfmpeg(which));
   const ffDir = ff ? path.dirname(ff) : '';
@@ -986,11 +952,13 @@ async function prepareSession(e, { slug, title, brief, files }, { which, claudeC
   // Tanpa tanda kutip / karakter khusus cmd di dalam prompt (prompt diapit "..." di file .cmd).
   const cleanTitle = String(title || slug).replace(/["%^&|<>()!]/g, '').slice(0, 80);
   const prompt = e.prompt(slug, cleanTitle);
-  const allowed = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'Skill', 'Bash(node:*)', 'Bash(ffmpeg:*)', 'Bash(ffprobe:*)', 'Bash(python:*)', 'Bash(ls:*)', 'Bash(mkdir:*)', 'Bash(cp:*)', ...e.voiceTools, ...(e.extraTools || []), ...(reachBin ? ['Bash(agent-reach:*)'] : [])];
-  return { mcpFile, ffDir, pathPrefix, npmRoot, claude, prompt, allowed, briefFile };
+  const allowed = ['Read', 'Write', 'Edit', 'Glob', 'Grep', ...(web ? ['WebSearch', 'WebFetch'] : []), 'Skill','Bash(node:*)', 'Bash(ffmpeg:*)', 'Bash(ffprobe:*)', 'Bash(python:*)', 'Bash(ls:*)', 'Bash(mkdir:*)', 'Bash(cp:*)', ...e.voiceTools, ...(e.extraTools || []), ...(reachBin ? ['Bash(agent-reach:*)'] : [])];
+  // Riset web mati: alatnya ditolak tegas (bukan sekadar ditanyakan), supaya tidak tersetujui tanpa sengaja.
+  const denied = web ? [] : WEB_TOOLS;
+  return { mcpFile, ffDir, pathPrefix, npmRoot, claude, prompt, allowed, denied, briefFile };
 }
 
-function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, settingsFile }) {
+function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, settingsFile, readSettings, writeSettings }) {
   const sayFor = (engine) => (step, line) => {
     const w = getWin();
     if (w && !w.isDestroyed()) w.webContents.send('skill:event', { engine, step, line });
@@ -1027,9 +995,9 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
   }
 
   ipcMain.handle('skill:check', (_e, id) => check(id));
-  const deps = { which, claudeCodePath, mcpServerPath, settingsFile, check };
+  const deps = { which, claudeCodePath, mcpServerPath, settingsFile, readSettings, check };
   // Panel obrolan Claude di dalam aplikasi (pengganti jendela terminal).
-  const chat = require('./skillchat.cjs').register({ ipcMain, getWin, engineOf, prepareSession: (e, p) => prepareSession(e, p, deps) });
+  const chat = require('./skillchat.cjs').register({ ipcMain, getWin, engineOf, slugOk, prepareSession: (e, p) => prepareSession(e, p, deps) });
 
   ipcMain.handle('skill:setup', async (_e, { engine, optional }) => {
     const e = engineOf(engine);
@@ -1047,8 +1015,9 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
   });
 
   /** Buka Chrome khusus Google Flow (login sekali, lalu dipakai sesi). */
-  ipcMain.handle('flow:openChrome', () => launchFlowChrome());
-  ipcMain.handle('flow:status', async () => ({ running: await flowChromeUp(), downloads: FLOW_DL, port: FLOW_PORT }));
+  ipcMain.handle('flow:openChrome', () => flowChrome.launchChrome({ accepted: Boolean(readSettings().flowRiskAccepted) }));
+  ipcMain.handle('flow:closeChrome', () => flowChrome.closeChrome());
+  ipcMain.handle('flow:status', async () => ({ running: await flowChrome.chromeUp(), downloads: FLOW_DL, port: flowChrome.currentPort(), accepted: Boolean(readSettings().flowRiskAccepted), risk: flowChrome.RISK_TEXT }));
 
   // Storyboard cerita + teks suara (<proyek>/cerita.json): ditulis Claude, diedit pengguna di aplikasi sebelum render.
   const storyFile = (engine, slug) => {
@@ -1098,7 +1067,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
   /** Tulis brief lalu buka jendela Claude Code dengan /<skill>. payload: { engine, slug, title, brief } */
   ipcMain.handle('skill:open', async (_e, { engine, slug, title, brief, files }) => {
     const e = engineOf(engine);
-    const { mcpFile, pathPrefix, npmRoot, claude, prompt, allowed, briefFile } = await prepareSession(e, { slug, title, brief, files }, deps);
+    const { mcpFile, pathPrefix, npmRoot, claude, prompt, allowed, denied, briefFile } = await prepareSession(e, { slug, title, brief, files }, deps);
     if (!isWin) throw new Error(`Jendela Claude otomatis baru tersedia di Windows. Jalankan manual: cd ${e.work} && claude "${prompt}"`);
 
     // Peluncur .cmd: PATH berisi ffmpeg lengkap; NODE_PATH = modul global npm.
@@ -1116,7 +1085,7 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
         'echo Setelah video MP4 jadi: di HyperForge buka tab Render, klik Masukkan ke daftar render.',
         'echo.',
         // prompt di depan: --allowedTools menerima banyak nilai, jadi harus di akhir
-        `"${claude}" "${prompt}" --mcp-config "${mcpFile}" --allowedTools ${allowed.map((a) => `"${a}"`).join(' ')}`,
+        `"${claude}" "${prompt}" --mcp-config "${mcpFile}"${denied.length ? ` --disallowedTools ${denied.map((a) => `"${a}"`).join(' ')}` : ''} --allowedTools ${allowed.filter((a) => !a.includes('"')).map((a) => `"${a}"`).join(' ')}`,
         'echo.',
         'echo Sesi Claude selesai. Tekan tombol apa saja untuk menutup.',
         'pause >nul',
@@ -1145,4 +1114,4 @@ function register({ ipcMain, getWin, which, claudeCodePath, mcpServerPath, setti
   return chat;
 }
 
-module.exports = { register, ENGINES, listMp4, slugOk, findSh };
+module.exports = { register, ENGINES, listMp4, slugOk, findSh, scriptRules, WEB_TOOLS };
