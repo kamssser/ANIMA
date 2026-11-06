@@ -1,0 +1,61 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Horor kartun 3D</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block;position:absolute;left:0;top:0}</style>
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
+<script src="/kit/studio-kit.js"></script><script src="/kit/horor-3d.js"></script></head><body><canvas id="gl"></canvas><canvas id="ui"></canvas>
+<script type="module">
+// Contoh gaya horor-dongeng / horor-nyata (8 detik): malam berkabut, beringin, rumah kampung, tokoh dengan senter,
+// detak jantung naik (vinyet berdenyut merah), lampu padam, hening, lalu kuntilanak muncul + kilat.
+// Pasangan suaranya: score.json di bawah (salin ke audio/score.json untuk mendengar contoh yang sama).
+//   { "durasi": 8, "bpm": 70, "mood": "horor", "bagian": [{ "dari": 0, "sampai": 8, "energi": 0.55 }],
+//     "hening": [{ "dari": 5.2, "sampai": 5.8 }], "jantung": [{ "dari": 2, "sampai": 5.2, "bpm0": 70, "bpm1": 135, "gain": 0.7 }],
+//     "ambien": [{ "dari": 0, "sampai": 5.2, "jenis": "malam", "gain": 0.6 }],
+//     "sfx": [{ "t": 0.6, "jenis": "tokek", "gain": 0.35 }, { "t": 5.8, "jenis": "stinger", "gain": 0.9 }, { "t": 6.3, "jenis": "guntur", "gain": 0.6 }] }
+import * as THREE from 'three';
+HR.pakai(THREE);
+const W = 1080, H = 1920, DUR = 8;
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+const ui = document.getElementById('ui'); ui.width = W; ui.height = H; const ctx = ui.getContext('2d');
+const scene = new THREE.Scene(); const cam = new THREE.PerspectiveCamera(34, W / H, 0.1, 120);
+
+const dunia = HR.suasana(scene, renderer, { rapat: 0.05, kilat: [5.8] });
+scene.add(HR.tanah({ jalan: true }).group);
+const pohon = HR.beringin(); pohon.group.position.set(-3.2, 0, -5); scene.add(pohon.group);
+const rumah = HR.rumah(); rumah.group.position.set(3.4, 0, -8); rumah.group.rotation.y = -0.4; scene.add(rumah.group);
+const kubur = HR.nisan({ n: 6 }); kubur.group.position.set(-1.5, 0, -9); scene.add(kubur.group);
+const kabut = HR.kabutTanah({ tebal: 0.45 }); kabut.group.position.z = -4; scene.add(kabut.group);
+const lampu = HR.lentera({ kuat: 7, padam: [[5.1, 8]] }); lampu.light.position.set(1.6, 2.6, -2); scene.add(lampu.light);
+const tiang = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 2.6, 8), HR.mat('#222')); tiang.position.set(1.6, 1.3, -2); scene.add(tiang);
+const dimas = HR.orang({ baju: '#4f6d8f', senter: true }); dimas.group.position.set(0.62, 0, 3.4); dimas.group.rotation.y = Math.PI; scene.add(dimas.group);
+const kunti = HR.kuntilanak(); kunti.group.position.set(-1.3, 0, -3.4); scene.add(kunti.group);
+
+const beats = HR.ketukanJantung([{ dari: 2, sampai: 5.2, bpm0: 70, bpm1: 135 }]);
+const words = [
+  { s: 0.3, e: 0.8, text: 'Malam' }, { s: 0.8, e: 1.2, text: 'itu' }, { s: 1.2, e: 1.7, text: 'kampung' }, { s: 1.7, e: 2.3, text: 'sepi.' },
+  { s: 2.6, e: 3.0, text: 'Lalu' }, { s: 3.0, e: 3.4, text: 'lampu' }, { s: 3.4, e: 3.9, text: 'jalan' }, { s: 3.9, e: 4.6, text: 'berkedip.' },
+];
+const chunks = HF.chunkWords(words, 4);
+
+HF.setup({ width: W, height: H, fps: 30, duration: DUR, draw(t) {
+  const k = dunia.update(t); lampu.update(t); pohon.update(t); kabut.update(t);
+  rumah.update(t, { nyala: t < 5.1 ? 1 : 0 });
+  const muncul = HF.prog(t, 5.8, 6.1);
+  kunti.group.visible = t >= 5.8;
+  kunti.update(t, { muncul, nyala: muncul, raih: HF.prog(t, 6.4, 7.6) });
+  const takut = Math.max(HF.prog(t, 2, 5.2) * 0.5, HF.prog(t, 5.8, 6.0));
+  // tokoh menoleh ke belakang saat hantu muncul
+  dimas.group.rotation.y = Math.PI + HF.ease.inOut(HF.prog(t, 5.9, 6.4)) * 2.4;
+  dimas.update(t, { takut, jalan: t < 2 });
+  // kamera: dari belakang tokoh, mendekat pelan selama detak jantung, lalu goyang saat kejutan
+  const d = HR.dekati(t, 1.5, 5.4);
+  cam.position.set(0.3 - d * 0.2, 2.1 - d * 0.2, 7.4 - d * 1.8);
+  cam.lookAt(-0.4, 1.3, -3);
+  HR.kameraGoyang(cam, t, 0.012 + (t > 5.8 ? 0.05 * Math.exp(-(t - 5.8) * 3) : 0));
+  renderer.render(scene, cam);
+  ctx.clearRect(0, 0, W, H);
+  HR.overlay(ctx, t, { denyut: HR.denyut(t, beats), gelap: t >= 5.2 && t < 5.8 ? 0.85 : 0 });
+  if (k > 0.05) { ctx.fillStyle = `rgba(220,230,255,${k * 0.35})`; ctx.fillRect(0, 0, W, H); }
+  HR.kartu(ctx, t, { t0: 0, t1: 2.2, judul: 'Kampung Sukamaju', sub: 'malam Jumat, 1998', y: 0.2 });
+  HF.drawSubtitle(ctx, t, chunks, { ...HR.SUB, keywords: new Set(['berkedip']) });
+} });
+</script></body></html>

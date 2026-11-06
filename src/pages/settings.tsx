@@ -6,7 +6,7 @@ import { ClaudeIntegration } from '@/components/claude-integration';
 import { CharacterSettings } from '@/components/characters';
 import { SkillSettings } from '@/components/skill-video';
 import { LogSettings } from '@/components/skill-logs';
-import { AudioMixSettings, VoiceSettings } from '@/components/audio-settings';
+import { AudioMixSettings, GhostVoiceSettings, VoiceSettings } from '@/components/audio-settings';
 import { RenderTest } from '@/components/render-test';
 import { RemotionSetup } from '@/components/remotion-setup';
 import { UpdatePanel } from '@/components/update';
@@ -193,6 +193,7 @@ export default function SettingsPage({ onSaved }: { onSaved: (s: Settings) => vo
           {section === 'audio' && (
             <>
               <VoiceSettings s={s} setS={setS} />
+              <GhostVoiceSettings s={s} setS={setS} />
               <AudioMixSettings s={s} setS={setS} />
             </>
           )}

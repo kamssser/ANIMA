@@ -309,6 +309,24 @@
       "draw": []
     },
     {
+      "id": "studio-horor-dongeng",
+      "label": "Studio: dongeng horor (kartun 3D)",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "horor-dongeng",
+      "description": "Cerita hantu Indonesia karangan sendiri (kuntilanak, pocong, genderuwo, pantangan malam Jumat) dalam kartun 3D malam berkabut: lampu berkedip, siluet hantu, kamera dari balik bahu. Suara seram dari kode: dengung, derit pintu, ketukan, bisikan, tokek, detak jantung yang makin cepat, hening, lalu kejutan. Seram tanpa darah. Render sedang-berat. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
+      "id": "studio-horor-nyata",
+      "label": "Studio: horor nyata (kartun 3D)",
+      "kind": "skill",
+      "engine": "studio",
+      "skillStyle": "horor-nyata",
+      "description": "Kisah seram yang benar-benar beredar (legenda tempat angker, kejadian yang diberitakan, kesaksian) diceritakan ulang dalam kartun 3D. Claude meriset minimal 2 sumber, memisahkan fakta sejarah dari kisah yang beredar, menyamarkan nama orang biasa, dan mencantumkan sumber. Suara seram + detak jantung seperti dongeng horor. Render sedang-berat. HyperForge Studio di Claude Code: kamu menyetujui gaya, karakter, naskah, suara, dan storyboard sebelum render.",
+      "draw": []
+    },
+    {
       "id": "av-bongkar",
       "label": "Animantra: Kita Bongkar",
       "kind": "skill",

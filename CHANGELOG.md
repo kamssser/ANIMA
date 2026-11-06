@@ -6,6 +6,25 @@ bukan untuk programmer.
 
 Format: `## <versi> - <tanggal YYYY-MM-DD>`, lalu poin-poin di bawah judul **Baru**, **Perbaikan**, atau **Perubahan**.
 
+## 0.21.0 - 2026-11-06
+
+Versi ini membawa dua style horor baru dengan suara yang bikin merinding.
+
+**Baru**
+
+- **Style Dongeng horor (kartun 3D).** Cerita hantu Indonesia karangan sendiri: kuntilanak, pocong, genderuwo, pantangan malam Jumat. Malam berkabut, lampu berkedip lalu padam, kamera dari balik bahu, kilat. Seram tanpa darah.
+- **Style Horor nyata (kartun 3D).** Kisah seram yang benar-benar beredar (legenda tempat angker, kejadian yang diberitakan). Claude mencari minimal dua sumber, memisahkan fakta sejarah dari kisah yang beredar, menyamarkan nama orang biasa, dan mencantumkan sumbernya.
+- **Suara horor dari kode:** detak jantung yang makin cepat menjelang puncak (layar ikut berdenyut merah), hening total sebelum kejutan, lalu hantu muncul. Ada juga tawa kuntilanak, jeritan, bisikan, napas panik, biola sumbang, lolongan anjing, tokek, derit pintu, ketukan, guntur, dan hujan.
+- **Suara hantu cewek dan cowok** di Pengaturan > Suara & audio > Suara hantu (ElevenLabs model eleven_multilingual_v2). Dipakai saat hantu memanggil atau bicara, dan selalu diikuti jeritan.
+
+**Perbaikan**
+
+- **Explainer datar lebih nyaman di telinga.** Perpindahan adegan tidak lagi berbunyi "srek" seperti kertas diseret. Suara transisi hanya ada sesekali di pergantian topik besar, dengan bunyi yang lebih lembut.
+
+**Perubahan**
+
+- Style horor dibuat untuk penonton umum, bukan konten anak.
+
 ## 0.20.0 - 2026-11-06
 
 Versi ini fokus ke keamanan laptop dan akun kamu.

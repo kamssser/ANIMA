@@ -103,6 +103,7 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
   buat ke `<proyek>/audio/vo.mp3` (suara pilihan pengguna di HyperForge). Dua pembicara (brief menyebut **dua suara**;
   semua jenis konten bisa): satu file per giliran (`speaker: "A"`/`"B"`, provider sama dengan model/suara berbeda),
   gabungkan dengan ffmpeg (jeda 0,25 dtk). Tokoh yang sedang berbicara diberi `bicara: true` / mulut bergerak.
+  Gaya horor: dialog hantu memakai `speaker: "hantu-cewe"` / `"hantu-cowo"` (lihat styles/horor-3d.md).
 - `anima_vibi_words` pada `vo.mp3` → `audio/words.json` (timing tiap kata, Bahasa Indonesia).
 - Durasi kepanjangan: rapatkan jeda dulu (ffmpeg `silenceremove`/`atempo` ≤ 1,08), kalau masih lebih usulkan kalimat
   yang dipangkas, jangan langsung dipotong. Durasi video = durasi suara + 0,6 dtk.
@@ -128,7 +129,8 @@ HyperForge (kalau ada). Tanya hanya yang belum terjawab, dalam satu kali tanya.
 
 ### 6. Render → `hasil/`
 1. Musik & efek dari kode: tulis `audio/score.json` (mood, bpm, bagian energi, `hening` sebelum punchline, `sfx` di
-   momen yang terlihat: pop saat label muncul, whoosh saat pindah shot, ding saat fakta penting) →
+   momen yang terlihat: pop saat label muncul, ding saat fakta penting; whoosh hanya untuk transisi besar dan jarang,
+   jangan di setiap pindah shot; ikuti aturan suara di file style bila ada) →
    `node <skill>/tools/score.mjs <proyek>/audio/score.json`.
 2. `node <skill>/tools/mix.mjs <proyek>/audio` → `mix.wav` (musik mengecil otomatis saat narasi, -14 LUFS) dan
    `mix_tanpa_musik.wav`.
@@ -178,7 +180,7 @@ dari nol supaya tidak melenceng dari gaya.
 | `mux.mjs <video> <audio> <out>` | ganti audio tanpa render ulang |
 | `thumb.mjs <html> <out.jpg\|png> [--t 0]` | satu frame resolusi penuh (thumbnail/cover) + versi kecil 320 px untuk cek keterbacaan |
 | `refsheet.mjs <video> <proyek> [--threshold 0.2]` | bongkar video referensi |
-| `score.mjs <score.json>` | musik + efek suara dari kode |
+| `score.mjs <score.json>` | musik + efek suara dari kode (`"mood": "horor"`, `jantung`, `ambien`, efek seram: lihat styles/horor-3d.md) |
 | `mix.mjs <audio-dir> [--musik -10] [--sfx -4]` | mix + ducking + -14 LUFS, versi dengan/tanpa musik |
 | `check.mjs <video> <out.png> [--at ...]` | cek akhir: 6 frame + kerasnya suara |
 
@@ -187,6 +189,8 @@ Contoh adegan siap jalan untuk setiap gaya ada di `samples/<gaya>.html` (maskot 
 baca contoh gaya yang dipilih sebagai titik awal teknik, lalu buat versi sendiri sesuai cerita. Tiap file gaya berisi rasa, teknik (2D/3D), palet & material, garis, gerak (fps, on twos), kamera, efek, subtitle, berat
 render, cocok untuk, dan checklist frame. Baca file gaya yang dipilih sebelum langkah 2 dan 5. Mulai dari adegan 5
 detik untuk gaya yang baru pertama dipakai.
+Gaya horor (`horor-dongeng`, `horor-nyata`) memakai pustaka `kit/horor-3d.js` dan contoh `samples/horor-3d.html`;
+baca juga `styles/horor-3d.md` (tampilan + pola suara detak jantung).
 
 ## Error yang sering
 | gejala | penyebab | cara beres |

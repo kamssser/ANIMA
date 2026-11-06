@@ -32,6 +32,8 @@ export type VisualStyleId =
   | 'studio-papan-kapur'
   | 'studio-cat-air'
   | 'studio-karet-retro'
+  | 'studio-horor-dongeng'
+  | 'studio-horor-nyata'
   | 'av-bongkar'
   | 'av-bongkar-25d'
   | 'av-tur'

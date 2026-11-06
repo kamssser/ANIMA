@@ -23,7 +23,11 @@ if (!hasVo && !hasM) {
 }
 const mdb = Number(opt.musik ?? -10);
 const sdb = Number(opt.sfx ?? -4);
-const norm = 'loudnorm=I=-14:TP=-1.5:LRA=9';
+// --seram (gaya horor): narator sedikit lebih berat + gema ruang, musik tidak terlalu mengecil, rentang dinamis lebar
+// (sunyi benar-benar sunyi, kejutan benar-benar keras).
+const seram = !!opt.seram;
+const norm = `loudnorm=I=-14:TP=-1.5:LRA=${seram ? 18 : 9}`;
+const voFx = seram ? 'aresample=48000,asetrate=45600,aresample=48000,atempo=1.0526,bass=g=3:f=110,aecho=0.85:0.55:55|120:0.18|0.1,' : '';
 
 function mix(out, withMusic) {
   const inputs = [];
@@ -31,13 +35,13 @@ function mix(out, withMusic) {
   let g = '';
   if (hasVo) {
     inputs.push('-i', vo);
-    g += `[${inputs.length / 2 - 1}:a]aresample=48000,aformat=channel_layouts=stereo,asplit=2[vo][key];`;
+    g += `[${inputs.length / 2 - 1}:a]${voFx}aresample=48000,aformat=channel_layouts=stereo,asplit=2[vo][key];`;
   }
   if (withMusic && hasM) {
     inputs.push('-i', f('musik.wav'));
     const i = inputs.length / 2 - 1;
     g += hasVo
-      ? `[${i}:a]volume=${mdb}dB[m0];[m0][key]sidechaincompress=threshold=0.03:ratio=6:attack=40:release=450[m];`
+      ? `[${i}:a]volume=${mdb}dB[m0];[m0][key]sidechaincompress=threshold=${seram ? 0.06 : 0.03}:ratio=${seram ? 3 : 6}:attack=40:release=${seram ? 700 : 450}[m];`
       : `[${i}:a]volume=${mdb}dB[m];`;
     labels.push('[m]');
   } else if (hasVo) g += '[key]anullsink;';

@@ -122,6 +122,17 @@ faktanya tetap akurat dan bersumber.
 - Transisi: potong langsung (paling sering), `XD.gelembung` (pergantian topik), `XD.sapuan` (pindah tempat/waktu),
   zoom menembus objek.
 - Subtitle: sans tebal putih dengan bayangan lembut; kata yang sedang diucapkan kuning.
+
+## Suara transisi: tenang di telinga (WAJIB)
+Perpindahan adegan **tidak bersuara**. Efek "whoosh/srek" di setiap pindah shot terdengar seperti kertas diseret dan
+membuat penonton capek. Di `audio/score.json`:
+- **Jangan** memasang `whoosh`, `swoosh-up`, `klik`, atau `tik` pada potong langsung, gerak kamera, atau kartu yang muncul.
+- Suara transisi hanya untuk **pergantian bab/topik besar** (`XD.gelembung` / `XD.sapuan`), pakai jenis **`hembus`**
+  (desir lembut), gain 0,1–0,15. Paling banyak **satu tiap 30–45 detik**; video pendek (< 60 detik) cukup 0–1 kali.
+- Selalu tulis `"transisi": { "jedaMin": 30, "gainMaks": 0.15 }` supaya efek yang terlalu rapat dibuang otomatis.
+- Efek lain secukupnya dan pelan (gain ≤ 0,3): `pop` lembut untuk angka/kartu penting saja (bukan setiap label),
+  `ding` untuk satu fakta kunci per bab. Saat narasi berjalan, keheningan + musik latar lebih nyaman daripada efek.
+- Mix dengan `--sfx -8` (lebih pelan dari bawaan).
 - Format: paling cocok 16:9 (YouTube, bisa sampai 15 menit). Untuk 9:16, tokoh lebih besar di tengah, kartu di sepertiga atas.
 
 ## Penutup: cerita selesai, lalu terima kasih & sampai jumpa (WAJIB)

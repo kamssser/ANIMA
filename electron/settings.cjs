@@ -53,6 +53,14 @@ const defaultSettings = () => ({
   vibi2VoiceName: '',
   vibi2Language: 'id',
   vibi2Speed: 1,
+  // Suara hantu (gaya horor): dialog hantu perempuan (kuntilanak, dll.) dan hantu laki-laki (genderuwo, dll.).
+  // Selalu ElevenLabs eleven_multilingual_v2 lewat vibi.pro, terpisah dari provider suara A/B.
+  hantuCeweVoiceId: '',
+  hantuCeweVoiceName: '',
+  hantuCeweSpeed: 0.9,
+  hantuCowoVoiceId: '',
+  hantuCowoVoiceName: '',
+  hantuCowoSpeed: 0.9,
   wordTimestamps: true,
   // Branding: nama kanal/akun sosmed, tampil kecil di tengah paling bawah semua video ('' = mati).
   brandOn: false,

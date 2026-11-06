@@ -121,6 +121,13 @@ export interface Settings {
   vibi2VoiceName: string;
   vibi2Language: string;
   vibi2Speed: number;
+  /** Suara hantu (gaya horor), selalu ElevenLabs eleven_multilingual_v2. */
+  hantuCeweVoiceId: string;
+  hantuCeweVoiceName: string;
+  hantuCeweSpeed: number;
+  hantuCowoVoiceId: string;
+  hantuCowoVoiceName: string;
+  hantuCowoSpeed: number;
   /** Branding: teks nama kanal/sosmed kecil di tengah bawah semua video. */
   brandOn: boolean;
   brandText: string;

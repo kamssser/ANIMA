@@ -29,23 +29,24 @@ const KEYS = {
   B: { provider: 'vibi2Provider', model: 'vibi2Model', voiceId: 'vibi2VoiceId', voiceName: 'vibi2VoiceName', language: 'vibi2Language', speed: 'vibi2Speed' },
 } as const;
 
+// Suara hantu (gaya horor): selalu ElevenLabs + model tetap, terpisah dari provider suara A/B.
+const HANTU_MODEL = 'eleven_multilingual_v2';
+const HANTU = {
+  cewe: { voiceId: 'hantuCeweVoiceId', voiceName: 'hantuCeweVoiceName', speed: 'hantuCeweSpeed', label: 'Hantu cewek', desc: 'Kuntilanak, sundel bolong, wewe gombel, suara perempuan yang memanggil.' },
+  cowo: { voiceId: 'hantuCowoVoiceId', voiceName: 'hantuCowoVoiceName', speed: 'hantuCowoSpeed', label: 'Hantu cowok', desc: 'Genderuwo, pocong, sosok laki-laki, suara berat yang memanggil.' },
+} as const;
+
 const cleanErr = (e: unknown) => (e as Error).message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
 
-function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
-  const k = KEYS[slot];
-  // Satu provider untuk kedua suara (provider suara A).
-  const provider = s.vibiProvider;
+/** Daftar suara vibi.pro + tombol pilih (dipakai slot A/B dan slot suara hantu). */
+function VoicePicker({ s, provider, selected, onPick }: { s: Settings; provider: Provider; selected: string; onPick: (v: VibiVoice) => void }) {
   const [search, setSearch] = useState('');
   const [indo, setIndo] = useState(true);
   const [voices, setVoices] = useState<VibiVoice[] | null>(null);
-  // Daftar suara milik provider lain tidak berlaku lagi.
   useEffect(() => setVoices(null), [provider]);
   const [busy, setBusy] = useState(false);
   const [audio] = useState(() => new Audio());
   useEffect(() => () => audio.pause(), [audio]);
-
-  const set = (patch: Partial<Settings>) => setS({ ...s, ...patch });
-
   async function load() {
     if (!s.vibiApiKey) {
       toast.error('Isi API key vibi.pro dulu.');
@@ -61,6 +62,110 @@ function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
       setBusy(false);
     }
   }
+  return (
+    <>
+      <div className="flex gap-2">
+        <Input placeholder="Cari suara (kosongkan untuk semua)..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} />
+        <Button variant="outline" onClick={load} disabled={busy}>
+          <Search /> {busy ? 'Memuat...' : 'Cari suara'}
+        </Button>
+      </div>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" className="size-4 accent-primary" checked={indo} onChange={(e) => setIndo(e.target.checked)} />
+        Hanya suara asli bahasa Indonesia (logat lokal, bukan penutur asing)
+      </label>
+      {voices && (
+        <div className="max-h-64 overflow-y-auto rounded-md border">
+          {voices.length === 0 && <p className="p-3 text-sm text-muted-foreground">Tidak ada suara.</p>}
+          {voices.map((v) => (
+            <div key={v.id} className={cn('flex items-center gap-3 border-b px-3 py-2 last:border-0', selected === v.id && 'bg-accent')}>
+              {v.preview && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  title="Dengar contoh"
+                  onClick={() => {
+                    audio.src = v.preview!;
+                    audio.play().catch(() => toast.error('Contoh suara tidak bisa diputar'));
+                  }}
+                >
+                  <Play />
+                </Button>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium">{v.name}</div>
+                <div className="truncate text-xs text-muted-foreground">{[v.gender, v.accent, v.description].filter(Boolean).join(' · ')}</div>
+              </div>
+              <Button size="sm" variant={selected === v.id ? 'default' : 'outline'} onClick={() => onPick(v)}>
+                {selected === v.id ? 'Dipilih' : 'Pilih'}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Satu slot suara hantu: ElevenLabs, model eleven_multilingual_v2 (tetap), voice + kecepatan bisa diatur. */
+function GhostSlot({ s, setS, who }: Props & { who: keyof typeof HANTU }) {
+  const k = HANTU[who];
+  const set = (patch: Partial<Settings>) => setS({ ...s, ...patch });
+  return (
+    <div className="grid gap-4 rounded-lg border p-4">
+      <div>
+        <div className="text-sm font-medium">{k.label}</div>
+        <div className="text-xs text-muted-foreground">{k.desc}</div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-2">
+          <Label>Model</Label>
+          <Input value={HANTU_MODEL} disabled />
+        </div>
+        <div className="grid gap-2">
+          <Label>Provider</Label>
+          <Input value="ElevenLabs" disabled />
+        </div>
+        <div className="grid gap-2">
+          <Label>Kecepatan</Label>
+          <Input type="number" step={0.05} min={0.5} max={2} value={s[k.speed]} onChange={(e) => set({ [k.speed]: Number(e.target.value) } as Partial<Settings>)} />
+        </div>
+      </div>
+      <div className="grid gap-2">
+        <Label>Suara terpilih</Label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input className="max-w-xs" placeholder="voice_id" value={s[k.voiceId]} onChange={(e) => set({ [k.voiceId]: e.target.value.trim(), [k.voiceName]: '' } as Partial<Settings>)} />
+          {s[k.voiceName] && <span className="text-sm text-muted-foreground">{s[k.voiceName]}</span>}
+        </div>
+        <VoicePicker s={s} provider="elevenlabs" selected={s[k.voiceId]} onPick={(v) => set({ [k.voiceId]: v.id, [k.voiceName]: v.name } as Partial<Settings>)} />
+      </div>
+    </div>
+  );
+}
+
+/** Suara hantu untuk gaya Dongeng horor & Horor nyata. Disimpan dengan tombol Simpan di Pengaturan. */
+export function GhostVoiceSettings({ s, setS }: Props) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Suara hantu (gaya horor)</CardTitle>
+        <CardDescription>
+          Dipakai di style Dongeng horor dan Horor nyata untuk dialog hantu (memanggil, berbisik, tertawa). Selalu ElevenLabs model {HANTU_MODEL} lewat vibi.pro, terpisah dari suara A/B. Memakai kredit vibi.pro.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <GhostSlot s={s} setS={setS} who="cewe" />
+        <GhostSlot s={s} setS={setS} who="cowo" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
+  const k = KEYS[slot];
+  // Satu provider untuk kedua suara (provider suara A).
+  const provider = s.vibiProvider;
+  const set = (patch: Partial<Settings>) => setS({ ...s, ...patch });
 
   const other = KEYS[slot === 'A' ? 'B' : 'A'];
   const sameModel = s[k.model] === s[other.model] && MODELS[provider].length > 1;
@@ -126,47 +231,8 @@ function VoiceSlot({ s, setS, slot }: Props & { slot: 'A' | 'B' }) {
           />
           {(s[k.voiceName] as string) && <span className="text-sm text-muted-foreground">{s[k.voiceName] as string}</span>}
         </div>
-        <div className="flex gap-2">
-          <Input placeholder="Cari suara (kosongkan untuk semua)..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} />
-          <Button variant="outline" onClick={load} disabled={busy}>
-            <Search /> {busy ? 'Memuat...' : 'Cari suara'}
-          </Button>
-        </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" className="size-4 accent-primary" checked={indo} onChange={(e) => setIndo(e.target.checked)} />
-          Hanya suara asli bahasa Indonesia (logat lokal, bukan penutur asing)
-        </label>
+        <VoicePicker s={s} provider={provider} selected={s[k.voiceId] as string} onPick={(v) => set({ [k.voiceId]: v.id, [k.voiceName]: v.name } as Partial<Settings>)} />
       </div>
-
-      {voices && (
-        <div className="max-h-64 overflow-y-auto rounded-md border">
-          {voices.length === 0 && <p className="p-3 text-sm text-muted-foreground">Tidak ada suara.</p>}
-          {voices.map((v) => (
-            <div key={v.id} className={cn('flex items-center gap-3 border-b px-3 py-2 last:border-0', s[k.voiceId] === v.id && 'bg-accent')}>
-              {v.preview && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  title="Dengar contoh"
-                  onClick={() => {
-                    audio.src = v.preview!;
-                    audio.play().catch(() => toast.error('Contoh suara tidak bisa diputar'));
-                  }}
-                >
-                  <Play />
-                </Button>
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium">{v.name}</div>
-                <div className="truncate text-xs text-muted-foreground">{[v.gender, v.accent, v.description].filter(Boolean).join(' · ')}</div>
-              </div>
-              <Button size="sm" variant={s[k.voiceId] === v.id ? 'default' : 'outline'} onClick={() => set({ [k.voiceId]: v.id, [k.voiceName]: v.name } as Partial<Settings>)}>
-                {s[k.voiceId] === v.id ? 'Dipilih' : 'Pilih'}
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

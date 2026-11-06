@@ -344,8 +344,14 @@ async function vibiCall(s, p, init = {}) {
  * Suara A (bawaan) atau B (pembicara kedua) dari pengaturan HyperForge. Keduanya satu provider (provider suara A),
  * beda model/suara. Suara B lama dari provider lain dianggap belum dipilih.
  */
+const HANTU_MODEL = 'eleven_multilingual_v2';
 const voiceOf = (s, who) =>
-  who === 'B'
+  who === 'hantu-cewe' || who === 'hantu-cowo'
+    ? (() => {
+        const k = who === 'hantu-cewe' ? 'hantuCewe' : 'hantuCowo';
+        return { provider: 'elevenlabs', model: HANTU_MODEL, voiceId: s[k + 'VoiceId'], name: s[k + 'VoiceName'], language: 'id', speed: s[k + 'Speed'] ?? 0.9 };
+      })()
+    : who === 'B'
     ? {
         provider: s.vibiProvider,
         model: s.vibi2Model,
@@ -519,7 +525,10 @@ server.tool(
   {
     file: z.string().describe('path file mp3 relatif ke folder kerja, mis. "sejarah-kereta/vo.mp3"'),
     text: z.string().min(1).max(10000).describe('naskah VO, angka ditulis dengan kata (video 5 menit sekitar 4.500 karakter)'),
-    speaker: z.enum(['A', 'B']).default('A').describe('Suara A (bawaan) atau B (pembicara kedua)'),
+    speaker: z
+      .enum(['A', 'B', 'hantu-cewe', 'hantu-cowo'])
+      .default('A')
+      .describe('Suara A (bawaan), B (pembicara kedua), atau suara hantu untuk gaya horor: hantu-cewe (kuntilanak, sundel bolong, wewe gombel) / hantu-cowo (genderuwo, pocong, dll.). Suara hantu = ElevenLabs eleven_multilingual_v2.'),
     estimate: z.boolean().default(false),
   },
   async ({ file, text, speaker, estimate }) => {
@@ -530,7 +539,12 @@ server.tool(
       if (!out.startsWith(path.resolve(base) + path.sep) || !/\.mp3$/i.test(out)) return fail('File harus .mp3 di dalam folder kerja.');
       const s = hyperforgeSettings();
       const v = voiceOf(s, speaker);
-      if (!v.voiceId) return fail(`Suara ${speaker} belum dipilih di HyperForge > Pengaturan > Suara & audio.`);
+      if (!v.voiceId)
+        return fail(
+          speaker.startsWith('hantu')
+            ? `Suara ${speaker === 'hantu-cewe' ? 'hantu cewek' : 'hantu cowok'} belum dipilih di HyperForge > Pengaturan > Suara & audio > Suara hantu. Minta pengguna memilihnya dulu (jangan diganti suara lain).`
+            : `Suara ${speaker} belum dipilih di HyperForge > Pengaturan > Suara & audio.`,
+        );
       const voice = `${v.name || v.voiceId} (${v.provider || 'elevenlabs'}${v.model ? `, ${v.model}` : ''})`;
       if (estimate) return ok({ voice, characters: text.length, note: 'Kredit vibi.pro kira-kira sebanding jumlah karakter.' });
       fs.mkdirSync(path.dirname(out), { recursive: true });

@@ -16,6 +16,8 @@ Karakter tetap sama (bentuk, warna HEX, ekspresi), hanya diterjemahkan ke cara g
 | [Papan tulis kapur](papan-kapur.md) | 2D (canvas) | ringan | pelajaran, diagram, rumus, kuis |
 | [Cat air lembut](cat-air.md) | 2D (canvas) | ringan | cerita hangat, refleksi, dongeng sebelum tidur, alam |
 | [Kartun karet hitam-putih](karet-retro.md) | 2D (canvas) | ringan | musik & joget, nostalgia, iklan retro, komedi |
+| [Dongeng horor](horor-dongeng.md) | 3D (three.js) + [horor-3d](horor-3d.md) | sedang–berat | cerita hantu karangan, pantangan & makhluk rakyat |
+| [Horor nyata](horor-nyata.md) | 3D (three.js) + [horor-3d](horor-3d.md) | sedang–berat | legenda tempat angker & kisah yang beredar, dengan sumber |
 
 Mau upload rutin? Pilih yang ringan dan pakai satu gaya utama per akun supaya penonton mengenali seri-mu.
 Gaya yang 12 gambar/detik tetap diekspor 24/30 fps (tiap gambar tampil dua kali) supaya aman di semua platform.
